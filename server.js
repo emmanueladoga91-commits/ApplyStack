@@ -45,11 +45,11 @@ const stmts = {
   findByEmail  : db.prepare('SELECT * FROM users WHERE email = ?'),
   findById     : db.prepare('SELECT * FROM users WHERE id = ?'),
   createUser   : db.prepare('INSERT INTO users (email, password_hash) VALUES (?, ?) RETURNING *'),
-  incrTailoring: db.prepare('UPDATE users SET tailoring_count = tailoring_count + 1, updated_at = datetime("now") WHERE id = ?'),
-  setPlan      : db.prepare('UPDATE users SET plan = ?, stripe_customer_id = ?, stripe_subscription_id = ?, subscription_status = ?, updated_at = datetime("now") WHERE id = ?'),
-  setByStripe  : db.prepare('UPDATE users SET plan = ?, subscription_status = ?, updated_at = datetime("now") WHERE stripe_subscription_id = ?'),
-  setCustomer  : db.prepare('UPDATE users SET stripe_customer_id = ?, updated_at = datetime("now") WHERE email = ?'),
-  downgrade    : db.prepare('UPDATE users SET plan = "free", subscription_status = ?, updated_at = datetime("now") WHERE stripe_subscription_id = ?'),
+  incrTailoring: db.prepare("UPDATE users SET tailoring_count = tailoring_count + 1, updated_at = datetime('now') WHERE id = ?"),
+  setPlan      : db.prepare("UPDATE users SET plan = ?, stripe_customer_id = ?, stripe_subscription_id = ?, subscription_status = ?, updated_at = datetime('now') WHERE id = ?"),
+  setByStripe  : db.prepare("UPDATE users SET plan = ?, subscription_status = ?, updated_at = datetime('now') WHERE stripe_subscription_id = ?"),
+  setCustomer  : db.prepare("UPDATE users SET stripe_customer_id = ?, updated_at = datetime('now') WHERE email = ?"),
+  downgrade    : db.prepare("UPDATE users SET plan = 'free', subscription_status = ?, updated_at = datetime('now') WHERE stripe_subscription_id = ?"),
 };
 
 // ── JWT helpers ────────────────────────────────────────────────
