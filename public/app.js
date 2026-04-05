@@ -451,16 +451,6 @@ var TEMPLATES = {
 
 // ── Init ───────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
-  var k = localStorage.getItem('rb_key');
-  if (k) { document.getElementById('apiKey').value = k; document.getElementById('saveKey').checked = true; }
-
-  document.getElementById('eyeBtn').addEventListener('click', function() {
-    var i = document.getElementById('apiKey');
-    i.type = i.type === 'password' ? 'text' : 'password';
-  });
-  document.getElementById('saveKey').addEventListener('change', function() {
-    if (!this.checked) localStorage.removeItem('rb_key');
-  });
   document.getElementById('pageSel').addEventListener('change', function() {
     selectedPages = parseInt(this.value, 10);
   });
@@ -505,7 +495,7 @@ document.addEventListener('DOMContentLoaded', function() {
   });
 
   // Live stepper updates
-  ['jd','company','role','apiKey'].forEach(function(id) {
+  ['jd','company','role'].forEach(function(id) {
     document.getElementById(id).addEventListener('input', refreshStepper);
   });
 
@@ -569,7 +559,6 @@ function refreshStepper() {
   if (fileBuffer)                                         setStepDone(1);
   if (document.getElementById('jd').value.trim())         setStepDone(2);
   if (selectedTemplate)                                   setStepDone(3);
-  if (document.getElementById('apiKey').value.trim())     setStepDone(4);
 }
 
 // ── File handling ──────────────────────────────────────────────────────────
