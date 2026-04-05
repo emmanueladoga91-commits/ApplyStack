@@ -1,56 +1,50 @@
 'use strict';
 // ═══════════════════════════════════════════════════════════════
 //  TailorCV — Express Backend
-//  Auth · Claude AI Proxy · Stripe Subscriptions · SQLite
+//  Auth · Claude AI Proxy · Stripe Subscriptions · PostgreSQL
 // ═══════════════════════════════════════════════════════════════
 const express    = require('express');
 const path       = require('path');
-const crypto     = require('crypto');
 const bcrypt     = require('bcryptjs');
 const jwt        = require('jsonwebtoken');
-const Database   = require('better-sqlite3');
+const { Pool }   = require('pg');
 const Stripe     = require('stripe');
 const rateLimit  = require('express-rate-limit');
 const cors       = require('cors');
 
-// ── Load env (dotenv optional — use actual env vars in prod) ──
+// ── Load env ───────────────────────────────────────────────────
 try { require('dotenv').config(); } catch(e) {}
 
-const PORT        = process.env.PORT        || 3000;
-const JWT_SECRET  = process.env.JWT_SECRET  || 'CHANGE_THIS_SECRET_IN_PRODUCTION';
-const CLAUDE_KEY  = process.env.CLAUDE_API_KEY;
-const APP_URL     = process.env.APP_URL     || `http://localhost:${PORT}`;
-const stripe      = Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
+const PORT       = process.env.PORT        || 3000;
+const JWT_SECRET = process.env.JWT_SECRET  || 'CHANGE_THIS_SECRET_IN_PRODUCTION';
+const CLAUDE_KEY = process.env.CLAUDE_API_KEY;
+const APP_URL    = process.env.APP_URL     || `http://localhost:${PORT}`;
+const stripe     = Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
 
-// ── SQLite database ────────────────────────────────────────────
-const db = new Database(path.join(__dirname, 'tailorcv.db'));
-db.pragma('journal_mode = WAL');
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id                     INTEGER PRIMARY KEY AUTOINCREMENT,
-    email                  TEXT    UNIQUE NOT NULL,
-    password_hash          TEXT    NOT NULL,
-    plan                   TEXT    NOT NULL DEFAULT 'free',
-    stripe_customer_id     TEXT,
-    stripe_subscription_id TEXT,
-    subscription_status    TEXT,
-    tailoring_count        INTEGER NOT NULL DEFAULT 0,
-    created_at             TEXT    NOT NULL DEFAULT (datetime('now')),
-    updated_at             TEXT    NOT NULL DEFAULT (datetime('now'))
-  );
-`);
+// ── PostgreSQL pool ────────────────────────────────────────────
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.DATABASE_URL ? { rejectUnauthorized: false } : false,
+});
 
-// ── Prepared statements ────────────────────────────────────────
-const stmts = {
-  findByEmail  : db.prepare('SELECT * FROM users WHERE email = ?'),
-  findById     : db.prepare('SELECT * FROM users WHERE id = ?'),
-  createUser   : db.prepare('INSERT INTO users (email, password_hash) VALUES (?, ?) RETURNING *'),
-  incrTailoring: db.prepare("UPDATE users SET tailoring_count = tailoring_count + 1, updated_at = datetime('now') WHERE id = ?"),
-  setPlan      : db.prepare("UPDATE users SET plan = ?, stripe_customer_id = ?, stripe_subscription_id = ?, subscription_status = ?, updated_at = datetime('now') WHERE id = ?"),
-  setByStripe  : db.prepare("UPDATE users SET plan = ?, subscription_status = ?, updated_at = datetime('now') WHERE stripe_subscription_id = ?"),
-  setCustomer  : db.prepare("UPDATE users SET stripe_customer_id = ?, updated_at = datetime('now') WHERE email = ?"),
-  downgrade    : db.prepare("UPDATE users SET plan = 'free', subscription_status = ?, updated_at = datetime('now') WHERE stripe_subscription_id = ?"),
-};
+// ── Create table on startup ────────────────────────────────────
+(async () => {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id                     SERIAL PRIMARY KEY,
+      email                  TEXT   UNIQUE NOT NULL,
+      password_hash          TEXT   NOT NULL,
+      plan                   TEXT   NOT NULL DEFAULT 'free',
+      stripe_customer_id     TEXT,
+      stripe_subscription_id TEXT,
+      subscription_status    TEXT,
+      tailoring_count        INTEGER NOT NULL DEFAULT 0,
+      created_at             TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at             TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+  console.log('Database ready.');
+})().catch(err => { console.error('DB init error:', err); process.exit(1); });
 
 // ── JWT helpers ────────────────────────────────────────────────
 function signToken(userId) {
@@ -67,10 +61,17 @@ function requireAuth(req, res, next) {
   if (!token) return res.status(401).json({ error: 'Not authenticated' });
   const payload = verifyToken(token);
   if (!payload) return res.status(401).json({ error: 'Invalid or expired token' });
-  const user = stmts.findById.get(payload.sub);
-  if (!user) return res.status(401).json({ error: 'User not found' });
-  req.user = user;
-  next();
+  pool.query('SELECT * FROM users WHERE id = $1', [payload.sub])
+    .then(result => {
+      const user = result.rows[0];
+      if (!user) return res.status(401).json({ error: 'User not found' });
+      req.user = user;
+      next();
+    })
+    .catch(err => {
+      console.error('Auth DB error:', err);
+      res.status(500).json({ error: 'Authentication error' });
+    });
 }
 
 // ── Express app ────────────────────────────────────────────────
@@ -97,11 +98,15 @@ app.post('/api/auth/register', authLimiter, async (req, res) => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Invalid email address.' });
     if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters.' });
 
-    const existing = stmts.findByEmail.get(email.toLowerCase());
-    if (existing) return res.status(409).json({ error: 'An account with this email already exists.' });
+    const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email.toLowerCase()]);
+    if (existing.rows.length) return res.status(409).json({ error: 'An account with this email already exists.' });
 
     const hash = await bcrypt.hash(password, 12);
-    const user = stmts.createUser.get(email.toLowerCase(), hash);
+    const result = await pool.query(
+      'INSERT INTO users (email, password_hash) VALUES ($1, $2) RETURNING *',
+      [email.toLowerCase(), hash]
+    );
+    const user = result.rows[0];
     const token = signToken(user.id);
     res.json({ token, user: safeUser(user) });
   } catch (err) {
@@ -114,7 +119,8 @@ app.post('/api/auth/login', authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body || {};
     if (!email || !password) return res.status(400).json({ error: 'Email and password are required.' });
-    const user = stmts.findByEmail.get(email.toLowerCase());
+    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email.toLowerCase()]);
+    const user = result.rows[0];
     if (!user) return res.status(401).json({ error: 'Invalid email or password.' });
     const match = await bcrypt.compare(password, user.password_hash);
     if (!match) return res.status(401).json({ error: 'Invalid email or password.' });
@@ -141,7 +147,6 @@ app.post('/api/claude', requireAuth, aiLimiter, async (req, res) => {
   const isPro = (user.plan === 'pro' && user.subscription_status === 'active');
 
   if (type === 'tailor') {
-    // Free users get exactly 1 free tailor
     if (!isPro && user.tailoring_count >= 1) {
       return res.status(402).json({
         error: 'upgrade_required',
@@ -149,7 +154,6 @@ app.post('/api/claude', requireAuth, aiLimiter, async (req, res) => {
       });
     }
   } else {
-    // All other features (ATS, cover letter, skills gap, interview) require Pro
     if (!isPro) {
       return res.status(402).json({
         error: 'upgrade_required',
@@ -190,7 +194,10 @@ app.post('/api/claude', requireAuth, aiLimiter, async (req, res) => {
 
     // Increment tailor count after successful tailor call
     if (type === 'tailor') {
-      stmts.incrTailoring.run(user.id);
+      await pool.query(
+        'UPDATE users SET tailoring_count = tailoring_count + 1, updated_at = NOW() WHERE id = $1',
+        [user.id]
+      );
     }
 
     res.json({ text });
@@ -215,11 +222,13 @@ app.post('/api/billing/create-checkout', requireAuth, async (req, res) => {
     const user = req.user;
     let customerId = user.stripe_customer_id;
 
-    // Create Stripe customer if not exists
     if (!customerId) {
       const customer = await stripe.customers.create({ email: user.email, metadata: { userId: String(user.id) } });
       customerId = customer.id;
-      stmts.setCustomer.run(customerId, user.email);
+      await pool.query(
+        'UPDATE users SET stripe_customer_id = $1, updated_at = NOW() WHERE email = $2',
+        [customerId, user.email]
+      );
     }
 
     const session = await stripe.checkout.sessions.create({
@@ -273,7 +282,10 @@ async function handleStripeWebhook(req, res) {
           const sub = await stripe.subscriptions.retrieve(session.subscription);
           const userId = session.metadata && session.metadata.userId;
           if (userId) {
-            stmts.setPlan.run('pro', session.customer, sub.id, sub.status, parseInt(userId));
+            await pool.query(
+              'UPDATE users SET plan = $1, stripe_customer_id = $2, stripe_subscription_id = $3, subscription_status = $4, updated_at = NOW() WHERE id = $5',
+              ['pro', session.customer, sub.id, sub.status, parseInt(userId)]
+            );
           }
         }
         break;
@@ -281,21 +293,33 @@ async function handleStripeWebhook(req, res) {
       case 'customer.subscription.updated': {
         const sub = event.data.object;
         if (sub.status === 'active') {
-          stmts.setByStripe.run('pro', 'active', sub.id);
+          await pool.query(
+            'UPDATE users SET plan = $1, subscription_status = $2, updated_at = NOW() WHERE stripe_subscription_id = $3',
+            ['pro', 'active', sub.id]
+          );
         } else if (['past_due', 'unpaid'].includes(sub.status)) {
-          stmts.setByStripe.run('pro', sub.status, sub.id);
+          await pool.query(
+            'UPDATE users SET subscription_status = $1, updated_at = NOW() WHERE stripe_subscription_id = $2',
+            [sub.status, sub.id]
+          );
         }
         break;
       }
       case 'customer.subscription.deleted': {
         const sub = event.data.object;
-        stmts.downgrade.run('canceled', sub.id);
+        await pool.query(
+          "UPDATE users SET plan = 'free', subscription_status = $1, updated_at = NOW() WHERE stripe_subscription_id = $2",
+          ['canceled', sub.id]
+        );
         break;
       }
       case 'invoice.payment_failed': {
         const inv = event.data.object;
         if (inv.subscription) {
-          stmts.setByStripe.run('pro', 'past_due', inv.subscription);
+          await pool.query(
+            'UPDATE users SET subscription_status = $1, updated_at = NOW() WHERE stripe_subscription_id = $2',
+            ['past_due', inv.subscription]
+          );
         }
         break;
       }
@@ -307,7 +331,7 @@ async function handleStripeWebhook(req, res) {
   res.json({ received: true });
 }
 
-// ── SPA fallback: serve index.html for unknown routes ─────────
+// ── SPA fallback ───────────────────────────────────────────────
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -315,18 +339,12 @@ app.get('*', (req, res) => {
 // ── Helpers ────────────────────────────────────────────────────
 function safeUser(u) {
   return {
-    id:               u.id,
-    email:            u.email,
-    plan:             u.plan,
-    subscriptionStatus: u.subscription_status,
-    tailoringCount:   u.tailoring_count,
-    createdAt:        u.created_at,
+    id:                  u.id,
+    email:               u.email,
+    plan:                u.plan,
+    tailoring_count:     u.tailoring_count,
+    subscription_status: u.subscription_status,
   };
 }
 
-// ── Start ──────────────────────────────────────────────────────
-app.listen(PORT, () => {
-  console.log(`✅ TailorCV server running at http://localhost:${PORT}`);
-  if (!CLAUDE_KEY) console.warn('⚠️  CLAUDE_API_KEY not set — AI features will not work.');
-  if (!process.env.STRIPE_SECRET_KEY) console.warn('⚠️  STRIPE_SECRET_KEY not set — billing will not work.');
-});
+app.listen(PORT, () => console.log(`TailorCV running on port ${PORT}`));
