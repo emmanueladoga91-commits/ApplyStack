@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TailorCV — Sign In</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --navy:#1a2744; --indigo:#4f6ef7; --indigo2:#3a5ce4;
+      --green:#166534; --green-bg:#dcfce7; --green-bd:#86efac;
+      --red:#991b1b; --red-bg:#fef2f2;
+      --gray50:#f8fafc; --gray100:#f1f5f9; --gray200:#e2e8f0;
+      --gray400:#94a3b8; --gray600:#475569; --gray800:#1e293b;
+    }
+    body { font-family:'Inter',system-ui,sans-serif; background:var(--gray50); color:var(--gray800); min-height:100vh; display:flex; flex-direction:column; }
+    nav { background:#fff; border-bottom:1px solid var(--gray200); padding:16px 24px; display:flex; align-items:center; justify-content:space-between; }
+    .logo { font-size:1.3rem; font-weight:900; color:var(--navy); text-decoration:none; }
+    .logo span { color:var(--indigo); }
+    .nav-back { font-size:.9rem; color:var(--gray600); text-decoration:none; }
+    .nav-back:hover { color:var(--navy); }
+    main { flex:1; display:flex; align-items:center; justify-content:center; padding:40px 20px; }
+    .auth-card {
+      background:#fff; border:1px solid var(--gray200); border-radius:18px;
+      padding:40px 36px; width:100%; max-width:420px;
+      box-shadow:0 4px 24px rgba(0,0,0,.07);
+    }
+    .auth-title { font-size:1.6rem; font-weight:900; color:var(--navy); margin-bottom:6px; }
+    .auth-sub { font-size:.95rem; color:var(--gray600); margin-bottom:28px; }
+    .tabs { display:flex; background:var(--gray100); border-radius:10px; padding:4px; margin-bottom:28px; }
+    .tab { flex:1; text-align:center; padding:9px; border-radius:8px; font-size:.9rem; font-weight:600; color:var(--gray600); cursor:pointer; transition:all .2s; }
+    .tab.active { background:#fff; color:var(--navy); box-shadow:0 1px 6px rgba(0,0,0,.08); }
+    .f { margin-bottom:16px; }
+    .f label { display:block; font-size:.8rem; font-weight:700; color:var(--gray600); text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px; }
+    .f input { width:100%; padding:12px 14px; border:1.5px solid var(--gray200); border-radius:10px; font-size:.95rem; font-family:inherit; color:var(--gray800); background:#fafbfd; outline:none; transition:border-color .15s,box-shadow .15s; }
+    .f input:focus { border-color:var(--indigo); box-shadow:0 0 0 3px rgba(79,110,247,.1); background:#fff; }
+    .btn-primary { width:100%; padding:14px; background:linear-gradient(135deg,var(--indigo),var(--indigo2)); color:#fff; border:none; border-radius:10px; font-size:1rem; font-weight:700; font-family:inherit; cursor:pointer; transition:opacity .15s; margin-top:4px; }
+    .btn-primary:hover:not(:disabled) { opacity:.9; }
+    .btn-primary:disabled { opacity:.55; cursor:not-allowed; }
+    .alert { display:none; padding:12px 14px; border-radius:8px; font-size:.9rem; margin-bottom:16px; }
+    .alert.on { display:block; }
+    .alert.error { background:var(--red-bg); color:var(--red); border:1px solid #fca5a5; }
+    .alert.success { background:var(--green-bg); color:var(--green); border:1px solid var(--green-bd); }
+    .divider { display:flex; align-items:center; gap:12px; margin:20px 0; color:var(--gray400); font-size:.85rem; }
+    .divider::before,.divider::after { content:''; flex:1; height:1px; background:var(--gray200); }
+    .terms { font-size:.8rem; color:var(--gray400); text-align:center; margin-top:16px; line-height:1.6; }
+    .terms a { color:var(--indigo); text-decoration:none; }
+    .free-badge { background:linear-gradient(135deg,#f0f4ff,#eef2ff); border:1px solid #c7d2fe; border-radius:10px; padding:12px 16px; margin-bottom:24px; font-size:.88rem; color:var(--indigo); font-weight:600; text-align:center; }
+    .spin { display:inline-block; width:16px; height:16px; border:2.5px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; vertical-align:middle; margin-right:8px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+  </style>
+</head>
+<body>
+<nav>
+  <a href="/" class="logo">Tailor<span>CV</span></a>
+  <a href="/" class="nav-back">← Back to home</a>
+</nav>
+<main>
+  <div class="auth-card">
+    <div class="auth-title">Welcome to TailorCV</div>
+    <p class="auth-sub">AI-powered resumes that get you hired.</p>
+
+    <div class="free-badge">
+      🎁 Free: 1 tailored resume + download — no credit card needed
+    </div>
+
+    <div class="tabs">
+      <div class="tab active" id="tabLogin" onclick="switchTab('login')">Sign in</div>
+      <div class="tab" id="tabRegister" onclick="switchTab('register')">Create account</div>
+    </div>
+
+    <div id="alertBox" class="alert"></div>
+
+    <!-- Login form -->
+    <form id="loginForm" onsubmit="doLogin(event)">
+      <div class="f">
+        <label>Email address</label>
+        <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email" />
+      </div>
+      <div class="f">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="Your password" required autocomplete="current-password" />
+      </div>
+      <button class="btn-primary" type="submit" id="loginBtn">Sign in</button>
+    </form>
+
+    <!-- Register form -->
+    <form id="registerForm" style="display:none" onsubmit="doRegister(event)">
+      <div class="f">
+        <label>Email address</label>
+        <input type="email" id="regEmail" placeholder="you@example.com" required autocomplete="email" />
+      </div>
+      <div class="f">
+        <label>Password <span style="color:var(--gray400);font-weight:400">(min 8 characters)</span></label>
+        <input type="password" id="regPassword" placeholder="Create a password" required autocomplete="new-password" minlength="8" />
+      </div>
+      <div class="f">
+        <label>Confirm password</label>
+        <input type="password" id="regConfirm" placeholder="Repeat password" required autocomplete="new-password" />
+      </div>
+      <button class="btn-primary" type="submit" id="registerBtn">Create free account</button>
+      <p class="terms">By signing up you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</p>
+    </form>
+  </div>
+</main>
+
+<script>
+  // Redirect if already logged in
+  if (localStorage.getItem('tc_token')) {
+    window.location.href = '/app.html';
+  }
+
+  function switchTab(tab) {
+    document.getElementById('tabLogin').classList.toggle('active', tab === 'login');
+    document.getElementById('tabRegister').classList.toggle('active', tab === 'register');
+    document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+    document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+    clearAlert();
+  }
+
+  function showAlert(type, msg) {
+    var el = document.getElementById('alertBox');
+    el.className = 'alert on ' + type;
+    el.textContent = msg;
+  }
+  function clearAlert() {
+    document.getElementById('alertBox').className = 'alert';
+  }
+
+  function setLoading(btnId, loading) {
+    var btn = document.getElementById(btnId);
+    if (loading) { btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Please wait…'; }
+    else { btn.disabled = false; btn.textContent = btnId === 'loginBtn' ? 'Sign in' : 'Create free account'; }
+  }
+
+  async function doLogin(e) {
+    e.preventDefault(); clearAlert(); setLoading('loginBtn', true);
+    try {
+      var res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: document.getElementById('loginEmail').value.trim(),
+          password: document.getElementById('loginPassword').value,
+        }),
+      });
+      var data = await res.json();
+      if (!res.ok) { showAlert('error', data.error || 'Login failed.'); return; }
+      localStorage.setItem('tc_token', data.token);
+      localStorage.setItem('tc_user', JSON.stringify(data.user));
+      window.location.href = '/app.html';
+    } catch(err) {
+      showAlert('error', 'Network error. Please try again.');
+    } finally { setLoading('loginBtn', false); }
+  }
+
+  async function doRegister(e) {
+    e.preventDefault(); clearAlert();
+    var pass = document.getElementById('regPassword').value;
+    var conf = document.getElementById('regConfirm').value;
+    if (pass !== conf) { showAlert('error', 'Passwords do not match.'); return; }
+    setLoading('registerBtn', true);
+    try {
+      var res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: document.getElementById('regEmail').value.trim(),
+          password: pass,
+        }),
+      });
+      var data = await res.json();
+      if (!res.ok) { showAlert('error', data.error || 'Registration failed.'); return; }
+      localStorage.setItem('tc_token', data.token);
+      localStorage.setItem('tc_user', JSON.stringify(data.user));
+      window.location.href = '/app.html';
+    } catch(err) {
+      showAlert('error', 'Network error. Please try again.');
+    } finally { setLoading('registerBtn', false); }
+  }
+
+  // Pre-fill tab from query string ?tab=register
+  if (new URLSearchParams(location.search).get('tab') === 'register') switchTab('register');
+</script>
+</body>
+</html>

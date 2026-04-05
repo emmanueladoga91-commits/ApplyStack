@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TailorCV — My Account</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --navy:#1a2744; --navy2:#243057; --indigo:#4f6ef7; --indigo2:#3a5ce4;
+      --gold:#f59e0b; --green:#166534; --green-bg:#dcfce7; --green-bd:#86efac;
+      --red:#991b1b; --red-bg:#fef2f2; --amber:#92400e; --amber-bg:#fffbeb;
+      --gray50:#f8fafc; --gray100:#f1f5f9; --gray200:#e2e8f0;
+      --gray400:#94a3b8; --gray600:#475569; --gray800:#1e293b;
+    }
+    body { font-family:'Inter',system-ui,sans-serif; background:var(--gray50); color:var(--gray800); min-height:100vh; }
+    nav { background:#fff; border-bottom:1px solid var(--gray200); padding:14px 28px; display:flex; align-items:center; gap:12px; }
+    .logo { font-size:1.3rem; font-weight:900; color:var(--navy); text-decoration:none; }
+    .logo span { color:var(--indigo); }
+    .nav-right { margin-left:auto; display:flex; align-items:center; gap:16px; }
+    .nav-link { font-size:.9rem; color:var(--gray600); text-decoration:none; font-weight:500; }
+    .nav-link:hover { color:var(--navy); }
+    .btn-nav { padding:9px 20px; background:var(--indigo); color:#fff; border-radius:50px; font-size:.88rem; font-weight:700; text-decoration:none; transition:background .2s; }
+    .btn-nav:hover { background:var(--indigo2); }
+    main { max-width:700px; margin:40px auto; padding:0 20px 80px; }
+    h1 { font-size:1.8rem; font-weight:900; color:var(--navy); margin-bottom:6px; }
+    .sub { font-size:1rem; color:var(--gray600); margin-bottom:36px; }
+    .card { background:#fff; border:1px solid var(--gray200); border-radius:16px; padding:28px; margin-bottom:20px; box-shadow:0 2px 12px rgba(0,0,0,.05); }
+    .card-title { font-size:1rem; font-weight:700; color:var(--gray600); text-transform:uppercase; letter-spacing:.06em; margin-bottom:20px; }
+    .plan-row { display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+    .plan-badge { display:inline-flex; align-items:center; gap:8px; font-size:1.1rem; font-weight:800; color:var(--navy); }
+    .badge-pro { background:linear-gradient(135deg,var(--indigo),#7c3aed); color:#fff; padding:4px 14px; border-radius:50px; font-size:.8rem; font-weight:700; }
+    .badge-free { background:var(--gray100); color:var(--gray600); padding:4px 14px; border-radius:50px; font-size:.8rem; font-weight:700; }
+    .badge-past-due { background:var(--amber-bg); color:var(--amber); padding:4px 14px; border-radius:50px; font-size:.8rem; font-weight:700; border:1px solid #fcd34d; }
+    .stat-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin:20px 0; }
+    .stat-box { background:var(--gray50); border:1px solid var(--gray200); border-radius:12px; padding:16px; text-align:center; }
+    .stat-n { font-size:1.8rem; font-weight:900; color:var(--navy); }
+    .stat-l { font-size:.78rem; color:var(--gray600); font-weight:600; margin-top:3px; }
+    .pricing-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:8px; }
+    .price-option { border:2px solid var(--gray200); border-radius:14px; padding:20px; text-align:center; cursor:pointer; transition:all .2s; position:relative; }
+    .price-option:hover { border-color:var(--indigo); }
+    .price-option.selected { border-color:var(--indigo); background:#eef2ff; }
+    .price-option .price { font-size:1.8rem; font-weight:900; color:var(--navy); }
+    .price-option .period { font-size:.85rem; color:var(--gray600); }
+    .price-option .save { position:absolute; top:-10px; left:50%; transform:translateX(-50%); background:var(--green); color:#fff; font-size:.72rem; font-weight:700; padding:3px 12px; border-radius:50px; white-space:nowrap; }
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:13px 24px; border:none; border-radius:10px; font-size:.95rem; font-weight:700; font-family:inherit; cursor:pointer; transition:opacity .15s,background .15s; text-decoration:none; }
+    .btn-primary { background:linear-gradient(135deg,var(--indigo),var(--indigo2)); color:#fff; width:100%; margin-top:16px; }
+    .btn-primary:hover:not(:disabled) { opacity:.9; }
+    .btn-primary:disabled { opacity:.55; cursor:not-allowed; }
+    .btn-outline { background:#fff; color:var(--navy); border:2px solid var(--gray200); }
+    .btn-outline:hover { border-color:var(--indigo); color:var(--indigo); }
+    .btn-danger { background:var(--red-bg); color:var(--red); border:1px solid #fca5a5; }
+    .info-row { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--gray200); font-size:.9rem; }
+    .info-row:last-child { border-bottom:none; padding-bottom:0; }
+    .info-label { color:var(--gray600); font-weight:500; }
+    .info-val { font-weight:700; color:var(--navy); }
+    .alert { padding:12px 16px; border-radius:10px; font-size:.9rem; margin-bottom:20px; display:none; }
+    .alert.on { display:block; }
+    .alert.success { background:var(--green-bg); color:var(--green); border:1px solid var(--green-bd); }
+    .alert.warn { background:var(--amber-bg); color:var(--amber); border:1px solid #fcd34d; }
+    .free-limit-bar { background:var(--gray100); border-radius:99px; height:8px; margin:10px 0 6px; overflow:hidden; }
+    .free-limit-fill { height:8px; border-radius:99px; background:var(--indigo); transition:width .6s; }
+    .spin { display:inline-block; width:14px; height:14px; border:2px solid rgba(255,255,255,.4); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+  </style>
+</head>
+<body>
+<nav>
+  <a href="/" class="logo">Tailor<span>CV</span></a>
+  <div class="nav-right">
+    <a href="/app.html" class="nav-link">← Back to builder</a>
+    <a href="#" class="nav-link" onclick="logout()">Sign out</a>
+  </div>
+</nav>
+
+<main>
+  <h1>My Account</h1>
+  <p class="sub" id="userEmail">Loading…</p>
+
+  <div id="alertBox" class="alert"></div>
+
+  <!-- Plan card -->
+  <div class="card">
+    <div class="card-title">Your Plan</div>
+    <div class="plan-row">
+      <div class="plan-badge">
+        <span id="planName">Free</span>
+        <span id="planBadge" class="badge-free">FREE</span>
+      </div>
+      <div id="manageBtn" style="display:none">
+        <button class="btn btn-outline" onclick="openPortal()">Manage billing →</button>
+      </div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-box">
+        <div class="stat-n" id="statTailors">0</div>
+        <div class="stat-l">Resumes tailored</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-n" id="statPlan">Free</div>
+        <div class="stat-l">Current plan</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-n" id="statStatus">—</div>
+        <div class="stat-l">Status</div>
+      </div>
+    </div>
+
+    <!-- Free tier limit bar -->
+    <div id="freeLimitSection">
+      <div style="font-size:.88rem;color:var(--gray600);margin-bottom:4px;">Free tailoring used: <strong id="freeLimitText">0 / 1</strong></div>
+      <div class="free-limit-bar"><div class="free-limit-fill" id="freeLimitFill" style="width:0%"></div></div>
+      <div style="font-size:.8rem;color:var(--gray400);">Upgrade to Pro for unlimited tailoring and all premium features.</div>
+    </div>
+  </div>
+
+  <!-- Upgrade card (shown only for free users) -->
+  <div class="card" id="upgradeCard">
+    <div class="card-title">Upgrade to Pro</div>
+    <p style="font-size:.9rem;color:var(--gray600);margin-bottom:20px;">Get unlimited resume tailoring, ATS scoring, cover letters, skills gap analysis, interview prep, and more.</p>
+
+    <div class="pricing-grid">
+      <div class="price-option selected" id="optMonthly" onclick="selectPlan('monthly')">
+        <div class="price">$9</div>
+        <div class="period">per month</div>
+      </div>
+      <div class="price-option" id="optAnnual" onclick="selectPlan('annual')">
+        <div class="save">Save 27%</div>
+        <div class="price">$79</div>
+        <div class="period">per year</div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary" id="upgradeBtn" onclick="startCheckout()">
+      Upgrade to Pro →
+    </button>
+    <p style="font-size:.78rem;color:var(--gray400);text-align:center;margin-top:10px;">Secure payment via Stripe · Cancel anytime</p>
+  </div>
+
+  <!-- Account info -->
+  <div class="card">
+    <div class="card-title">Account Details</div>
+    <div class="info-row">
+      <span class="info-label">Email</span>
+      <span class="info-val" id="infoEmail">—</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Member since</span>
+      <span class="info-val" id="infoSince">—</span>
+    </div>
+    <div class="info-row" style="border-bottom:none;padding-top:16px;">
+      <button class="btn btn-danger" onclick="logout()">Sign out</button>
+    </div>
+  </div>
+</main>
+
+<script>
+  var user = null;
+  var selectedPlan = 'monthly';
+
+  function token() { return localStorage.getItem('tc_token'); }
+
+  function logout() {
+    localStorage.removeItem('tc_token');
+    localStorage.removeItem('tc_user');
+    window.location.href = '/auth.html';
+  }
+
+  async function loadUser() {
+    if (!token()) { window.location.href = '/auth.html'; return; }
+    try {
+      var res = await fetch('/api/auth/me', { headers: { Authorization: 'Bearer ' + token() } });
+      if (!res.ok) { logout(); return; }
+      var data = await res.json();
+      user = data.user;
+      localStorage.setItem('tc_user', JSON.stringify(user));
+      renderUser();
+    } catch(e) {
+      showAlert('warn', 'Could not load account info. Please refresh.');
+    }
+  }
+
+  function renderUser() {
+    var isPro = (user.plan === 'pro' && user.subscriptionStatus === 'active');
+    var isPastDue = (user.plan === 'pro' && user.subscriptionStatus === 'past_due');
+
+    document.getElementById('userEmail').textContent = user.email;
+    document.getElementById('infoEmail').textContent = user.email;
+    document.getElementById('infoSince').textContent = user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '—';
+    document.getElementById('statTailors').textContent = user.tailoringCount || 0;
+    document.getElementById('statPlan').textContent = isPro ? 'Pro' : 'Free';
+    document.getElementById('statStatus').textContent = isPro ? 'Active' : isPastDue ? 'Past Due' : 'Free';
+
+    if (isPro) {
+      document.getElementById('planName').textContent = 'Pro Plan';
+      document.getElementById('planBadge').className = 'badge-pro';
+      document.getElementById('planBadge').textContent = 'PRO';
+      document.getElementById('upgradeCard').style.display = 'none';
+      document.getElementById('freeLimitSection').style.display = 'none';
+      document.getElementById('manageBtn').style.display = 'block';
+    } else if (isPastDue) {
+      document.getElementById('planName').textContent = 'Pro Plan';
+      document.getElementById('planBadge').className = 'badge-past-due';
+      document.getElementById('planBadge').textContent = 'PAYMENT DUE';
+      document.getElementById('manageBtn').style.display = 'block';
+    } else {
+      // Free tier
+      var count = Math.min(user.tailoringCount || 0, 1);
+      document.getElementById('freeLimitText').textContent = count + ' / 1';
+      document.getElementById('freeLimitFill').style.width = (count * 100) + '%';
+    }
+
+    // Check for Stripe redirect results
+    var params = new URLSearchParams(location.search);
+    if (params.get('success')) showAlert('success', '🎉 Welcome to TailorCV Pro! Your subscription is now active.');
+    if (params.get('canceled')) showAlert('warn', 'Checkout was canceled. You can upgrade anytime.');
+  }
+
+  function selectPlan(plan) {
+    selectedPlan = plan;
+    document.getElementById('optMonthly').classList.toggle('selected', plan === 'monthly');
+    document.getElementById('optAnnual').classList.toggle('selected', plan === 'annual');
+  }
+
+  async function startCheckout() {
+    var btn = document.getElementById('upgradeBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spin"></span> Redirecting to checkout…';
+    try {
+      var res = await fetch('/api/billing/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token() },
+        body: JSON.stringify({ plan: selectedPlan }),
+      });
+      var data = await res.json();
+      if (!res.ok || !data.url) { showAlert('warn', data.error || 'Could not start checkout.'); btn.disabled=false; btn.textContent='Upgrade to Pro →'; return; }
+      window.location.href = data.url;
+    } catch(e) {
+      showAlert('warn', 'Network error. Please try again.');
+      btn.disabled=false; btn.textContent='Upgrade to Pro →';
+    }
+  }
+
+  async function openPortal() {
+    try {
+      var res = await fetch('/api/billing/portal', { method:'POST', headers:{ Authorization:'Bearer '+token() } });
+      var data = await res.json();
+      if (data.url) window.location.href = data.url;
+      else showAlert('warn', data.error || 'Could not open billing portal.');
+    } catch(e) { showAlert('warn', 'Network error.'); }
+  }
+
+  function showAlert(type, msg) {
+    var el = document.getElementById('alertBox');
+    el.className = 'alert on ' + type;
+    el.textContent = msg;
+    el.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  }
+
+  loadUser();
+</script>
+</body>
+</html>

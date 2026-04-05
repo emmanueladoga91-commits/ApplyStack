@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TailorCV — AI-Powered Resumes That Get You Hired</title>
+  <meta name="description" content="TailorCV tailors your resume to every job posting using AI. 13 professional templates, 18 career niches, ATS scoring, cover letters and more. Free to start." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:    #1a2744;
+      --navy2:   #243057;
+      --indigo:  #4f6ef7;
+      --indigo2: #3a5ce4;
+      --cyan:    #38bdf8;
+      --gold:    #f59e0b;
+      --green:   #22c55e;
+      --rose:    #f43f5e;
+      --gray50:  #f8fafc;
+      --gray100: #f1f5f9;
+      --gray200: #e2e8f0;
+      --gray400: #94a3b8;
+      --gray600: #475569;
+      --gray800: #1e293b;
+      --white:   #ffffff;
+      --radius:  14px;
+      --shadow:  0 4px 24px rgba(79,110,247,.13);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--white);
+      color: var(--gray800);
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ─── NAV ─────────────────────────────────────────── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(255,255,255,.92);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--gray200);
+    }
+    .nav-inner {
+      max-width: 1100px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 24px;
+    }
+    .logo {
+      font-size: 1.4rem; font-weight: 900;
+      color: var(--navy);
+      text-decoration: none;
+      letter-spacing: -.5px;
+    }
+    .logo span { color: var(--indigo); }
+    .nav-links {
+      display: flex; align-items: center; gap: 32px;
+      list-style: none;
+    }
+    .nav-links a {
+      text-decoration: none; color: var(--gray600);
+      font-size: .95rem; font-weight: 500;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--indigo); }
+    .nav-cta {
+      background: var(--indigo);
+      color: var(--white) !important;
+      padding: 10px 22px;
+      border-radius: 50px;
+      font-weight: 700 !important;
+      transition: background .2s, transform .15s !important;
+    }
+    .nav-cta:hover { background: var(--indigo2) !important; transform: translateY(-1px); }
+
+    /* ─── HERO ────────────────────────────────────────── */
+    .hero {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy2) 60%, #2d3f7a 100%);
+      color: var(--white);
+      padding: 100px 24px 120px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content:'';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(79,110,247,.35) 0%, transparent 70%);
+    }
+    .hero-inner { position: relative; max-width: 860px; margin: 0 auto; }
+    .hero-badge {
+      display: inline-block;
+      background: rgba(79,110,247,.25);
+      border: 1px solid rgba(79,110,247,.5);
+      color: var(--cyan);
+      font-size: .8rem; font-weight: 700;
+      letter-spacing: .08em; text-transform: uppercase;
+      padding: 6px 16px; border-radius: 50px;
+      margin-bottom: 28px;
+    }
+    .hero h1 {
+      font-size: clamp(2.4rem, 5.5vw, 4rem);
+      font-weight: 900;
+      line-height: 1.15;
+      letter-spacing: -.03em;
+      margin-bottom: 24px;
+    }
+    .hero h1 .highlight {
+      background: linear-gradient(90deg, var(--indigo) 0%, var(--cyan) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero-sub {
+      font-size: 1.2rem; color: rgba(255,255,255,.75);
+      max-width: 620px; margin: 0 auto 44px;
+      line-height: 1.7;
+    }
+    .hero-btns {
+      display: flex; align-items: center; justify-content: center;
+      gap: 16px; flex-wrap: wrap;
+    }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--indigo);
+      color: var(--white);
+      padding: 16px 32px;
+      border-radius: 50px;
+      font-size: 1.05rem; font-weight: 700;
+      text-decoration: none;
+      box-shadow: 0 8px 32px rgba(79,110,247,.45);
+      transition: transform .2s, box-shadow .2s, background .2s;
+    }
+    .btn-primary:hover { background: var(--indigo2); transform: translateY(-2px); box-shadow: 0 12px 40px rgba(79,110,247,.55); }
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,.12);
+      border: 1px solid rgba(255,255,255,.3);
+      color: var(--white);
+      padding: 15px 30px;
+      border-radius: 50px;
+      font-size: 1.05rem; font-weight: 600;
+      text-decoration: none;
+      backdrop-filter: blur(8px);
+      transition: background .2s, transform .2s;
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,.22); transform: translateY(-2px); }
+    .hero-trust {
+      margin-top: 56px;
+      display: flex; align-items: center; justify-content: center;
+      gap: 28px; flex-wrap: wrap;
+    }
+    .trust-item {
+      display: flex; align-items: center; gap: 8px;
+      font-size: .88rem; color: rgba(255,255,255,.65);
+    }
+    .trust-item .ico { font-size: 1rem; }
+
+    /* ─── MOCKUP STRIP ────────────────────────────────── */
+    .mockup-strip {
+      background: var(--gray50);
+      padding: 80px 24px;
+      text-align: center;
+    }
+    .mockup-strip h2 {
+      font-size: 1.1rem; font-weight: 700; color: var(--indigo);
+      text-transform: uppercase; letter-spacing: .08em;
+      margin-bottom: 48px;
+    }
+    .template-mosaic {
+      display: flex; justify-content: center;
+      gap: 16px; flex-wrap: wrap;
+      max-width: 1000px; margin: 0 auto;
+    }
+    .t-card {
+      background: var(--white);
+      border: 1px solid var(--gray200);
+      border-radius: 10px;
+      width: 130px; height: 170px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 10px;
+      font-size: .78rem; font-weight: 600;
+      color: var(--gray600);
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
+      transition: transform .2s, box-shadow .2s;
+      cursor: default;
+    }
+    .t-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(79,110,247,.15); }
+    .t-card .t-ico { font-size: 2rem; }
+    .t-card.featured { border-color: var(--indigo); background: linear-gradient(135deg,#eef2ff,#f0f7ff); }
+
+    /* ─── HOW IT WORKS ────────────────────────────────── */
+    .section {
+      max-width: 1100px; margin: 0 auto;
+      padding: 96px 24px;
+    }
+    .section-label {
+      font-size: .8rem; font-weight: 700;
+      color: var(--indigo); text-transform: uppercase; letter-spacing: .1em;
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: clamp(1.9rem, 3.5vw, 2.75rem);
+      font-weight: 900;
+      color: var(--navy);
+      line-height: 1.2;
+      letter-spacing: -.025em;
+      margin-bottom: 16px;
+    }
+    .section-sub {
+      font-size: 1.1rem; color: var(--gray600);
+      max-width: 560px;
+      margin-bottom: 64px;
+    }
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 28px;
+    }
+    .step-card {
+      background: var(--gray50);
+      border: 1px solid var(--gray200);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      position: relative;
+      transition: border-color .2s, box-shadow .2s;
+    }
+    .step-card:hover {
+      border-color: var(--indigo);
+      box-shadow: var(--shadow);
+    }
+    .step-num {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--indigo), var(--cyan));
+      color: var(--white);
+      font-weight: 800; font-size: .95rem;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 18px;
+    }
+    .step-card h3 {
+      font-size: 1rem; font-weight: 700;
+      color: var(--navy); margin-bottom: 10px;
+    }
+    .step-card p {
+      font-size: .9rem; color: var(--gray600); line-height: 1.6;
+    }
+
+    /* ─── FEATURES ────────────────────────────────────── */
+    .features-bg { background: var(--navy); }
+    .features-section {
+      max-width: 1100px; margin: 0 auto;
+      padding: 96px 24px;
+      color: var(--white);
+    }
+    .features-section .section-label { color: var(--cyan); }
+    .features-section .section-title { color: var(--white); }
+    .features-section .section-sub { color: rgba(255,255,255,.65); }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+    }
+    .feat-card {
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      transition: background .2s, border-color .2s;
+    }
+    .feat-card:hover {
+      background: rgba(79,110,247,.12);
+      border-color: rgba(79,110,247,.5);
+    }
+    .feat-ico {
+      font-size: 2rem; margin-bottom: 16px;
+      display: block;
+    }
+    .feat-card h3 {
+      font-size: 1.05rem; font-weight: 700;
+      color: var(--white); margin-bottom: 10px;
+    }
+    .feat-card p {
+      font-size: .9rem; color: rgba(255,255,255,.6); line-height: 1.65;
+    }
+    .feat-tag {
+      display: inline-block;
+      background: rgba(79,110,247,.2);
+      border: 1px solid rgba(79,110,247,.4);
+      color: var(--cyan);
+      font-size: .72rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .06em;
+      padding: 3px 10px; border-radius: 50px;
+      margin-top: 14px;
+    }
+
+    /* ─── NICHES ──────────────────────────────────────── */
+    .niches-wrap { background: var(--gray50); padding: 80px 24px; }
+    .niches-inner { max-width: 1100px; margin: 0 auto; }
+    .niches-grid {
+      display: flex; flex-wrap: wrap; gap: 10px;
+      margin-top: 40px;
+    }
+    .niche-chip {
+      background: var(--white);
+      border: 1px solid var(--gray200);
+      border-radius: 50px;
+      padding: 9px 18px;
+      font-size: .88rem; font-weight: 600;
+      color: var(--gray800);
+      transition: border-color .2s, background .2s;
+      cursor: default;
+    }
+    .niche-chip:hover {
+      border-color: var(--indigo);
+      background: #eef2ff;
+      color: var(--indigo);
+    }
+
+    /* ─── TESTIMONIALS ────────────────────────────────── */
+    .testi-section { padding: 96px 24px; }
+    .testi-inner { max-width: 1100px; margin: 0 auto; }
+    .testi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 24px; margin-top: 56px;
+    }
+    .testi-card {
+      background: var(--gray50);
+      border: 1px solid var(--gray200);
+      border-radius: var(--radius);
+      padding: 28px;
+    }
+    .testi-stars { color: var(--gold); font-size: 1rem; margin-bottom: 14px; }
+    .testi-text {
+      font-size: .95rem; color: var(--gray800);
+      line-height: 1.7; margin-bottom: 20px;
+    }
+    .testi-author { display: flex; align-items: center; gap: 12px; }
+    .testi-avatar {
+      width: 42px; height: 42px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--indigo), var(--cyan));
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 1rem; color: var(--white);
+    }
+    .testi-name { font-weight: 700; font-size: .9rem; color: var(--navy); }
+    .testi-role { font-size: .8rem; color: var(--gray400); }
+
+    /* ─── PRICING ─────────────────────────────────────── */
+    .pricing-bg { background: linear-gradient(135deg, #f0f4ff 0%, #f8fafc 100%); }
+    .pricing-section { max-width: 960px; margin: 0 auto; padding: 96px 24px; text-align: center; }
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px; margin-top: 56px; text-align: left;
+    }
+    .price-card {
+      background: var(--white);
+      border: 2px solid var(--gray200);
+      border-radius: 18px;
+      padding: 36px 32px;
+      position: relative;
+      transition: box-shadow .2s, border-color .2s;
+    }
+    .price-card:hover { box-shadow: 0 8px 40px rgba(79,110,247,.15); }
+    .price-card.popular {
+      border-color: var(--indigo);
+      box-shadow: 0 8px 40px rgba(79,110,247,.2);
+    }
+    .popular-badge {
+      position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+      background: var(--indigo);
+      color: var(--white);
+      font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em;
+      padding: 5px 18px; border-radius: 50px;
+      white-space: nowrap;
+    }
+    .price-name {
+      font-size: 1.05rem; font-weight: 700; color: var(--gray600);
+      margin-bottom: 8px;
+    }
+    .price-amount {
+      font-size: 3rem; font-weight: 900; color: var(--navy);
+      line-height: 1; margin-bottom: 6px;
+    }
+    .price-amount sup { font-size: 1.4rem; vertical-align: top; margin-top: 8px; }
+    .price-period {
+      font-size: .88rem; color: var(--gray400); margin-bottom: 28px;
+    }
+    .price-divider { border: none; border-top: 1px solid var(--gray200); margin: 24px 0; }
+    .price-features { list-style: none; }
+    .price-features li {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: .9rem; color: var(--gray600);
+      padding: 7px 0;
+    }
+    .price-features li .chk { color: var(--green); font-weight: 700; flex-shrink: 0; }
+    .price-features li .x   { color: var(--gray400); flex-shrink: 0; }
+    .price-btn {
+      display: block; text-align: center;
+      margin-top: 32px;
+      padding: 14px;
+      border-radius: 50px;
+      font-size: 1rem; font-weight: 700;
+      text-decoration: none;
+      transition: transform .15s, box-shadow .15s;
+    }
+    .price-btn-outline {
+      border: 2px solid var(--gray200);
+      color: var(--navy);
+    }
+    .price-btn-outline:hover { border-color: var(--indigo); color: var(--indigo); }
+    .price-btn-filled {
+      background: var(--indigo);
+      color: var(--white);
+      box-shadow: 0 6px 24px rgba(79,110,247,.4);
+    }
+    .price-btn-filled:hover { background: var(--indigo2); transform: translateY(-2px); box-shadow: 0 10px 32px rgba(79,110,247,.5); }
+    .price-note {
+      margin-top: 48px;
+      font-size: .88rem; color: var(--gray400);
+    }
+
+    /* ─── FAQ ─────────────────────────────────────────── */
+    .faq-section { max-width: 740px; margin: 0 auto; padding: 96px 24px; }
+    .faq-item {
+      border-bottom: 1px solid var(--gray200);
+    }
+    .faq-q {
+      width: 100%; background: none; border: none;
+      text-align: left; cursor: pointer;
+      font-size: 1rem; font-weight: 700; color: var(--navy);
+      padding: 22px 0;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 12px;
+    }
+    .faq-q .arr { color: var(--indigo); font-size: 1.2rem; transition: transform .25s; }
+    .faq-q.open .arr { transform: rotate(180deg); }
+    .faq-a {
+      font-size: .95rem; color: var(--gray600);
+      line-height: 1.75;
+      max-height: 0; overflow: hidden;
+      transition: max-height .35s ease, padding .35s ease;
+      padding: 0;
+    }
+    .faq-a.open { max-height: 400px; padding-bottom: 22px; }
+
+    /* ─── CTA BANNER ──────────────────────────────────── */
+    .cta-banner {
+      background: linear-gradient(135deg, var(--indigo) 0%, #3a5ce4 100%);
+      padding: 80px 24px;
+      text-align: center;
+    }
+    .cta-banner h2 {
+      font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+      font-weight: 900; color: var(--white);
+      letter-spacing: -.025em; margin-bottom: 16px;
+    }
+    .cta-banner p {
+      font-size: 1.1rem; color: rgba(255,255,255,.8);
+      max-width: 500px; margin: 0 auto 40px;
+    }
+
+    /* ─── FOOTER ──────────────────────────────────────── */
+    footer {
+      background: var(--navy);
+      padding: 48px 24px 32px;
+      color: rgba(255,255,255,.45);
+    }
+    .footer-inner {
+      max-width: 1100px; margin: 0 auto;
+      display: flex; flex-wrap: wrap; gap: 24px;
+      justify-content: space-between; align-items: center;
+    }
+    .footer-logo {
+      font-size: 1.3rem; font-weight: 900;
+      color: var(--white); text-decoration: none;
+    }
+    .footer-logo span { color: var(--indigo); }
+    .footer-links {
+      display: flex; gap: 24px; flex-wrap: wrap;
+      list-style: none;
+    }
+    .footer-links a {
+      color: rgba(255,255,255,.45);
+      text-decoration: none; font-size: .88rem;
+      transition: color .2s;
+    }
+    .footer-links a:hover { color: var(--white); }
+    .footer-copy { font-size: .8rem; margin-top: 28px; text-align: center; }
+
+    /* ─── RESPONSIVE ──────────────────────────────────── */
+    @media (max-width: 680px) {
+      .nav-links { display: none; }
+      .hero { padding: 72px 20px 88px; }
+      .hero h1 { font-size: 2.2rem; }
+      .hero-btns { flex-direction: column; align-items: stretch; }
+      .btn-primary, .btn-secondary { justify-content: center; }
+    }
+
+    /* ─── ATS RING DEMO ───────────────────────────────── */
+    .ats-demo {
+      display: flex; align-items: center; justify-content: center; gap: 32px;
+      flex-wrap: wrap; margin-top: 48px;
+    }
+    .ats-ring-wrap {
+      text-align: center;
+    }
+    .ats-ring-wrap svg { display: block; margin: 0 auto 8px; }
+    .ats-ring-label { font-size: .8rem; font-weight: 600; color: rgba(255,255,255,.5); }
+    .ring-score { font-size: 1.1rem; font-weight: 900; fill: white; }
+
+    /* Scroll-reveal fade */
+    .reveal {
+      opacity: 0; transform: translateY(30px);
+      transition: opacity .6s ease, transform .6s ease;
+    }
+    .reveal.visible { opacity: 1; transform: none; }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════ NAV ════════════════ -->
+<nav>
+  <div class="nav-inner">
+    <a href="#" class="logo">Tailor<span>CV</span></a>
+    <ul class="nav-links">
+      <li><a href="#how-it-works">How it works</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#faq">FAQ</a></li>
+      <li><a href="/auth.html?tab=register" class="nav-cta">Start Free →</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ════════════════ HERO ════════════════ -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-badge">✦ AI-Powered Web App — Free to Start</div>
+    <h1>
+      Your resume,<br/>
+      <span class="highlight">tailored to every job</span><br/>
+      you apply for.
+    </h1>
+    <p class="hero-sub">
+      Paste any job posting, upload your resume — TailorCV rewrites it in seconds using AI,
+      scores it against ATS, generates a cover letter, and tracks every application.
+      All inside Chrome. No subscriptions. No fluff.
+    </p>
+    <div class="hero-btns">
+      <a href="/auth.html?tab=register" class="btn-primary">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+        Start for Free — No Card Needed
+      </a>
+      <a href="#how-it-works" class="btn-secondary">
+        See how it works →
+      </a>
+    </div>
+    <div class="hero-trust">
+      <div class="trust-item"><span class="ico">🎁</span> 1 free resume — no card needed</div>
+      <div class="trust-item"><span class="ico">⚡</span> Results in under 30 seconds</div>
+      <div class="trust-item"><span class="ico">🎯</span> 13 professional templates</div>
+      <div class="trust-item"><span class="ico">🏆</span> 18 career niches</div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ TEMPLATE MOSAIC ════════════════ -->
+<div class="mockup-strip">
+  <h2>13 professionally designed templates</h2>
+  <div class="template-mosaic">
+    <div class="t-card featured"><span class="t-ico">💼</span>Classic</div>
+    <div class="t-card"><span class="t-ico">🚀</span>Tech</div>
+    <div class="t-card"><span class="t-ico">✨</span>Modern</div>
+    <div class="t-card"><span class="t-ico">🏥</span>Healthcare</div>
+    <div class="t-card"><span class="t-ico">📊</span>Consulting</div>
+    <div class="t-card featured"><span class="t-ico">⚖️</span>Legal</div>
+    <div class="t-card"><span class="t-ico">🎓</span>Academic</div>
+    <div class="t-card"><span class="t-ico">📐</span>Minimal</div>
+    <div class="t-card"><span class="t-ico">🏛️</span>Government</div>
+    <div class="t-card"><span class="t-ico">🎨</span>Creative</div>
+    <div class="t-card"><span class="t-ico">📦</span>Compact</div>
+    <div class="t-card"><span class="t-ico">🌐</span>Professional</div>
+    <div class="t-card featured"><span class="t-ico">💡</span>Executive</div>
+  </div>
+</div>
+
+<!-- ════════════════ HOW IT WORKS ════════════════ -->
+<section id="how-it-works">
+  <div class="section">
+    <div class="reveal">
+      <div class="section-label">How it works</div>
+      <h2 class="section-title">From job posting to perfect resume<br/>in five simple steps</h2>
+      <p class="section-sub">No lengthy sign-up. No confusing dashboards. Just open the extension and go.</p>
+    </div>
+    <div class="steps-grid reveal">
+      <div class="step-card">
+        <div class="step-num">1</div>
+        <h3>Pick your career profile</h3>
+        <p>Choose from 18 professional niches — from Software Engineer to Nurse Manager to Marketing Director. TailorCV adapts its AI for your field.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">2</div>
+        <h3>Upload your existing resume</h3>
+        <p>Drop in your current .docx or PDF resume. TailorCV reads it and uses it as the foundation for your tailored version.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">3</div>
+        <h3>Paste the job description</h3>
+        <p>Copy the full job posting and paste it in. The AI analyzes what the employer is looking for and aligns your resume with it.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">4</div>
+        <h3>Choose your template</h3>
+        <p>Pick from 13 templates — TailorCV even recommends the top 3 best-fit templates for your specific career profile.</p>
+      </div>
+      <div class="step-card">
+        <div class="step-num">5</div>
+        <h3>Download & apply</h3>
+        <p>Export your polished .docx resume, ATS score report, cover letter, and skills gap analysis — then hit that Apply button.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ FEATURES ════════════════ -->
+<div class="features-bg" id="features">
+  <div class="features-section">
+    <div class="reveal">
+      <div class="section-label">Features</div>
+      <h2 class="section-title">Everything you need to land<br/>your next role</h2>
+      <p class="section-sub">TailorCV isn't just a resume builder — it's your complete job application assistant.</p>
+    </div>
+
+    <!-- ATS Ring Demo -->
+    <div class="ats-demo reveal" style="margin-bottom:64px;">
+      <div class="ats-ring-wrap">
+        <svg width="90" height="90" viewBox="0 0 90 90">
+          <circle cx="45" cy="45" r="38" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="8"/>
+          <circle cx="45" cy="45" r="38" fill="none" stroke="#22c55e" stroke-width="8"
+            stroke-dasharray="239" stroke-dashoffset="33" stroke-linecap="round"
+            transform="rotate(-90 45 45)"/>
+          <text x="45" y="50" text-anchor="middle" class="ring-score">87%</text>
+        </svg>
+        <div class="ats-ring-label">ATS Score</div>
+      </div>
+      <div style="color:rgba(255,255,255,.7);max-width:340px;font-size:.95rem;line-height:1.75;">
+        <strong style="color:white;">Know before you apply.</strong> Every tailored resume gets an ATS compatibility score so you know exactly how likely your application is to pass automated screening filters.
+      </div>
+    </div>
+
+    <div class="features-grid reveal">
+      <div class="feat-card">
+        <span class="feat-ico">🎯</span>
+        <h3>AI Resume Tailoring</h3>
+        <p>Claude AI rewrites your resume to match the exact language, keywords, and priorities of each job posting — without making things up.</p>
+        <span class="feat-tag">Core Feature</span>
+      </div>
+      <div class="feat-card">
+        <span class="feat-ico">📊</span>
+        <h3>ATS Score + Analysis</h3>
+        <p>Get a compatibility percentage, a breakdown of matched and missing keywords, and actionable tips to improve your score before applying.</p>
+        <span class="feat-tag">Core Feature</span>
+      </div>
+      <div class="feat-card">
+        <span class="feat-ico">✉️</span>
+        <h3>Cover Letter Generator</h3>
+        <p>Auto-generated, role-specific cover letters that match the tone of the job posting and highlight your most relevant experience.</p>
+        <span class="feat-tag">Core Feature</span>
+      </div>
+      <div class="feat-card">
+        <span class="feat-ico">🔍</span>
+        <h3>Skills Gap Analysis</h3>
+        <p>See exactly which skills the employer wants that you haven't yet highlighted — with suggestions for how to bridge the gap.</p>
+      </div>
+      <div class="feat-card">
+        <span class="feat-ico">🎤</span>
+        <h3>Interview Prep Questions</h3>
+        <p>Get 10 tailored behavioural and technical interview questions based on the specific job description you applied for.</p>
+      </div>
+      <div class="feat-card">
+        <span class="feat-ico">📋</span>
+        <h3>Job Application Tracker</h3>
+        <p>Track every application in a sidebar — company, role, template used, ATS score, and current status. Never lose track of where you applied.</p>
+      </div>
+      <div class="feat-card">
+        <span class="feat-ico">👁️</span>
+        <h3>Live Template Previews</h3>
+        <p>Preview all 13 templates with real resume content — formatted for your specific career profile — before committing to one.</p>
+      </div>
+      <div class="feat-card">
+        <span class="feat-ico">💾</span>
+        <h3>Save & Continue Later</h3>
+        <p>Your progress is automatically saved so you can close the extension, come back later, and pick up right where you left off.</p>
+      </div>
+      <div class="feat-card">
+        <span class="feat-ico">🔑</span>
+        <h3>Bring Your Own API Key</h3>
+        <p>Use your own Claude API key for free unlimited use. Your key, your data, your control — nothing stored on our servers.</p>
+        <span class="feat-tag">Privacy First</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ NICHES ════════════════ -->
+<div class="niches-wrap">
+  <div class="niches-inner reveal">
+    <div class="section-label">Career niches</div>
+    <h2 class="section-title" style="margin-bottom:8px;">Built for your industry,<br/>not just any industry</h2>
+    <p style="color:var(--gray600);font-size:1rem;">TailorCV has dedicated AI prompts, template recommendations, and formatting rules for every major profession.</p>
+    <div class="niches-grid">
+      <span class="niche-chip">💻 Software Engineering</span>
+      <span class="niche-chip">📊 Data Science & AI</span>
+      <span class="niche-chip">🏥 Nursing & Healthcare</span>
+      <span class="niche-chip">⚖️ Legal & Compliance</span>
+      <span class="niche-chip">📈 Marketing & Growth</span>
+      <span class="niche-chip">💼 Business Management</span>
+      <span class="niche-chip">🎓 Education & Academia</span>
+      <span class="niche-chip">🏛️ Government & Civil Service</span>
+      <span class="niche-chip">🔧 Engineering</span>
+      <span class="niche-chip">🎨 Creative & Design</span>
+      <span class="niche-chip">💰 Finance & Accounting</span>
+      <span class="niche-chip">🧠 Product Management</span>
+      <span class="niche-chip">🤝 Human Resources</span>
+      <span class="niche-chip">🚀 Startups & Founders</span>
+      <span class="niche-chip">🌐 Sales & Business Dev</span>
+      <span class="niche-chip">🔬 Research & Science</span>
+      <span class="niche-chip">🏗️ Construction & Trades</span>
+      <span class="niche-chip">✈️ Operations & Logistics</span>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════ TESTIMONIALS ════════════════ -->
+<section class="testi-section">
+  <div class="testi-inner">
+    <div class="reveal">
+      <div class="section-label">Early users</div>
+      <h2 class="section-title">Resumes that actually get responses</h2>
+    </div>
+    <div class="testi-grid reveal">
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">"I applied to 40 jobs with my generic resume and heard nothing. With TailorCV I applied to 8 and got 3 interviews in the first week. The ATS scoring alone is worth it."</p>
+        <div class="testi-author">
+          <div class="testi-avatar">JK</div>
+          <div>
+            <div class="testi-name">Jordan K.</div>
+            <div class="testi-role">Software Engineer, Chicago</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">"As a nurse switching to a management role, I had no idea how to reframe my experience. TailorCV adapted my resume perfectly and even generated interview questions specific to the role."</p>
+        <div class="testi-author">
+          <div class="testi-avatar">AM</div>
+          <div>
+            <div class="testi-name">Angela M.</div>
+            <div class="testi-role">Nurse Manager, Houston</div>
+          </div>
+        </div>
+      </div>
+      <div class="testi-card">
+        <div class="testi-stars">★★★★★</div>
+        <p class="testi-text">"The cover letter generator is frighteningly good. It reads the job posting and writes something that sounds like I spent an hour on it. Hired after two weeks of using this."</p>
+        <div class="testi-author">
+          <div class="testi-avatar">RP</div>
+          <div>
+            <div class="testi-name">Rohan P.</div>
+            <div class="testi-role">Product Manager, London</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ PRICING ════════════════ -->
+<div class="pricing-bg" id="pricing">
+  <div class="pricing-section">
+    <div class="reveal">
+      <div class="section-label">Pricing</div>
+      <h2 class="section-title">Simple, honest pricing</h2>
+      <p style="color:var(--gray600);font-size:1.1rem;max-width:480px;margin:0 auto 16px;">Start free with your own API key. Upgrade once for Pro features — no monthly fees, ever.</p>
+    </div>
+    <div class="pricing-grid reveal">
+      <!-- Free -->
+      <div class="price-card">
+        <div class="price-name">Free</div>
+        <div class="price-amount"><sup>$</sup>0</div>
+        <div class="price-period">1 free resume to try it out</div>
+        <hr class="price-divider" />
+        <ul class="price-features">
+          <li><span class="chk">✓</span> 1 AI resume tailoring</li>
+          <li><span class="chk">✓</span> 1 .docx download</li>
+          <li><span class="chk">✓</span> All 13 professional templates</li>
+          <li><span class="chk">✓</span> All 18 career niches</li>
+          <li><span class="x">—</span> <span style="color:var(--gray400)">ATS score &amp; analysis</span></li>
+          <li><span class="x">—</span> <span style="color:var(--gray400)">Cover letter generator</span></li>
+          <li><span class="x">—</span> <span style="color:var(--gray400)">Skills gap analysis</span></li>
+          <li><span class="x">—</span> <span style="color:var(--gray400)">Interview prep questions</span></li>
+          <li><span class="x">—</span> <span style="color:var(--gray400)">Unlimited tailoring</span></li>
+        </ul>
+        <a href="/auth.html?tab=register" class="price-btn price-btn-outline">Start for Free →</a>
+      </div>
+      <!-- Pro Monthly -->
+      <div class="price-card popular">
+        <div class="popular-badge">⭐ Most Popular</div>
+        <div class="price-name">Pro</div>
+        <div class="price-amount"><sup>$</sup>9</div>
+        <div class="price-period">per month &nbsp;·&nbsp; or <strong>$79/year</strong> (save 27%)</div>
+        <hr class="price-divider" />
+        <ul class="price-features">
+          <li><span class="chk">✓</span> <strong>Unlimited</strong> resume tailoring</li>
+          <li><span class="chk">✓</span> Unlimited .docx downloads</li>
+          <li><span class="chk">✓</span> All 13 professional templates</li>
+          <li><span class="chk">✓</span> ATS score &amp; keyword analysis</li>
+          <li><span class="chk">✓</span> Cover letter generator</li>
+          <li><span class="chk">✓</span> Skills gap analysis</li>
+          <li><span class="chk">✓</span> Interview prep questions</li>
+          <li><span class="chk">✓</span> Job application tracker</li>
+          <li><span class="chk">✓</span> Priority AI processing</li>
+        </ul>
+        <a href="/auth.html?tab=register" class="price-btn price-btn-filled">Start Free, then Upgrade →</a>
+      </div>
+    </div>
+    <p class="price-note reveal">💳 Secure payment via Stripe &nbsp;·&nbsp; Cancel anytime &nbsp;·&nbsp; 30-day money-back guarantee</p>
+  </div>
+</div>
+
+<!-- ════════════════ FAQ ════════════════ -->
+<section id="faq">
+  <div class="faq-section">
+    <div class="reveal">
+      <div class="section-label">FAQ</div>
+      <h2 class="section-title" style="margin-bottom:40px;">Common questions</h2>
+    </div>
+    <div class="faq-item reveal">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        How does the free plan work?
+        <span class="arr">▾</span>
+      </button>
+      <div class="faq-a">
+        Sign up for free with just your email — no credit card required. You get one complete resume tailoring and download to experience the full power of TailorCV. After that, upgrade to Pro for $9/month (or $79/year) for unlimited builds and all premium features.
+      </div>
+    </div>
+    <div class="faq-item reveal">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        Is my resume data stored on your servers?
+        <span class="arr">▾</span>
+      </button>
+      <div class="faq-a">
+        No. Everything runs locally in your browser. Your resume, job descriptions, and API key are stored only in your Chrome browser's local storage. We do not collect, store, or transmit your personal data to our servers.
+      </div>
+    </div>
+    <div class="faq-item reveal">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        Does TailorCV make things up or hallucinate?
+        <span class="arr">▾</span>
+      </button>
+      <div class="faq-a">
+        TailorCV is explicitly instructed to only use information from your existing resume — it reformats, reorders, and re-phrases your real experience to match the job description. It will not invent qualifications, companies, or roles. The AI is prompted with strict rules to only work with what you provide.
+      </div>
+    </div>
+    <div class="faq-item reveal">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        Which file formats does TailorCV support?
+        <span class="arr">▾</span>
+      </button>
+      <div class="faq-a">
+        You can upload your existing resume as a .docx (Word) or .pdf file. TailorCV outputs a professionally formatted .docx file that you can open in Microsoft Word, Google Docs, or any compatible editor. PDF export is coming soon for Pro users.
+      </div>
+    </div>
+    <div class="faq-item reveal">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        What does Pro include and can I cancel?
+        <span class="arr">▾</span>
+      </button>
+      <div class="faq-a">
+        Pro gives you unlimited resume tailoring, ATS scoring, cover letter generation, skills gap analysis, interview prep questions, and priority AI processing — all at $9/month or $79/year. You can cancel anytime from your account page and you won't be charged again. We also offer a 30-day money-back guarantee.
+      </div>
+    </div>
+    <div class="faq-item reveal">
+      <button class="faq-q" onclick="toggleFaq(this)">
+        Does it work for any job or industry?
+        <span class="arr">▾</span>
+      </button>
+      <div class="faq-a">
+        Yes. TailorCV supports 18 professional career niches with dedicated AI rules, formatting styles, and template recommendations for each. From software engineers to nurses to lawyers to marketing managers — TailorCV adapts to your field automatically.
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════ CTA BANNER ════════════════ -->
+<section class="cta-banner" id="install">
+  <div class="reveal">
+    <h2>Start tailoring your resume today.<br/>It takes 30 seconds.</h2>
+    <p>Free to start. No credit card required. Just sign up, paste, and download.</p>
+    <a href="/auth.html?tab=register" class="btn-primary" style="display:inline-flex;font-size:1.1rem;padding:18px 40px;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+      Create Your Free Account →
+    </a>
+    <p style="margin-top:20px;font-size:.85rem;color:rgba(255,255,255,.55);">Works in any browser &nbsp;·&nbsp; No Chrome extension needed &nbsp;·&nbsp; Results in 30 seconds</p>
+  </div>
+</section>
+
+<!-- ════════════════ FOOTER ════════════════ -->
+<footer>
+  <div class="footer-inner">
+    <a href="#" class="footer-logo">Tailor<span>CV</span></a>
+    <ul class="footer-links">
+      <li><a href="#how-it-works">How it works</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+      <li><a href="#faq">FAQ</a></li>
+      <li><a href="mailto:hello@tailorcv.com">Contact</a></li>
+      <li><a href="#">Privacy Policy</a></li>
+    </ul>
+  </div>
+  <p class="footer-copy">© 2026 TailorCV. Made with ❤️ for job seekers everywhere.</p>
+</footer>
+
+<script>
+  // FAQ accordion
+  function toggleFaq(btn) {
+    var answer = btn.nextElementSibling;
+    var isOpen = btn.classList.contains('open');
+    // close all
+    document.querySelectorAll('.faq-q.open').forEach(function(b){
+      b.classList.remove('open');
+      b.nextElementSibling.classList.remove('open');
+    });
+    if (!isOpen) {
+      btn.classList.add('open');
+      answer.classList.add('open');
+    }
+  }
+
+  // Scroll reveal
+  var revealEls = document.querySelectorAll('.reveal');
+  var observer = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){ e.target.classList.add('visible'); }
+    });
+  }, { threshold: 0.12 });
+  revealEls.forEach(function(el){ observer.observe(el); });
+
+  // ATS ring animation on load
+  window.addEventListener('load', function(){
+    var ring = document.querySelector('.ats-demo circle[stroke="#22c55e"]');
+    if(ring){
+      ring.style.transition = 'stroke-dashoffset 1.2s ease';
+    }
+  });
+</script>
+</body>
+</html>
