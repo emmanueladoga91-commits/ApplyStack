@@ -594,29 +594,42 @@ function resetFile() {
 }
 
 // ── PDF extraction (PDF.js) ────────────────────────────────────────────────
+// Cache extracted text so PDF.js only processes the file once per upload.
+// PDF.js transfers the ArrayBuffer to its worker (detaching it), so caching
+// prevents "detached ArrayBuffer" errors on repeated calls (Match Score + Build).
+var _pdfTextCache = null;      // cached text string
+var _pdfCacheKey  = null;      // fileName at extraction time
+
 async function extractPdfText(buffer) {
+  // Return cached text if the same file is still loaded
+  if (_pdfTextCache && _pdfCacheKey === fileName) return _pdfTextCache;
+
   var pdfjsLib = window['pdfjs-dist/build/pdf'];
   if (!pdfjsLib) throw new Error('PDF reader not loaded. Please refresh the page and try again.');
   pdfjsLib.GlobalWorkerOptions.workerSrc =
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-  // Use buffer.slice(0) to copy — PDF.js transfers the ArrayBuffer to its
-  // worker thread which detaches the original, breaking any subsequent use.
-  var pdf = await pdfjsLib.getDocument({ data: new Uint8Array(buffer.slice(0)) }).promise;
+
+  // Uint8Array from a fresh copy — avoids detaching the stored fileBuffer
+  var data = new Uint8Array(buffer.byteLength);
+  data.set(new Uint8Array(buffer));
+
+  var pdf = await pdfjsLib.getDocument({ data: data }).promise;
   var parts = [];
   for (var p = 1; p <= pdf.numPages; p++) {
     var page    = await pdf.getPage(p);
     var content = await page.getTextContent();
-    var pageText = content.items.map(function(item) {
-      return item.str;
-    }).join(' ');
+    var pageText = content.items.map(function(item) { return item.str; }).join(' ');
     parts.push(pageText);
   }
   var text = parts.join('\n').replace(/\s+/g, ' ').trim();
   if (text.length < 50) throw new Error(
     'Could not extract text from this PDF. Make sure it has selectable text — scanned image PDFs are not supported. Try the .docx version instead.'
   );
+  _pdfTextCache = text;
+  _pdfCacheKey  = fileName;
   return text;
 }
+
 async function extractDocxText(buffer) {
   var zip=await JSZip.loadAsync(buffer);
   var xmlFile=zip.file('word/document.xml');
@@ -1968,11 +1981,13 @@ clearOutputs = function() {
   document.getElementById('matchPanel').classList.remove('on');
 };
 
-// Clear pre-extracted text on file reset
+// Clear pre-extracted text and PDF cache on file reset
 var _origResetFile = resetFile;
 resetFile = function() {
   _origResetFile();
   window._preExtractedResumeText = null;
+  _pdfTextCache = null;
+  _pdfCacheKey  = null;
   var saveRow = document.getElementById('libSaveRow');
   if (saveRow) saveRow.style.display = 'none';
 };
