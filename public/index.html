@@ -497,6 +497,78 @@
     .footer-links a:hover { color: var(--white); }
     .footer-copy { font-size: .8rem; margin-top: 28px; text-align: center; }
 
+    /* ─── BEFORE / AFTER ─────────────────────────────── */
+    .ba-wrap {
+      background: var(--white);
+      padding: 96px 24px;
+      border-top: 1px solid var(--gray200);
+    }
+    .ba-inner { max-width: 1100px; margin: 0 auto; }
+    .ba-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-top: 48px;
+    }
+    @media (max-width: 720px) { .ba-grid { grid-template-columns: 1fr; } }
+    .ba-card {
+      border: 1.5px solid var(--gray200);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .ba-card-header {
+      padding: 12px 20px;
+      display: flex; align-items: center; gap: 8px;
+      font-weight: 800; font-size: .9rem;
+    }
+    .ba-card-header.before { background: #fee2e2; color: #b91c1c; border-bottom: 1.5px solid #fca5a5; }
+    .ba-card-header.after  { background: #dcfce7; color: #15803d; border-bottom: 1.5px solid #86efac; }
+    .ba-resume {
+      padding: 24px 22px;
+      font-family: 'Georgia', serif;
+      font-size: .8rem;
+      line-height: 1.55;
+      color: #1e293b;
+      background: #fff;
+      min-height: 340px;
+    }
+    .ba-name { font-size: 1.1rem; font-weight: 700; margin-bottom: 2px; }
+    .ba-contact { font-size: .75rem; color: #64748b; margin-bottom: 12px; }
+    .ba-sec {
+      font-size: .72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .06em; color: #1a2744;
+      border-bottom: 1px solid #1a2744; padding-bottom: 2px;
+      margin: 12px 0 6px;
+    }
+    .ba-plain { color: #475569; font-size: .8rem; line-height: 1.55; }
+    .ba-bullet { margin-left: 12px; color: #475569; font-size: .8rem; }
+    .ba-bullet li { margin-bottom: 3px; }
+    .ba-highlight { color: #1a2744; }
+    .ba-tag {
+      display: inline-block; background: #dcfce7; color: #15803d;
+      font-size: .7rem; font-weight: 700; font-family: inherit;
+      padding: 2px 8px; border-radius: 4px; margin-right: 4px; margin-bottom: 3px;
+    }
+    .ba-arrow-col {
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+    }
+    .ba-arrow {
+      position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+      background: var(--indigo); color: #fff;
+      width: 48px; height: 48px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem; z-index: 2;
+      box-shadow: 0 4px 16px rgba(79,110,247,.4);
+    }
+    .ba-score-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #dcfce7; border: 1.5px solid #86efac;
+      color: #15803d; font-size: .82rem; font-weight: 800;
+      padding: 5px 12px; border-radius: 50px;
+      margin-top: 10px;
+    }
+
     /* ─── FREE SCORE DEMO ────────────────────────────── */
     .score-demo-wrap {
       background: linear-gradient(135deg, #f0f4ff 0%, #eef8ff 100%);
@@ -863,6 +935,100 @@
     </div>
   </div>
 </section>
+
+<!-- ════════════════ BEFORE / AFTER ════════════════ -->
+<div class="ba-wrap">
+  <div class="ba-inner reveal">
+    <div class="section-label">See the difference</div>
+    <h2 class="section-title">From generic to interview-ready<br/>in 30 seconds</h2>
+    <p class="section-sub">Same person. Same experience. One resume gets ignored — the other gets interviews.</p>
+
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;flex-wrap:wrap">
+      <span style="background:#e2e8f0;padding:6px 14px;border-radius:50px;font-size:.82rem;font-weight:700;color:#475569">📋 Role: Senior Product Manager</span>
+      <span style="background:#e2e8f0;padding:6px 14px;border-radius:50px;font-size:.82rem;font-weight:700;color:#475569">🏢 Company: Stripe</span>
+    </div>
+
+    <div class="ba-grid">
+
+      <!-- BEFORE -->
+      <div class="ba-card">
+        <div class="ba-card-header before">
+          <span>😞</span> Before — Generic Resume
+          <span style="margin-left:auto;font-size:.75rem;font-weight:600;background:#fca5a5;padding:2px 8px;border-radius:50px">ATS Score: 34%</span>
+        </div>
+        <div class="ba-resume">
+          <div class="ba-name">Alex Johnson</div>
+          <div class="ba-contact">alex@email.com · 416-555-0123 · Toronto, ON</div>
+
+          <div class="ba-sec">Summary</div>
+          <div class="ba-plain">Experienced product manager with strong background in technology. Good at working with teams and delivering projects on time. Looking for a new opportunity to grow my career.</div>
+
+          <div class="ba-sec">Experience</div>
+          <div style="margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between"><strong>Product Manager</strong><span style="color:#94a3b8;font-size:.75rem">2021–Present</span></div>
+            <div style="color:#64748b;font-size:.75rem;margin-bottom:4px">Acme Corp, Toronto</div>
+            <ul class="ba-bullet">
+              <li>Managed product roadmap and worked with engineering team</li>
+              <li>Ran weekly meetings and wrote product specs</li>
+              <li>Helped improve the product based on customer feedback</li>
+              <li>Worked with stakeholders to deliver features</li>
+            </ul>
+          </div>
+
+          <div class="ba-sec">Skills</div>
+          <div class="ba-plain">Product management, Agile, JIRA, communication, leadership, roadmaps, analytics</div>
+        </div>
+      </div>
+
+      <!-- AFTER -->
+      <div class="ba-card">
+        <div class="ba-card-header after">
+          <span>🚀</span> After — TailorCV Output
+          <span style="margin-left:auto;font-size:.75rem;font-weight:600;background:#86efac;padding:2px 8px;border-radius:50px">ATS Score: 89%</span>
+        </div>
+        <div class="ba-resume">
+          <div class="ba-name">Alex Johnson</div>
+          <div class="ba-contact">alex@email.com · 416-555-0123 · Toronto, ON · LinkedIn</div>
+
+          <div class="ba-sec">Professional Summary</div>
+          <div class="ba-plain ba-highlight">Results-driven Senior Product Manager with 4+ years leading B2B SaaS products from 0→1 and at scale. Proven record of shipping payment and API-adjacent features, driving <strong>3.2× revenue growth</strong> through data-informed roadmaps, and aligning cross-functional teams of 12+ engineers. Deep familiarity with Stripe's ecosystem and the developer experience challenges that define best-in-class fintech products.</div>
+
+          <div class="ba-sec">Experience</div>
+          <div style="margin-bottom:8px">
+            <div style="display:flex;justify-content:space-between"><strong>Senior Product Manager — Payments Platform</strong><span style="color:#94a3b8;font-size:.75rem">2021–Present</span></div>
+            <div style="color:#64748b;font-size:.75rem;margin-bottom:4px">Acme Corp, Toronto</div>
+            <ul class="ba-bullet">
+              <li>Owned end-to-end roadmap for a <strong>$12M ARR</strong> checkout platform serving 2,400+ merchant APIs, reducing failed payment rate by <strong>38%</strong> through ML-powered retry logic</li>
+              <li>Led a 9-person cross-functional squad (eng, design, data) through 4 quarterly planning cycles using OKR framework — shipped 11 of 12 committed features on time</li>
+              <li>Synthesised 200+ merchant interviews into a developer-experience audit that directly influenced 3 pricing model changes, increasing ARPU by <strong>22%</strong></li>
+            </ul>
+          </div>
+
+          <div class="ba-sec">Core Competencies</div>
+          <div>
+            <span class="ba-tag">API Product Strategy</span>
+            <span class="ba-tag">Payments &amp; Fintech</span>
+            <span class="ba-tag">Developer Experience</span>
+            <span class="ba-tag">0→1 Product Builds</span>
+            <span class="ba-tag">OKR / Roadmapping</span>
+            <span class="ba-tag">SQL · Mixpanel</span>
+          </div>
+          <div class="ba-score-badge" style="display:inline-flex">
+            <span>✅</span> 14 of 16 JD keywords matched
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div style="text-align:center;margin-top:40px">
+      <a href="/auth.html?tab=register" class="btn-primary" style="display:inline-flex;font-size:1rem;padding:16px 36px">
+        Transform My Resume — Free
+      </a>
+      <p style="margin-top:14px;font-size:.85rem;color:var(--gray400)">No credit card · Free account · Results in under 30 seconds</p>
+    </div>
+  </div>
+</div>
 
 <!-- ════════════════ FEATURES ════════════════ -->
 <div class="features-bg" id="features">

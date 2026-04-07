@@ -331,7 +331,19 @@
 
 <main>
 
-  <!-- Gate screen (shown if not Pro) -->
+  <!-- Free preview banner (shown for free users above setup) -->
+  <div class="card" id="freePreviewBanner" style="display:none;background:linear-gradient(135deg,#fff7ed,#fef3c7);border:1.5px solid #fcd34d;padding:18px 24px;">
+    <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
+      <span style="font-size:2rem;line-height:1">🎁</span>
+      <div style="flex:1;min-width:200px">
+        <div style="font-weight:800;font-size:1rem;color:#92400e;margin-bottom:4px">Free Preview — 3 Questions</div>
+        <div style="font-size:.9rem;color:#78350f;line-height:1.55">You get 3 tailored interview questions with full model answers and STAR coaching — completely free. Upgrade to Pro to unlock all 10 questions, self-rating tools, session saves, and PDF export.</div>
+      </div>
+      <a class="btn-upgrade" href="account.html" style="flex-shrink:0;font-size:.9rem;padding:10px 20px">⚡ Upgrade to Pro</a>
+    </div>
+  </div>
+
+  <!-- Gate screen (legacy — not shown for free users anymore) -->
   <div class="card" id="gateScreen" style="display:none">
     <div class="gate-icon">🔒</div>
     <h2>Interview Coach is a Pro Feature</h2>
@@ -424,10 +436,11 @@
       <div class="progress-label" id="progressLabel">0 of 0 questions practised</div>
     </div>
     <div class="stats-actions">
-      <button class="btn-secondary" onclick="openSaveModal()">💾 Save Session</button>
-      <button class="btn-secondary" onclick="exportSessionPDF()" style="background:var(--accent-lite);color:var(--accent);border-color:var(--accent-bd)">📄 Export PDF</button>
+      <button class="btn-secondary free-hide" onclick="openSaveModal()">💾 Save Session</button>
+      <button class="btn-secondary free-hide" onclick="exportSessionPDF()" style="background:var(--accent-lite);color:var(--accent);border-color:var(--accent-bd)">📄 Export PDF</button>
       <button class="btn-secondary" onclick="shuffleQuestions()">🔀 Shuffle</button>
-      <button class="btn-secondary" onclick="resetRatings()">↩ Reset Ratings</button>
+      <button class="btn-secondary free-hide" onclick="resetRatings()">↩ Reset Ratings</button>
+      <a class="btn-secondary free-show" href="account.html" style="display:none;background:#fef3c7;border-color:#fcd34d;color:#92400e;font-weight:700;text-decoration:none">⚡ Unlock All 10 Questions</a>
     </div>
   </div>
 
@@ -445,13 +458,25 @@
   <div id="quizContainer"></div>
   <div id="emptyFilter">No questions in this category.</div>
 
+  <!-- Free preview upgrade nudge (shown after 3 questions) -->
+  <div id="freeUpgradeNudge" style="display:none;background:linear-gradient(135deg,#1a2744,#243057);border-radius:16px;padding:32px;text-align:center;margin:16px 0">
+    <div style="font-size:2.5rem;margin-bottom:12px">🔒</div>
+    <h3 style="color:#fff;font-size:1.3rem;font-weight:800;margin-bottom:8px">7 more questions await in Pro</h3>
+    <p style="color:rgba(255,255,255,.7);font-size:.95rem;max-width:480px;margin:0 auto 20px;line-height:1.6">You've seen 3 questions — just a taste of what TailorCV Interview Coach can do. Upgrade to unlock all 10 tailored questions, self-rating (Got It / Almost / Need Work), session saves, and one-click PDF export.</p>
+    <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+      <a class="btn-upgrade" href="account.html" style="font-size:1rem;padding:14px 32px">⚡ Upgrade to Pro — $9/mo</a>
+      <a href="account.html" style="display:inline-flex;align-items:center;color:rgba(255,255,255,.6);font-size:.9rem;text-decoration:underline;padding:14px 0">See what Pro includes →</a>
+    </div>
+    <p style="margin-top:16px;font-size:.8rem;color:rgba(255,255,255,.35)">No credit card risk — cancel anytime · 30-day money-back guarantee</p>
+  </div>
+
   <!-- Complete Banner -->
   <div id="completeBanner">
     <h3>🎉 Great work! You've practised all questions.</h3>
     <p style="margin-bottom:16px">Review any you marked "Need Practice" or start a new session with a different role.</p>
     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-      <button class="btn-secondary" onclick="openSaveModal()" style="background:#fff">💾 Save this session</button>
-      <button class="btn-secondary" onclick="exportSessionPDF()" style="background:#fff;color:var(--accent);border-color:var(--accent-bd)">📄 Export as PDF</button>
+      <button class="btn-secondary free-hide" onclick="openSaveModal()" style="background:#fff">💾 Save this session</button>
+      <button class="btn-secondary free-hide" onclick="exportSessionPDF()" style="background:#fff;color:var(--accent);border-color:var(--accent-bd)">📄 Export as PDF</button>
     </div>
   </div>
 
@@ -500,23 +525,28 @@ async function init() {
     var isPro = u.is_owner
       || (u.plan === 'pro' && ['active', 'beta'].includes(u.subscription_status));
 
+    window._icIsPro = isPro;
+
     if (!isPro) {
-      document.getElementById('gateScreen').style.display = 'block';
-      return;
+      // Free users get a preview — show banner, hide Pro-only actions
+      document.getElementById('freePreviewBanner').style.display = 'block';
+      document.querySelectorAll('.free-hide').forEach(function(el){ el.style.display='none'; });
     }
   } catch(e) {
     window.location.href = 'auth.html';
     return;
   }
 
-  // Load saved session from localStorage
-  var savedSession = localStorage.getItem('tc_interview_session');
-  if (savedSession) {
-    try {
-      var sess = JSON.parse(savedSession);
-      _questions = sess.questions || [];
-      _ratings   = sess.ratings   || {};
-    } catch(e) { _questions = []; _ratings = {}; }
+  // Load saved session from localStorage (Pro only — don't load stale free-session data)
+  if (window._icIsPro) {
+    var savedSession = localStorage.getItem('tc_interview_session');
+    if (savedSession) {
+      try {
+        var sess = JSON.parse(savedSession);
+        _questions = sess.questions || [];
+        _ratings   = sess.ratings   || {};
+      } catch(e) { _questions = []; _ratings = {}; }
+    }
   }
 
   // Load context
@@ -572,12 +602,9 @@ async function generateQuestions() {
     '  "key_points": ["Point 1", "Point 2", "Point 3"]',
     '}',
     '',
-    'Generate exactly 10 questions — 2 per category in this order:',
-    '1. Behavioral (STAR format)',
-    '2. Technical (role-specific skills)',
-    '3. Situational (hypothetical scenarios)',
-    '4. Company (culture, why this company)',
-    '5. Role (responsibilities, fit)',
+    (window._icIsPro
+      ? 'Generate exactly 10 questions — 2 per category in this order:\n1. Behavioral (STAR format)\n2. Technical (role-specific skills)\n3. Situational (hypothetical scenarios)\n4. Company (culture, why this company)\n5. Role (responsibilities, fit)'
+      : 'Generate exactly 3 questions — 1 Behavioral, 1 Technical, 1 Situational. These are a free preview.'),
     '',
     'All questions must be specific to this exact role and company.',
     'IMPORTANT: Keep answers short. The entire JSON response must stay well under 4000 tokens.',
@@ -600,7 +627,7 @@ async function generateQuestions() {
         type:      'interview_quiz',
         system:    systemPrompt,
         userMsg:   userMsg,
-        maxTokens: 8000,
+        maxTokens: window._icIsPro ? 8000 : 3000,
       }),
     });
 
@@ -637,13 +664,20 @@ async function generateQuestions() {
     _questions = parsed;
     _ratings   = {};
 
-    // Save to localStorage
-    saveSession();
+    // Save to localStorage (Pro only)
+    if (window._icIsPro) saveSession();
 
-    document.getElementById('clearSessionBtn').style.display = '';
+    document.getElementById('clearSessionBtn').style.display = window._icIsPro ? '' : 'none';
     document.getElementById('generatingState').style.display = 'none';
     document.getElementById('setupPanel').style.display      = 'block';
     renderQuiz();
+
+    // Show upgrade nudge for free users after rendering
+    if (!window._icIsPro) {
+      document.getElementById('freeUpgradeNudge').style.display = 'block';
+      // Also show the free-show elements (unlock button in stats bar)
+      document.querySelectorAll('.free-show').forEach(function(el){ el.style.display=''; });
+    }
 
   } catch(err) {
     document.getElementById('generatingState').style.display = 'none';
@@ -750,21 +784,23 @@ function renderQuiz() {
       starHTML,
       '    </div>',
 
-      // Rating
-      '    <div style="margin-top:16px">',
-      '      <div class="ans-section-title" style="margin-bottom:8px">How did you do?</div>',
-      '      <div class="rating-row">',
-      '        <button class="rating-btn ' + ratingActive[0] + '" onclick="rate(' + idx + ', \'got-it\', event)">',
-      '          <span class="rb-icon">✅</span><span class="rb-label">Got It</span>',
-      '        </button>',
-      '        <button class="rating-btn ' + ratingActive[1] + '" onclick="rate(' + idx + ', \'almost\', event)">',
-      '          <span class="rb-icon">⚡</span><span class="rb-label">Almost</span>',
-      '        </button>',
-      '        <button class="rating-btn ' + ratingActive[2] + '" onclick="rate(' + idx + ', \'need-work\', event)">',
-      '          <span class="rb-icon">🔄</span><span class="rb-label">Need Practice</span>',
-      '        </button>',
-      '      </div>',
-      '    </div>',
+      // Rating (Pro only)
+      window._icIsPro ? [
+        '    <div style="margin-top:16px">',
+        '      <div class="ans-section-title" style="margin-bottom:8px">How did you do?</div>',
+        '      <div class="rating-row">',
+        '        <button class="rating-btn ' + ratingActive[0] + '" onclick="rate(' + idx + ', \'got-it\', event)">',
+        '          <span class="rb-icon">✅</span><span class="rb-label">Got It</span>',
+        '        </button>',
+        '        <button class="rating-btn ' + ratingActive[1] + '" onclick="rate(' + idx + ', \'almost\', event)">',
+        '          <span class="rb-icon">⚡</span><span class="rb-label">Almost</span>',
+        '        </button>',
+        '        <button class="rating-btn ' + ratingActive[2] + '" onclick="rate(' + idx + ', \'need-work\', event)">',
+        '          <span class="rb-icon">🔄</span><span class="rb-label">Need Practice</span>',
+        '        </button>',
+        '      </div>',
+        '    </div>',
+      ].join('') : '    <div style="margin-top:14px;padding:10px 14px;background:#fef3c7;border-radius:8px;font-size:.85rem;color:#92400e"><a href="account.html" style="color:#d97706;font-weight:700">⚡ Upgrade to Pro</a> to rate your answers and track progress</div>',
 
       '  </div>',
       '</div>',

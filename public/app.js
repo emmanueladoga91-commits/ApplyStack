@@ -1058,11 +1058,39 @@ async function scoreResume(tailored, jd){
   txt+='\n\nTechnical Skills: '+(tailored.technicalSkills||[]).map(function(t){return t.category+': '+t.items;}).join('; ');
   txt+='\nCertifications: '+(tailored.certifications||[]).join(', ');
   var sys='You are an ATS scoring expert. Respond with ONLY a raw JSON object — no markdown, no extra text.';
-  var prompt=['Score the resume against the JD. Respond with ONLY the JSON object.','','JOB DESCRIPTION:',jd,'','RESUME:',txt,'','JSON format:','{"overallScore":<0-100>,"breakdown":{"keywordMatch":<0-100>,"skillsAlignment":<0-100>,"experienceRelevance":<0-100>,"summaryRelevance":<0-100>},"matchedKeywords":[<up to 8>],"missingKeywords":[<up to 5>],"strengths":[<2-3>],"improvements":[<1-2>]}'].join('\n');
+  var prompt=[
+    'Score the resume against the JD. Respond with ONLY the JSON object — no markdown, no explanation.',
+    '',
+    'JOB DESCRIPTION:',jd,
+    '',
+    'RESUME:',txt,
+    '',
+    'Return exactly this JSON shape:',
+    '{',
+    '  "overallScore": <0-100>,',
+    '  "scoreLabel": "Strong Match"|"Good Match"|"Partial Match"|"Needs Work",',
+    '  "breakdown": {',
+    '    "keywordMatch": <0-100>,',
+    '    "skillsAlignment": <0-100>,',
+    '    "experienceRelevance": <0-100>,',
+    '    "summaryAlignment": <0-100>',
+    '  },',
+    '  "matchedKeywords": [<up to 10 matched keywords/phrases>],',
+    '  "missingKeywords": [<up to 8 missing keywords/phrases>],',
+    '  "strengths": [<2-3 one-sentence strengths>],',
+    '  "topFixes": [',
+    '    {"priority": 1, "fix": "<specific one-sentence action>", "impact": "High|Medium"},',
+    '    {"priority": 2, "fix": "<specific one-sentence action>", "impact": "High|Medium"},',
+    '    {"priority": 3, "fix": "<specific one-sentence action>", "impact": "High|Medium"},',
+    '    {"priority": 4, "fix": "<specific one-sentence action>", "impact": "High|Medium"},',
+    '    {"priority": 5, "fix": "<specific one-sentence action>", "impact": "High|Medium"}',
+    '  ]',
+    '}',
+  ].join('\n');
   var raw = await fetch('/api/claude', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
-    body: JSON.stringify({ type: 'ats', system: sys, userMsg: prompt, maxTokens: 2500, model: 'claude-haiku-4-5-20251001' }),
+    body: JSON.stringify({ type: 'ats', system: sys, userMsg: prompt, maxTokens: 3500, model: 'claude-haiku-4-5-20251001' }),
   });
   if (raw.status === 402) {
     var ed = await raw.json().catch(function(){ return {}; });
@@ -1098,17 +1126,87 @@ function renderAtsScore(ats){
   var score=ats.overallScore||0;
   var color=score>=80?'#16a34a':score>=60?'#d97706':'#dc2626';
   var r=46, circ=+(2*Math.PI*r).toFixed(2), offset=+(circ-(score/100)*circ).toFixed(2);
-  var bars=[{label:'Keyword Match',val:(ats.breakdown||{}).keywordMatch||0},{label:'Skills Alignment',val:(ats.breakdown||{}).skillsAlignment||0},{label:'Experience Relevance',val:(ats.breakdown||{}).experienceRelevance||0},{label:'Summary Relevance',val:(ats.breakdown||{}).summaryRelevance||0}];
-  var h='<div class="ats-wrap"><div class="ats-ring-wrap"><svg viewBox="0 0 114 114"><circle class="ats-track" cx="57" cy="57" r="'+r+'"/><circle class="ats-fill" cx="57" cy="57" r="'+r+'" stroke="'+color+'" stroke-dasharray="'+circ+'" stroke-dashoffset="'+offset+'"/></svg><div class="ats-center"><div class="ats-num" style="color:'+color+'">'+score+'</div><div class="ats-pct">/ 100</div></div></div>';
+  var bd=ats.breakdown||{};
+  var bars=[
+    {label:'Keyword Match',      ico:'🔑', val:bd.keywordMatch||0},
+    {label:'Skills Alignment',   ico:'⚙️', val:bd.skillsAlignment||0},
+    {label:'Experience Relevance',ico:'💼', val:bd.experienceRelevance||0},
+    {label:'Summary Alignment',  ico:'📝', val:bd.summaryAlignment||bd.summaryRelevance||0}
+  ];
+  var scoreLabel=ats.scoreLabel||(score>=80?'Strong Match':score>=60?'Good Match':score>=40?'Partial Match':'Needs Work');
+  var labelColor=score>=80?'#16a34a':score>=60?'#d97706':'#dc2626';
+  var labelBg   =score>=80?'#dcfce7':score>=60?'#fef3c7':'#fee2e2';
+
+  // ── Ring + sub-scores ──
+  var h='<div class="ats-wrap"><div class="ats-ring-wrap">'
+    +'<svg viewBox="0 0 114 114"><circle class="ats-track" cx="57" cy="57" r="'+r+'"/>'
+    +'<circle class="ats-fill" cx="57" cy="57" r="'+r+'" stroke="'+color+'" stroke-dasharray="'+circ+'" stroke-dashoffset="'+offset+'"/></svg>'
+    +'<div class="ats-center"><div class="ats-num" style="color:'+color+'">'+score+'</div><div class="ats-pct">/ 100</div></div></div>';
   h+='<div class="ats-right">';
-  bars.forEach(function(b){var bc=b.val>=80?'#16a34a':b.val>=60?'#d97706':'#dc2626';h+='<div class="ats-bar-row"><div class="ats-bar-top"><span>'+b.label+'</span><span style="color:'+bc+'">'+b.val+'%</span></div><div class="ats-bg"><div class="ats-fg" style="width:'+b.val+'%;background:'+bc+'"></div></div></div>';});
+  h+='<div style="display:inline-block;padding:4px 12px;border-radius:50px;font-size:12px;font-weight:800;background:'+labelBg+';color:'+labelColor+';margin-bottom:12px">'+esc(scoreLabel)+'</div>';
+  bars.forEach(function(b){
+    var bc=b.val>=80?'#16a34a':b.val>=60?'#d97706':'#dc2626';
+    h+='<div class="ats-bar-row">'
+      +'<div class="ats-bar-top"><span>'+b.ico+' '+b.label+'</span><span style="color:'+bc+';font-weight:700">'+b.val+'%</span></div>'
+      +'<div class="ats-bg"><div class="ats-fg" style="width:'+b.val+'%;background:'+bc+';transition:width .8s ease"></div></div></div>';
+  });
   h+='</div></div>';
+
+  // ── Keywords ──
   var matched=ats.matchedKeywords||[], missing=ats.missingKeywords||[];
-  if(matched.length){h+='<div class="kw-sec"><div class="kw-title">\u2705 Keywords Found</div><div class="kw-chips">';matched.forEach(function(k){h+='<span class="kw-chip kw-match">'+esc(k)+'</span>';});h+='</div></div>';}
-  if(missing.length){h+='<div class="kw-sec" style="margin-top:10px"><div class="kw-title">\u26a0\ufe0f Keywords Missing</div><div class="kw-chips">';missing.forEach(function(k){h+='<span class="kw-chip kw-miss">'+esc(k)+'</span>';});h+='</div></div>';}
-  var st=ats.strengths||[], im=ats.improvements||[];
-  if(st.length||im.length){h+='<div class="ats-insights">';if(st.length){h+='<div class="kw-title" style="margin-top:14px">\uD83D\uDCAA Strengths</div><ul>';st.forEach(function(s){h+='<li>'+esc(s)+'</li>';});h+='</ul>';}if(im.length){h+='<div class="kw-title" style="margin-top:10px">\uD83D\uDCA1 Suggestions</div><ul>';im.forEach(function(s){h+='<li>'+esc(s)+'</li>';});h+='</ul>';}h+='</div>';}
-  if(missing.length){h+='<hr class="improve-sep"><p class="improve-note">Want a higher score? Claude can naturally weave the missing keywords into your resume wherever your experience genuinely supports them.</p><button type="button" class="improve-btn" id="improveBtn">\u2728 Improve Resume with Missing Keywords</button><div id="improveMsg"></div>';}
+  if(matched.length||missing.length){
+    h+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px">';
+    if(matched.length){
+      h+='<div class="kw-sec"><div class="kw-title">\u2705 Matched Keywords ('+matched.length+')</div><div class="kw-chips">';
+      matched.forEach(function(k){h+='<span class="kw-chip kw-match">'+esc(k)+'</span>';});
+      h+='</div></div>';
+    }
+    if(missing.length){
+      h+='<div class="kw-sec"><div class="kw-title">\u26a0\ufe0f Missing Keywords ('+missing.length+')</div><div class="kw-chips">';
+      missing.forEach(function(k){h+='<span class="kw-chip kw-miss">'+esc(k)+'</span>';});
+      h+='</div></div>';
+    }
+    h+='</div>';
+  }
+
+  // ── Strengths ──
+  var st=ats.strengths||[];
+  if(st.length){
+    h+='<div class="ats-insights" style="margin-top:14px">';
+    h+='<div class="kw-title">\uD83D\uDCAA Strengths</div><ul>';
+    st.forEach(function(s){h+='<li>'+esc(s)+'</li>';});
+    h+='</ul></div>';
+  }
+
+  // ── Top 5 Fixes (the new star feature) ──
+  var fixes=ats.topFixes||[];
+  if(fixes.length){
+    h+='<div style="margin-top:18px;border:1.5px solid #e2e8f0;border-radius:10px;overflow:hidden">';
+    h+='<div style="background:#1a2744;padding:10px 16px;display:flex;align-items:center;gap:8px">';
+    h+='<span style="font-size:1.1rem">📋</span>';
+    h+='<span style="color:#fff;font-weight:800;font-size:.95rem">Top '+fixes.length+' Things to Fix</span>';
+    h+='<span style="margin-left:auto;font-size:.75rem;color:rgba(255,255,255,.5)">Prioritised by impact</span>';
+    h+='</div>';
+    fixes.forEach(function(f,i){
+      var impColor=f.impact==='High'?'#dc2626':'#d97706';
+      var impBg   =f.impact==='High'?'#fee2e2':'#fef3c7';
+      h+='<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-bottom:'+(i<fixes.length-1?'1px solid #f1f5f9':0)+'">';
+      h+='<div style="flex-shrink:0;width:24px;height:24px;border-radius:50%;background:#1a2744;color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center">'+(i+1)+'</div>';
+      h+='<div style="flex:1;font-size:.88rem;color:#334155;line-height:1.55">'+esc(f.fix)+'</div>';
+      h+='<div style="flex-shrink:0;font-size:.72rem;font-weight:700;padding:2px 8px;border-radius:50px;background:'+impBg+';color:'+impColor+'">'+esc(f.impact||'Medium')+'</div>';
+      h+='</div>';
+    });
+    h+='</div>';
+  }
+
+  // ── Improve button ──
+  if(missing.length){
+    h+='<hr class="improve-sep">'
+      +'<p class="improve-note">Want a higher score? Claude can naturally weave the missing keywords into your resume wherever your experience genuinely supports them.</p>'
+      +'<button type="button" class="improve-btn" id="improveBtn">\u2728 Improve Resume with Missing Keywords</button>'
+      +'<div id="improveMsg"></div>';
+  }
+
   document.getElementById('atsContent').innerHTML=h;
   document.getElementById('atsCard').style.display='block';
   var btn=document.getElementById('improveBtn');
