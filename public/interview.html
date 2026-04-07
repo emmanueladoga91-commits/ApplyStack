@@ -418,8 +418,9 @@ async function init() {
     if (!r.ok) { window.location.href = 'auth.html'; return; }
     var u = await r.json();
 
-    var isOwner = u.email && u.email === (window.__ownerEmail || '');
-    var isPro   = u.plan === 'pro' && ['active','beta'].includes(u.subscription_status);
+    // Owner always gets Pro; beta-code users have plan='pro' + status='beta'
+    var isPro = u.is_owner
+      || (u.plan === 'pro' && ['active', 'beta'].includes(u.subscription_status));
 
     if (!isPro) {
       document.getElementById('gateScreen').style.display = 'block';

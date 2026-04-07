@@ -546,12 +546,14 @@ app.get('*', (req, res) => {
 
 // ── Helpers ────────────────────────────────────────────────────
 function safeUser(u) {
+  const isOwner = OWNER_EMAIL && u.email && u.email.toLowerCase() === OWNER_EMAIL;
   return {
     id:                  u.id,
     email:               u.email,
     plan:                u.plan,
     tailoring_count:     u.tailoring_count,
     subscription_status: u.subscription_status,
+    is_owner:            isOwner || false,
   };
 }
 
