@@ -28,6 +28,8 @@ const CLAUDE_KEY   = process.env.CLAUDE_API_KEY;
 const APP_URL      = process.env.APP_URL       || `http://localhost:${PORT}`;
 const ADMIN_SECRET = process.env.ADMIN_SECRET  || '';
 const OWNER_EMAIL  = (process.env.OWNER_EMAIL  || '').toLowerCase();
+const RESEND_KEY   = process.env.RESEND_API_KEY || '';
+const CRON_SECRET  = process.env.CRON_SECRET   || '';
 const stripe       = Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
 
 // ── PostgreSQL pool ────────────────────────────────────────────
@@ -71,6 +73,8 @@ const pool = new Pool({
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `);
+  // Onboarding email stage tracker (0=none,1=welcome sent,2=day-2 sent,3=day-7 sent)
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_stage INTEGER NOT NULL DEFAULT 0;`);
   // Referral columns (idempotent — ADD COLUMN IF NOT EXISTS)
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS referral_code TEXT;`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS referral_credits INTEGER NOT NULL DEFAULT 0;`);
@@ -84,6 +88,109 @@ const pool = new Pool({
   await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS users_referral_code_idx ON users(referral_code);`);
   console.log('Database ready.');
 })().catch(err => { console.error('DB init error:', err); process.exit(1); });
+
+// ══════════════════════════════════════════════════════════════
+//  EMAIL — Resend HTTP API (no SDK needed)
+// ══════════════════════════════════════════════════════════════
+async function sendEmail(to, subject, html) {
+  if (!RESEND_KEY) return; // silently skip if not configured
+  try {
+    const r = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${RESEND_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from:    'TailorCV <hello@tailorcv.com>',
+        to:      [to],
+        subject,
+        html,
+      }),
+    });
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({}));
+      console.error('Resend error:', err);
+    }
+  } catch (e) {
+    console.error('Email send error:', e.message);
+  }
+}
+
+// ── Email wrapper ─────────────────────────────────────────────
+function emailBase(content) {
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif;background:#f8fafc;margin:0;padding:40px 20px;}
+  .wrap{max-width:560px;margin:0 auto;}
+  .card{background:#fff;border-radius:16px;padding:40px 36px;border:1px solid #e2e8f0;}
+  .logo{font-size:1.4rem;font-weight:900;color:#1a2744;margin-bottom:28px;}
+  .logo span{color:#4f6ef7;}
+  h2{font-size:1.4rem;font-weight:800;color:#1a2744;margin:0 0 14px;}
+  p{font-size:.95rem;color:#475569;line-height:1.7;margin:0 0 16px;}
+  .btn{display:inline-block;background:#4f6ef7;color:#fff;text-decoration:none;padding:14px 28px;border-radius:50px;font-weight:700;font-size:.95rem;margin:8px 0 20px;}
+  .tip{background:#f0f4ff;border-left:3px solid #4f6ef7;padding:14px 16px;border-radius:0 8px 8px 0;margin:18px 0;}
+  .tip p{margin:0;font-size:.88rem;color:#1a2744;}
+  ul{padding-left:20px;} li{font-size:.9rem;color:#475569;margin-bottom:8px;line-height:1.6;}
+  .footer{margin-top:24px;font-size:.78rem;color:#94a3b8;text-align:center;line-height:1.7;}
+  .footer a{color:#94a3b8;}
+</style></head><body><div class="wrap"><div class="card">
+<div class="logo">Tailor<span>CV</span></div>
+${content}
+</div>
+<div class="footer">TailorCV · <a href="${APP_URL}">tailorcv.com</a><br>
+You're receiving this because you signed up at TailorCV.<br>
+<a href="${APP_URL}/account.html">Manage preferences</a></div>
+</div></body></html>`;
+}
+
+function emailWelcome() {
+  return emailBase(`
+<h2>Welcome to TailorCV 👋</h2>
+<p>You're all set. Here's how to get the best result from your first resume build:</p>
+<ul>
+  <li><strong>Upload your current resume</strong> — .docx or PDF both work. The more complete it is, the better the output.</li>
+  <li><strong>Paste the full job description</strong> — not just the title. The AI reads every requirement and aligns your resume to it.</li>
+  <li><strong>Check your ATS score</strong> — aim for 75+. The score shows which keywords are matched and which you're missing.</li>
+  <li><strong>Download your .docx</strong> — edit it in Word or Google Docs if you want to tweak anything before applying.</li>
+</ul>
+<div class="tip"><p>💡 <strong>Pro tip:</strong> Use the Interview Coach after building your resume — it generates role-specific questions based on the same job description.</p></div>
+<a href="${APP_URL}/app.html" class="btn">Build my first resume →</a>
+<p>Most users finish their first tailored resume in under 4 minutes. You've got this.</p>
+<p style="color:#94a3b8;font-size:.85rem">— The TailorCV team</p>`);
+}
+
+function emailDay2() {
+  return emailBase(`
+<h2>Most users finish in under 4 minutes ⏱️</h2>
+<p>We noticed you haven't built your first tailored resume yet. That's okay — here's a quick-start so it takes less than 5 minutes:</p>
+<ul>
+  <li>Find a job posting you want to apply for</li>
+  <li>Copy the full job description text</li>
+  <li>Upload your current resume (any .pdf or .docx works)</li>
+  <li>Hit <strong>Build Resume</strong> — TailorCV does the rest</li>
+</ul>
+<a href="${APP_URL}/app.html" class="btn">Start my first resume →</a>
+<div class="tip"><p>💡 Don't have a polished resume yet? Upload whatever you have — even a rough draft. TailorCV will restructure and rewrite it to match the role.</p></div>
+<p>Your first resume is completely free — no credit card, no strings.</p>
+<p style="color:#94a3b8;font-size:.85rem">— The TailorCV team</p>`);
+}
+
+function emailDay7() {
+  return emailBase(`
+<h2>You have 1 free tailoring left 🎯</h2>
+<p>You've tried TailorCV — now make it count. Here's what Pro users do differently:</p>
+<ul>
+  <li>They tailor a <strong>different resume for every role</strong> they apply to (not one generic version)</li>
+  <li>They use the <strong>ATS score to hit 80+</strong> before submitting — recruiters use filters that cut off below 70</li>
+  <li>They generate a <strong>matching cover letter</strong> in the same session, so the tone is consistent</li>
+  <li>They practice with the <strong>Interview Coach</strong> right after, using questions from the same JD</li>
+</ul>
+<a href="${APP_URL}/account.html" class="btn">Upgrade to Pro — $9/month →</a>
+<p>Pro is $9/month or $79/year. Cancel anytime. 30-day money-back guarantee.</p>
+<div class="tip"><p>💡 <strong>Referral deal:</strong> Invite a friend — you both get a free bonus tailoring when they complete their first resume. Find your link in <a href="${APP_URL}/account.html">your account</a>.</p></div>
+<p style="color:#94a3b8;font-size:.85rem">— The TailorCV team</p>`);
+}
 
 // ── JWT helpers ────────────────────────────────────────────────
 function signToken(userId) {
@@ -195,6 +302,10 @@ app.post('/api/auth/register', authLimiter, async (req, res) => {
     const user = result.rows[0];
     const token = signToken(user.id);
     res.json({ token, user: safeUser(user) });
+    // Send welcome email (async — don't block response)
+    sendEmail(normalEmail, 'Welcome to TailorCV 👋', emailWelcome()).then(async () => {
+      await pool.query('UPDATE users SET onboarding_stage = 1 WHERE id = $1', [user.id]);
+    }).catch(() => {});
   } catch (err) {
     console.error('Register error:', err);
     res.status(500).json({ error: 'Registration failed. Please try again.' });
@@ -911,6 +1022,55 @@ async function handleStripeWebhook(req, res) {
 
   res.json({ received: true });
 }
+
+// ══════════════════════════════════════════════════════════════
+//  CRON — Onboarding email scheduler
+//  Call daily from Render's cron service or any HTTP scheduler:
+//    GET /api/cron/onboarding?secret=CRON_SECRET
+// ══════════════════════════════════════════════════════════════
+app.get('/api/cron/onboarding', async (req, res) => {
+  // Validate cron secret (skip check if CRON_SECRET not configured)
+  if (CRON_SECRET && req.query.secret !== CRON_SECRET) {
+    return res.status(401).json({ error: 'Unauthorized' });
+  }
+  try {
+    let sent2 = 0, sent3 = 0;
+
+    // Email 2 — day 2, zero builds done, welcome email already sent
+    const day2 = await pool.query(`
+      SELECT id, email FROM users
+      WHERE onboarding_stage = 1
+        AND tailoring_count = 0
+        AND created_at <= NOW() - INTERVAL '2 days'
+        AND created_at >= NOW() - INTERVAL '5 days'
+    `);
+    for (const u of day2.rows) {
+      await sendEmail(u.email, 'Most users finish in under 4 minutes ⏱️', emailDay2());
+      await pool.query('UPDATE users SET onboarding_stage = 2 WHERE id = $1', [u.id]);
+      sent2++;
+    }
+
+    // Email 3 — day 7, still on free plan, at least one build done or not
+    const day7 = await pool.query(`
+      SELECT id, email FROM users
+      WHERE onboarding_stage < 3
+        AND plan = 'free'
+        AND subscription_status IS DISTINCT FROM 'active'
+        AND created_at <= NOW() - INTERVAL '7 days'
+        AND created_at >= NOW() - INTERVAL '10 days'
+    `);
+    for (const u of day7.rows) {
+      await sendEmail(u.email, 'You have 1 free tailoring left 🎯', emailDay7());
+      await pool.query('UPDATE users SET onboarding_stage = 3 WHERE id = $1', [u.id]);
+      sent3++;
+    }
+
+    res.json({ ok: true, sent2, sent3 });
+  } catch (err) {
+    console.error('Onboarding cron error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // ── Referral API ───────────────────────────────────────────────
 app.get('/api/referral', requireAuth, async (req, res) => {
