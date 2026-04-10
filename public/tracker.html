@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TailorCV — Job Application Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --navy:#1a2744; --navy2:#243057; --indigo:#4f6ef7; --indigo2:#3a5ce4;
+      --gray50:#f8fafc; --gray100:#f1f5f9; --gray200:#e2e8f0;
+      --gray400:#94a3b8; --gray600:#475569; --gray800:#1e293b;
+      --green:#166534; --green-bg:#dcfce7; --green-bd:#86efac;
+      --red:#991b1b; --red-bg:#fef2f2; --amber:#92400e; --amber-bg:#fffbeb;
+      --radius:12px;
+    }
+    body { font-family:'Inter',system-ui,sans-serif; background:var(--gray50); color:var(--gray800); min-height:100vh; }
+
+    /* ── Nav ── */
+    nav { background:#fff; border-bottom:1px solid var(--gray200); padding:14px 28px; display:flex; align-items:center; gap:12px; position:sticky; top:0; z-index:10; }
+    .logo { font-size:1.3rem; font-weight:900; color:var(--navy); text-decoration:none; }
+    .logo span { color:var(--indigo); }
+    .nav-right { margin-left:auto; display:flex; align-items:center; gap:12px; }
+    .nav-link { font-size:.9rem; color:var(--gray600); text-decoration:none; font-weight:500; }
+    .nav-link:hover { color:var(--navy); }
+    .btn-nav { padding:9px 20px; background:var(--indigo); color:#fff; border-radius:50px; font-size:.88rem; font-weight:700; text-decoration:none; }
+
+    /* ── Layout ── */
+    main { max-width:1100px; margin:0 auto; padding:32px 20px 80px; }
+    .page-hdr { display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:16px; margin-bottom:28px; }
+    .page-title { font-size:1.7rem; font-weight:900; color:var(--navy); }
+    .page-sub { font-size:.95rem; color:var(--gray600); margin-top:4px; }
+
+    /* ── Pipeline summary ── */
+    .pipeline { display:grid; grid-template-columns:repeat(auto-fit,minmax(100px,1fr)); gap:10px; margin-bottom:28px; }
+    .pipe-col { background:#fff; border:1px solid var(--gray200); border-radius:var(--radius); padding:14px 12px; text-align:center; cursor:pointer; transition:border-color .2s, box-shadow .2s; }
+    .pipe-col:hover, .pipe-col.active { border-color:var(--indigo); box-shadow:0 2px 12px rgba(79,110,247,.15); }
+    .pipe-col.active { background:#eef2ff; }
+    .pipe-n { font-size:1.6rem; font-weight:900; color:var(--navy); line-height:1; }
+    .pipe-l { font-size:.72rem; font-weight:700; color:var(--gray600); text-transform:uppercase; letter-spacing:.04em; margin-top:4px; }
+    .pipe-dot { width:10px; height:10px; border-radius:50%; margin:0 auto 6px; }
+
+    /* ── Actions bar ── */
+    .actions-bar { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:20px; }
+    .search-box { flex:1; min-width:180px; padding:10px 14px; border:1.5px solid var(--gray200); border-radius:var(--radius); font-size:.9rem; font-family:inherit; outline:none; }
+    .search-box:focus { border-color:var(--indigo); }
+    .btn { display:inline-flex; align-items:center; gap:6px; padding:10px 18px; border:none; border-radius:var(--radius); font-size:.88rem; font-weight:700; font-family:inherit; cursor:pointer; transition:opacity .15s; }
+    .btn-add { background:var(--indigo); color:#fff; }
+    .btn-add:hover { opacity:.88; }
+    .btn-export { background:#fff; border:1.5px solid var(--gray200); color:var(--gray800); }
+    .btn-export:hover { border-color:var(--indigo); color:var(--indigo); }
+
+    /* ── Table ── */
+    .table-wrap { background:#fff; border:1px solid var(--gray200); border-radius:16px; overflow:hidden; }
+    .tbl-empty { padding:56px 24px; text-align:center; color:var(--gray400); }
+    .tbl-empty .te-ico { font-size:2.5rem; display:block; margin-bottom:12px; }
+    table { width:100%; border-collapse:collapse; }
+    thead tr { background:var(--gray50); border-bottom:1px solid var(--gray200); }
+    th { padding:12px 16px; font-size:.78rem; font-weight:700; color:var(--gray600); text-align:left; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; }
+    td { padding:14px 16px; font-size:.88rem; vertical-align:middle; border-bottom:1px solid var(--gray100); }
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background:#fafbff; }
+    .td-company { font-weight:700; color:var(--navy); }
+    .td-role { color:var(--gray800); }
+    .td-date { color:var(--gray400); white-space:nowrap; font-size:.82rem; }
+    .td-ats { white-space:nowrap; }
+    .ats-chip { display:inline-block; padding:2px 8px; border-radius:50px; font-size:.75rem; font-weight:700; }
+    .ats-g { background:var(--green-bg); color:var(--green); }
+    .ats-a { background:var(--amber-bg); color:var(--amber); }
+    .ats-r { background:var(--red-bg); color:var(--red); }
+    .status-select { border:1.5px solid var(--gray200); border-radius:8px; padding:5px 10px; font-size:.82rem; font-family:inherit; font-weight:600; cursor:pointer; outline:none; background:#fff; }
+    .status-select:focus { border-color:var(--indigo); }
+    .td-notes textarea { width:100%; border:1px solid var(--gray200); border-radius:8px; padding:6px 10px; font-size:.82rem; font-family:inherit; resize:none; height:54px; outline:none; }
+    .td-notes textarea:focus { border-color:var(--indigo); }
+    .td-del { text-align:center; }
+    .del-btn { background:none; border:none; color:var(--gray400); cursor:pointer; font-size:1rem; padding:4px 8px; border-radius:6px; }
+    .del-btn:hover { color:var(--red); background:var(--red-bg); }
+
+    /* ── Status color map ── */
+    select.Applied    { color:#1d4ed8; } select.Phone   { color:#0369a1; }
+    select.Interview  { color:#7c3aed; } select.Final   { color:#92400e; }
+    select.Offer      { color:#166534; } select.Rejected { color:#991b1b; }
+
+    /* ── Add modal ── */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(15,23,42,.6); z-index:200; align-items:center; justify-content:center; padding:20px; }
+    .modal-overlay.open { display:flex; }
+    .modal-box { background:#fff; border-radius:20px; padding:32px; max-width:500px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,.18); }
+    .modal-title { font-size:1.2rem; font-weight:800; color:var(--navy); margin-bottom:20px; }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+    .f label { display:block; font-size:.78rem; font-weight:700; color:var(--gray600); text-transform:uppercase; letter-spacing:.04em; margin-bottom:5px; }
+    .f input, .f select, .f textarea { width:100%; padding:10px 12px; border:1.5px solid var(--gray200); border-radius:var(--radius); font-size:.9rem; font-family:inherit; outline:none; }
+    .f input:focus, .f select:focus, .f textarea:focus { border-color:var(--indigo); }
+    .f textarea { resize:vertical; min-height:70px; }
+    .modal-actions { display:flex; gap:10px; margin-top:20px; }
+    .btn-primary { background:var(--indigo); color:#fff; flex:1; justify-content:center; }
+    .btn-primary:hover { background:var(--indigo2); }
+    .btn-cancel { background:#fff; border:1.5px solid var(--gray200); color:var(--gray800); }
+
+    /* ── Responsive ── */
+    @media (max-width:640px) {
+      th.hide-sm, td.hide-sm { display:none; }
+      .form-row { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">Tailor<span>CV</span></a>
+  <div class="nav-right">
+    <a href="/app.html" class="nav-link">← Resume Builder</a>
+    <a href="/account.html" class="nav-link">Account</a>
+    <a href="/interview.html" class="btn-nav">🎤 Interview Coach</a>
+  </div>
+</nav>
+
+<main>
+  <div class="page-hdr">
+    <div>
+      <div class="page-title">📋 Job Application Tracker</div>
+      <div class="page-sub">Track every application, update statuses, and never lose a lead.</div>
+    </div>
+  </div>
+
+  <!-- Pipeline summary bar -->
+  <div class="pipeline" id="pipeline"></div>
+
+  <!-- Actions -->
+  <div class="actions-bar">
+    <input class="search-box" type="text" id="searchBox" placeholder="🔍  Search by company or role…" oninput="filterTable()" />
+    <button class="btn btn-add" onclick="openAddModal()">+ Add Application</button>
+    <button class="btn btn-export" onclick="exportCSV()">⬇ Export CSV</button>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap" id="tableWrap">
+    <div class="tbl-empty" id="tblEmpty">
+      <span class="te-ico">📝</span>
+      <div style="font-weight:700;color:var(--navy);margin-bottom:6px">No applications yet</div>
+      <div style="font-size:.9rem">Build a resume in the Resume Builder to auto-add it here, or click <strong>+ Add Application</strong> to track manually.</div>
+    </div>
+    <table id="tbl" style="display:none">
+      <thead>
+        <tr>
+          <th>Company</th>
+          <th>Role</th>
+          <th class="hide-sm">Applied</th>
+          <th class="hide-sm">ATS</th>
+          <th>Status</th>
+          <th>Notes</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="tblBody"></tbody>
+    </table>
+  </div>
+</main>
+
+<!-- Add Application Modal -->
+<div class="modal-overlay" id="addModal" onclick="handleModalClick(event)">
+  <div class="modal-box">
+    <div class="modal-title">➕ Add Application</div>
+    <div class="form-row">
+      <div class="f">
+        <label>Company *</label>
+        <input type="text" id="addCompany" placeholder="e.g. Google, Stripe" />
+      </div>
+      <div class="f">
+        <label>Role *</label>
+        <input type="text" id="addRole" placeholder="e.g. Product Manager" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="f">
+        <label>Date Applied</label>
+        <input type="date" id="addDate" />
+      </div>
+      <div class="f">
+        <label>Status</label>
+        <select id="addStatus">
+          <option>Applied</option>
+          <option>Phone Screen</option>
+          <option>Interview</option>
+          <option>Final Round</option>
+          <option>Offer</option>
+          <option>Rejected</option>
+          <option>Withdrawn</option>
+        </select>
+      </div>
+    </div>
+    <div class="f" style="margin-bottom:14px">
+      <label>Notes</label>
+      <textarea id="addNotes" placeholder="Recruiter name, salary range, anything useful…"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="confirmAdd()">Add Application</button>
+      <button class="btn btn-cancel" onclick="closeAddModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  TailorCV Job Tracker — Full-Page View
+//  Reads/writes from the same localStorage key as the sidebar
+// ══════════════════════════════════════════════════════════════
+
+var TRACKER_KEY = 'proresume_tracker_v2';
+var _activeFilter = 'All';
+
+var STATUS_COLORS = {
+  'Applied':      '#2d5a8e',
+  'Phone Screen': '#0369a1',
+  'Interview':    '#7c3aed',
+  'Final Round':  '#92400e',
+  'Offer':        '#166534',
+  'Rejected':     '#991b1b',
+  'Withdrawn':    '#4b5563',
+};
+var STATUS_BG = {
+  'Applied':      '#eff6ff',
+  'Phone Screen': '#e0f2fe',
+  'Interview':    '#f3e8ff',
+  'Final Round':  '#fef9c3',
+  'Offer':        '#dcfce7',
+  'Rejected':     '#fee2e2',
+  'Withdrawn':    '#f1f5f9',
+};
+var STATUSES = ['Applied','Phone Screen','Interview','Final Round','Offer','Rejected','Withdrawn'];
+
+function load() {
+  try { return JSON.parse(localStorage.getItem(TRACKER_KEY)) || []; } catch(e) { return []; }
+}
+function save(entries) { localStorage.setItem(TRACKER_KEY, JSON.stringify(entries)); }
+
+// ── Pipeline ──────────────────────────────────────────────────
+function renderPipeline() {
+  var entries = load();
+  var stages = [
+    { key:'All',         label:'All',          dot:'#94a3b8', count: entries.length },
+    { key:'Applied',     label:'Applied',       dot:'#2d5a8e', count: entries.filter(function(e){ return e.status==='Applied'; }).length },
+    { key:'Phone Screen',label:'Phone Screen',  dot:'#0369a1', count: entries.filter(function(e){ return e.status==='Phone Screen'; }).length },
+    { key:'Interview',   label:'Interview',     dot:'#7c3aed', count: entries.filter(function(e){ return e.status==='Interview'; }).length },
+    { key:'Final Round', label:'Final Round',   dot:'#92400e', count: entries.filter(function(e){ return e.status==='Final Round'; }).length },
+    { key:'Offer',       label:'Offers 🎉',     dot:'#166534', count: entries.filter(function(e){ return e.status==='Offer'; }).length },
+    { key:'Rejected',    label:'Rejected',      dot:'#991b1b', count: entries.filter(function(e){ return e.status==='Rejected'; }).length },
+  ];
+  var h = '';
+  stages.forEach(function(s) {
+    var active = _activeFilter === s.key ? ' active' : '';
+    h += '<div class="pipe-col'+active+'" onclick="setFilter(\''+s.key+'\')">'
+       + '<div class="pipe-dot" style="background:'+s.dot+'"></div>'
+       + '<div class="pipe-n">'+s.count+'</div>'
+       + '<div class="pipe-l">'+s.label+'</div>'
+       + '</div>';
+  });
+  document.getElementById('pipeline').innerHTML = h;
+}
+
+function setFilter(key) {
+  _activeFilter = key;
+  renderPipeline();
+  renderTable();
+}
+
+// ── Table ─────────────────────────────────────────────────────
+function renderTable() {
+  var entries = load();
+  var q = (document.getElementById('searchBox').value || '').toLowerCase().trim();
+
+  var filtered = entries.filter(function(e) {
+    if (_activeFilter !== 'All' && e.status !== _activeFilter) return false;
+    if (q && !(e.company.toLowerCase().includes(q) || e.role.toLowerCase().includes(q))) return false;
+    return true;
+  });
+
+  var empty = document.getElementById('tblEmpty');
+  var tbl   = document.getElementById('tbl');
+  var body  = document.getElementById('tblBody');
+
+  if (!filtered.length) {
+    empty.style.display = 'block'; tbl.style.display = 'none'; return;
+  }
+  empty.style.display = 'none'; tbl.style.display = 'table';
+
+  var h = '';
+  filtered.forEach(function(e) {
+    var atsHtml = '—';
+    if (e.atsScore !== null && e.atsScore !== undefined) {
+      var cls = e.atsScore >= 80 ? 'ats-g' : e.atsScore >= 60 ? 'ats-a' : 'ats-r';
+      atsHtml = '<span class="ats-chip '+cls+'">'+e.atsScore+'%</span>';
+    }
+    var sc  = STATUS_COLORS[e.status] || '#4b5563';
+    var sbg = STATUS_BG[e.status]     || '#f1f5f9';
+    var opts = STATUSES.map(function(s) {
+      return '<option value="'+s+'"'+(e.status===s?' selected':'')+'>'+s+'</option>';
+    }).join('');
+    var noteVal = (e.notes || '').replace(/"/g, '&quot;');
+    h += '<tr>'
+       + '<td class="td-company">'+esc(e.company)+'</td>'
+       + '<td class="td-role">'+esc(e.role)+'</td>'
+       + '<td class="td-date hide-sm">'+esc(e.date||'—')+'</td>'
+       + '<td class="td-ats hide-sm">'+atsHtml+'</td>'
+       + '<td><select class="status-select" data-id="'+e.id+'" style="color:'+sc+';background:'+sbg+'">'+opts+'</select></td>'
+       + '<td class="td-notes"><textarea data-notes-id="'+e.id+'" placeholder="Add notes…">'+esc(e.notes||'')+'</textarea></td>'
+       + '<td class="td-del"><button class="del-btn" data-del="'+e.id+'" title="Remove">✕</button></td>'
+       + '</tr>';
+  });
+  body.innerHTML = h;
+
+  body.querySelectorAll('.status-select').forEach(function(sel) {
+    sel.addEventListener('change', function() {
+      var id = sel.getAttribute('data-id');
+      var all = load();
+      all.forEach(function(e) { if(e.id===id) { e.status=sel.value; e.statusDate=new Date().toISOString(); } });
+      save(all);
+      renderPipeline();
+      renderTable();
+    });
+  });
+  body.querySelectorAll('[data-notes-id]').forEach(function(ta) {
+    ta.addEventListener('change', function() {
+      var id = ta.getAttribute('data-notes-id');
+      var all = load();
+      all.forEach(function(e) { if(e.id===id) e.notes=ta.value; });
+      save(all);
+    });
+  });
+  body.querySelectorAll('[data-del]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      if (!confirm('Remove this application?')) return;
+      save(load().filter(function(e){ return e.id!==btn.getAttribute('data-del'); }));
+      renderPipeline();
+      renderTable();
+    });
+  });
+}
+
+function filterTable() { renderTable(); }
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ── Add modal ─────────────────────────────────────────────────
+function openAddModal() {
+  document.getElementById('addCompany').value = '';
+  document.getElementById('addRole').value    = '';
+  document.getElementById('addNotes').value   = '';
+  document.getElementById('addStatus').value  = 'Applied';
+  // Default date = today
+  var today = new Date();
+  document.getElementById('addDate').value = today.toISOString().split('T')[0];
+  document.getElementById('addModal').classList.add('open');
+  setTimeout(function(){ document.getElementById('addCompany').focus(); }, 80);
+}
+function closeAddModal() { document.getElementById('addModal').classList.remove('open'); }
+function handleModalClick(e) { if (e.target === document.getElementById('addModal')) closeAddModal(); }
+
+function confirmAdd() {
+  var company = document.getElementById('addCompany').value.trim();
+  var role    = document.getElementById('addRole').value.trim();
+  if (!company || !role) { alert('Company and Role are required.'); return; }
+
+  var dateVal = document.getElementById('addDate').value;
+  var date = dateVal
+    ? new Date(dateVal).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})
+    : new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+
+  var all = load();
+  all.unshift({
+    id: Date.now().toString(),
+    company:      company,
+    role:         role,
+    date:         date,
+    template:     '',
+    templateLabel:'Manual entry',
+    profile:      '',
+    profileLabel: '',
+    atsScore:     null,
+    status:       document.getElementById('addStatus').value,
+    notes:        document.getElementById('addNotes').value.trim(),
+    statusDate:   new Date().toISOString(),
+  });
+  save(all);
+  closeAddModal();
+  renderPipeline();
+  renderTable();
+}
+
+// ── CSV Export ────────────────────────────────────────────────
+function exportCSV() {
+  var entries = load();
+  if (!entries.length) { alert('No applications to export.'); return; }
+  var cols = ['Company','Role','Date','Status','ATS Score','Template','Notes'];
+  var rows = entries.map(function(e) {
+    return [
+      '"'+(e.company||'').replace(/"/g,'""')+'"',
+      '"'+(e.role||'').replace(/"/g,'""')+'"',
+      '"'+(e.date||'')+'"',
+      '"'+(e.status||'')+'"',
+      e.atsScore!=null ? e.atsScore : '',
+      '"'+(e.templateLabel||e.template||'')+'"',
+      '"'+(e.notes||'').replace(/"/g,'""')+'"',
+    ].join(',');
+  });
+  var csv = [cols.join(',')].concat(rows).join('\n');
+  var a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'tailorcv-applications-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+}
+
+// ── Auth guard ────────────────────────────────────────────────
+(function() {
+  if (!localStorage.getItem('tc_token')) { window.location.href = '/auth.html'; }
+})();
+
+// ── Init ──────────────────────────────────────────────────────
+renderPipeline();
+renderTable();
+</script>
+</body>
+</html>

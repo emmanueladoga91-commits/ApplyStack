@@ -643,8 +643,80 @@ async function extractDocxText(buffer) {
   if(text.length<50) throw new Error('Could not read text from DOCX. Make sure it has actual text (not just images).');
   return text;
 }
+// ── LinkedIn PDF Detection & Smart Parsing ────────────────────────────────
+function detectLinkedIn(text) {
+  // LinkedIn profile PDFs have several reliable signatures
+  var lower = text.toLowerCase();
+  return (
+    lower.includes('linkedin.com/in/') ||
+    lower.includes('linkedin profile') ||
+    // LinkedIn section headers in their exported PDFs
+    (lower.includes('contact') && lower.includes('experience') && lower.includes('education') && lower.includes('skills') && text.length < 12000)
+  );
+}
+
+function parseLinkedInFields(text) {
+  // Try to extract the most recent job title and company from LinkedIn text
+  // LinkedIn PDF format: Name at top, then Experience section with "Title\nCompany\nDates"
+  var result = { role: null, company: null };
+  try {
+    // Find Experience section
+    var expIdx = text.search(/\bExperience\b/i);
+    if (expIdx === -1) return result;
+    var expSection = text.slice(expIdx, expIdx + 800);
+    var lines = expSection.split(/\n|\r/).map(function(l){ return l.trim(); }).filter(Boolean);
+    // Skip the "Experience" heading itself
+    var start = 0;
+    for (var i = 0; i < lines.length; i++) {
+      if (/^Experience$/i.test(lines[i])) { start = i + 1; break; }
+    }
+    // The first entry is typically: Role\nCompany\nDate Range
+    if (lines[start]) result.role    = lines[start];
+    if (lines[start + 1]) result.company = lines[start + 1];
+  } catch(e) {}
+  return result;
+}
+
+function showLinkedInBanner(fields) {
+  // Remove any existing banner
+  var existing = document.getElementById('linkedInBanner');
+  if (existing) existing.remove();
+
+  var banner = document.createElement('div');
+  banner.id = 'linkedInBanner';
+  banner.style.cssText = 'background:#eef2ff;border:1.5px solid #a5b4fc;border-radius:10px;padding:12px 16px;margin:10px 0;display:flex;align-items:flex-start;gap:10px;font-size:.88rem;';
+  var msg = '<span style="font-size:1.2rem;flex-shrink:0">🔗</span><div><strong style="color:#1a2744">LinkedIn profile detected!</strong> We\'ve optimised the text extraction for LinkedIn\'s export format.';
+  if (fields.role || fields.company) {
+    msg += '<br><span style="color:#475569">Auto-filled: ';
+    if (fields.role)    msg += '<strong>' + fields.role    + '</strong> (role)';
+    if (fields.role && fields.company) msg += ' at ';
+    if (fields.company) msg += '<strong>' + fields.company + '</strong> (company)';
+    msg += ' — edit if needed.</span>';
+  }
+  msg += '</div>';
+  banner.innerHTML = msg;
+
+  // Insert after the dropzone
+  var dz = document.getElementById('dz');
+  if (dz && dz.parentNode) dz.parentNode.insertBefore(banner, dz.nextSibling);
+}
+
 async function extractText(buffer, name) {
-  return name.match(/\.pdf$/i) ? extractPdfText(buffer) : extractDocxText(buffer);
+  if (name.match(/\.pdf$/i)) {
+    var text = await extractPdfText(buffer);
+    // Check for LinkedIn PDF
+    if (detectLinkedIn(text)) {
+      var fields = parseLinkedInFields(text);
+      // Auto-fill Company and Role if the fields are empty
+      var roleEl    = document.getElementById('role');
+      var companyEl = document.getElementById('company');
+      if (roleEl    && !roleEl.value.trim()    && fields.role)    roleEl.value    = fields.role;
+      if (companyEl && !companyEl.value.trim() && fields.company) companyEl.value = fields.company;
+      showLinkedInBanner(fields);
+    }
+    return text;
+  }
+  return extractDocxText(buffer);
 }
 
 // ── Claude API helper ──────────────────────────────────────────────────────
@@ -2118,6 +2190,9 @@ resetFile = function() {
   window._preExtractedResumeText = null;
   _pdfTextCache = null;
   _pdfCacheKey  = null;
+  // Remove LinkedIn banner if present
+  var liBanner = document.getElementById('linkedInBanner');
+  if (liBanner) liBanner.remove();
   var saveRow = document.getElementById('libSaveRow');
   if (saveRow) saveRow.style.display = 'none';
 };

@@ -182,14 +182,16 @@
     if (pass !== conf) { showAlert('error', 'Passwords do not match.'); return; }
     setLoading('registerBtn', true);
     try {
-      var betaCode = document.getElementById('regBetaCode').value.trim();
+      var betaCode   = document.getElementById('regBetaCode').value.trim();
+      var referredBy = sessionStorage.getItem('tc_ref') || new URLSearchParams(location.search).get('ref') || undefined;
       var res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: document.getElementById('regEmail').value.trim(),
           password: pass,
-          betaCode: betaCode || undefined,
+          betaCode:   betaCode   || undefined,
+          referredBy: referredBy || undefined,
         }),
       });
       var data = await res.json();
@@ -210,7 +212,21 @@
   }
 
   // Pre-fill tab from query string ?tab=register
-  if (new URLSearchParams(location.search).get('tab') === 'register') switchTab('register');
+  var _params = new URLSearchParams(location.search);
+  if (_params.get('tab') === 'register') switchTab('register');
+
+  // Persist referral code from URL so it survives tab switches
+  var _refCode = _params.get('ref');
+  if (_refCode) {
+    sessionStorage.setItem('tc_ref', _refCode.trim().toUpperCase());
+    switchTab('register');
+    // Show a friendly referral notice
+    var notice = document.createElement('div');
+    notice.style.cssText = 'background:#dcfce7;border:1px solid #86efac;border-radius:10px;padding:12px 16px;font-size:.88rem;color:#166534;margin-bottom:16px;display:flex;align-items:center;gap:8px';
+    notice.innerHTML = '<span style="font-size:1.1rem">🎁</span><div><strong>You were invited!</strong> Sign up now and you\'ll both get a free bonus resume tailoring after your first build.</div>';
+    var form = document.getElementById('registerForm');
+    if (form) form.insertBefore(notice, form.firstChild);
+  }
 </script>
 </body>
 </html>

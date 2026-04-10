@@ -132,6 +132,38 @@
     </div>
   </div>
 
+  <!-- Referral Card -->
+  <div class="card" id="referralCard">
+    <div class="card-title">🎁 Refer a Friend — Earn Free Tailorings</div>
+    <p style="font-size:.9rem;color:var(--gray600);margin-bottom:16px;line-height:1.6">Share your personal link. When a friend signs up and builds their first resume, <strong>you both get 1 free bonus tailoring</strong>. Works even on the free plan.</p>
+
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+      <input id="referralLinkInput" type="text" readonly
+        style="flex:1;min-width:200px;padding:11px 14px;border:1.5px solid var(--gray200);border-radius:10px;font-size:.85rem;color:var(--gray800);background:var(--gray50);font-family:inherit"
+        value="Loading…" />
+      <button onclick="copyReferralLink()" id="copyBtn"
+        style="padding:11px 20px;background:var(--indigo);color:#fff;border:none;border-radius:10px;font-size:.88rem;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;transition:background .2s">
+        📋 Copy Link
+      </button>
+    </div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:4px">
+      <div class="stat-box">
+        <div class="stat-n" id="refStatCount">—</div>
+        <div class="stat-l">Friends referred</div>
+      </div>
+      <div class="stat-box" style="border-color:#86efac;background:#f0fdf4">
+        <div class="stat-n" style="color:#166534" id="refStatCredits">—</div>
+        <div class="stat-l">Free tailorings earned</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-n" id="refStatCode" style="font-size:1.2rem;letter-spacing:.05em">—</div>
+        <div class="stat-l">Your referral code</div>
+      </div>
+    </div>
+    <p style="font-size:.78rem;color:var(--gray400);margin-top:10px">Credits are awarded automatically when your referred friend completes their first resume build.</p>
+  </div>
+
   <!-- Upgrade card (shown only for free users) -->
   <div class="card" id="upgradeCard">
     <div class="card-title">Upgrade to Pro</div>
@@ -348,7 +380,36 @@
     }
   }
 
+  // ── Referral ──────────────────────────────────────────────────
+  async function loadReferral() {
+    try {
+      var res = await fetch('/api/referral', { headers: { Authorization: 'Bearer ' + token() } });
+      if (!res.ok) return;
+      var d = await res.json();
+      var base = location.origin + '/auth.html?tab=register&ref=';
+      var link = base + (d.referral_code || '');
+      document.getElementById('referralLinkInput').value = link;
+      document.getElementById('refStatCount').textContent   = d.referral_count   ?? 0;
+      document.getElementById('refStatCredits').textContent = d.referral_credits ?? 0;
+      document.getElementById('refStatCode').textContent    = d.referral_code    || '—';
+    } catch(e) { /* silent */ }
+  }
+
+  function copyReferralLink() {
+    var input = document.getElementById('referralLinkInput');
+    navigator.clipboard.writeText(input.value).then(function() {
+      var btn = document.getElementById('copyBtn');
+      btn.textContent = '✅ Copied!';
+      btn.style.background = '#166534';
+      setTimeout(function() { btn.textContent = '📋 Copy Link'; btn.style.background = ''; }, 2200);
+    }).catch(function() {
+      input.select();
+      document.execCommand('copy');
+    });
+  }
+
   loadUser();
+  loadReferral();
 </script>
 </body>
 </html>

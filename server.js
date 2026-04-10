@@ -7,10 +7,17 @@ const express    = require('express');
 const path       = require('path');
 const bcrypt     = require('bcryptjs');
 const jwt        = require('jsonwebtoken');
+const crypto     = require('crypto');
 const { Pool }   = require('pg');
 const Stripe     = require('stripe');
 const rateLimit  = require('express-rate-limit');
 const cors       = require('cors');
+
+// ── Referral code generator ────────────────────────────────────
+function genReferralCode() {
+  // 8-char alphanumeric, URL-safe, case-insensitive
+  return crypto.randomBytes(5).toString('base64url').toUpperCase().slice(0, 8).replace(/[^A-Z0-9]/g, 'X');
+}
 
 // ── Load env ───────────────────────────────────────────────────
 try { require('dotenv').config(); } catch(e) {}
@@ -64,6 +71,17 @@ const pool = new Pool({
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
   `);
+  // Referral columns (idempotent — ADD COLUMN IF NOT EXISTS)
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS referral_code TEXT;`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS referral_credits INTEGER NOT NULL DEFAULT 0;`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS referred_by INTEGER;`);
+  // Back-fill referral codes for existing users who don't have one
+  await pool.query(`
+    UPDATE users SET referral_code = UPPER(SUBSTRING(MD5(RANDOM()::TEXT), 1, 8))
+    WHERE referral_code IS NULL;
+  `);
+  // Unique index (idempotent)
+  await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS users_referral_code_idx ON users(referral_code);`);
   console.log('Database ready.');
 })().catch(err => { console.error('DB init error:', err); process.exit(1); });
 
@@ -119,7 +137,7 @@ const aiLimiter   = rateLimit({ windowMs:  1 * 60 * 1000, max: 10, message: { er
 // ══════════════════════════════════════════════════════════════
 app.post('/api/auth/register', authLimiter, async (req, res) => {
   try {
-    const { email, password, betaCode } = req.body || {};
+    const { email, password, betaCode, referredBy } = req.body || {};
     if (!email || !password) return res.status(400).json({ error: 'Email and password are required.' });
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: 'Invalid email address.' });
     if (password.length < 8) return res.status(400).json({ error: 'Password must be at least 8 characters.' });
@@ -151,10 +169,28 @@ app.post('/api/auth/register', authLimiter, async (req, res) => {
       );
     }
 
+    // Resolve referrer (if a valid referral code was passed)
+    let referrerId = null;
+    if (referredBy) {
+      const refRow = await pool.query(
+        'SELECT id FROM users WHERE referral_code = $1',
+        [referredBy.trim().toUpperCase()]
+      );
+      if (refRow.rows.length) referrerId = refRow.rows[0].id;
+    }
+
     const hash = await bcrypt.hash(password, 12);
+    // Generate a unique referral code for the new user
+    let newCode = genReferralCode();
+    // Retry on collision (extremely unlikely but safe)
+    for (let i = 0; i < 5; i++) {
+      const chk = await pool.query('SELECT id FROM users WHERE referral_code = $1', [newCode]);
+      if (!chk.rows.length) break;
+      newCode = genReferralCode();
+    }
     const result = await pool.query(
-      'INSERT INTO users (email, password_hash, plan, subscription_status) VALUES ($1, $2, $3, $4) RETURNING *',
-      [normalEmail, hash, plan, subscriptionStatus]
+      'INSERT INTO users (email, password_hash, plan, subscription_status, referral_code, referred_by) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
+      [normalEmail, hash, plan, subscriptionStatus, newCode, referrerId]
     );
     const user = result.rows[0];
     const token = signToken(user.id);
@@ -298,7 +334,8 @@ app.post('/api/claude', requireAuth, aiLimiter, async (req, res) => {
   if (type === 'score') {
     // no gating — everyone can check their match score
   } else if (type === 'tailor') {
-    if (!isPro && user.tailoring_count >= 1) {
+    const freeLimit = 1 + (user.referral_credits || 0);
+    if (!isPro && user.tailoring_count >= freeLimit) {
       return res.status(402).json({
         error: 'upgrade_required',
         message: 'You have used your free resume tailoring. Upgrade to Pro for unlimited tailoring.',
@@ -349,6 +386,21 @@ app.post('/api/claude', requireAuth, aiLimiter, async (req, res) => {
         'UPDATE users SET tailoring_count = tailoring_count + 1, updated_at = NOW() WHERE id = $1',
         [user.id]
       );
+      // On first build — award referral credit to both referrer and this user
+      const freshUser = await pool.query(
+        'SELECT tailoring_count, referred_by FROM users WHERE id = $1', [user.id]
+      );
+      const fu = freshUser.rows[0];
+      if (fu && fu.tailoring_count === 1 && fu.referred_by) {
+        await pool.query(
+          'UPDATE users SET referral_credits = referral_credits + 1, updated_at = NOW() WHERE id = $1',
+          [fu.referred_by]
+        );
+        await pool.query(
+          'UPDATE users SET referral_credits = referral_credits + 1, updated_at = NOW() WHERE id = $1',
+          [user.id]
+        );
+      }
     }
 
     res.json({ text });
@@ -860,6 +912,24 @@ async function handleStripeWebhook(req, res) {
   res.json({ received: true });
 }
 
+// ── Referral API ───────────────────────────────────────────────
+app.get('/api/referral', requireAuth, async (req, res) => {
+  try {
+    const user = req.user;
+    const countRes = await pool.query(
+      'SELECT COUNT(*) AS cnt FROM users WHERE referred_by = $1', [user.id]
+    );
+    res.json({
+      referral_code:    user.referral_code || '',
+      referral_count:   parseInt(countRes.rows[0].cnt, 10),
+      referral_credits: user.referral_credits || 0,
+    });
+  } catch (err) {
+    console.error('Referral API error:', err);
+    res.status(500).json({ error: 'Could not load referral info.' });
+  }
+});
+
 // ── SPA fallback ───────────────────────────────────────────────
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -875,6 +945,8 @@ function safeUser(u) {
     tailoring_count:     u.tailoring_count,
     subscription_status: u.subscription_status,
     is_owner:            isOwner || false,
+    referral_code:       u.referral_code || null,
+    referral_credits:    u.referral_credits || 0,
   };
 }
 
