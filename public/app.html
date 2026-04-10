@@ -105,6 +105,50 @@
     .ft-divider { width:1px; height:22px; background:var(--border); flex-shrink:0; }
     .ft-preview { margin-left:auto; font-size:14px; color:var(--muted); font-style:italic; white-space:nowrap; }
 
+    /* ── Template Customizer panel ── */
+    .cust-panel { display:none; margin-top:14px; background:linear-gradient(135deg,#f0f4ff,#f8fffe); border:1.5px solid #c7d2fe; border-radius:12px; padding:16px; }
+    .cust-panel.on { display:block; }
+    .cust-hdr { font-size:13px; font-weight:800; color:var(--navy); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+    .cust-hdr span { font-size:18px; }
+    .cust-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    @media (max-width:640px) { .cust-grid { grid-template-columns:1fr; } }
+    .cust-group { background:#fff; border:1px solid var(--border); border-radius:9px; padding:12px; }
+    .cust-full { grid-column:1/-1; }
+    .cust-lbl { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); margin-bottom:8px; }
+    .cust-sel { width:100%; padding:6px 8px; border:1.5px solid var(--border); border-radius:7px; font-size:12px; font-family:inherit; color:var(--text); background:#fafbfd; outline:none; cursor:pointer; }
+    .cust-sel:focus { border-color:var(--mid); }
+    /* Style toggle buttons */
+    .cst-btns { display:flex; flex-wrap:wrap; gap:5px; }
+    .cst-btn { padding:4px 10px; border:1.5px solid var(--border); border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; background:#fafbfd; color:var(--text); font-family:inherit; transition:all .12s; white-space:nowrap; }
+    .cst-btn:hover { border-color:var(--mid); }
+    .cst-btn.on { background:var(--navy); color:#fff; border-color:var(--navy); }
+    /* Toggle row */
+    .cst-tog { display:flex; gap:4px; }
+    .cst-tog-btn { flex:1; padding:5px 4px; border:1.5px solid var(--border); border-radius:6px; font-size:11px; font-weight:600; cursor:pointer; background:#fafbfd; color:var(--text); font-family:inherit; text-align:center; transition:all .12s; }
+    .cst-tog-btn.on { background:var(--navy); color:#fff; border-color:var(--navy); }
+    /* Color picker row */
+    .color-row { display:flex; flex-wrap:wrap; gap:5px; align-items:center; }
+    .cswatch { width:24px; height:24px; border-radius:6px; border:2px solid transparent; cursor:pointer; transition:transform .12s,border-color .12s; flex-shrink:0; }
+    .cswatch:hover { transform:scale(1.2); }
+    .cswatch.on { border-color:var(--navy); outline:2px solid #6366f1; outline-offset:1px; }
+    input[type=color].cpick { width:24px; height:24px; border:1.5px solid var(--border); border-radius:6px; cursor:pointer; padding:1px; background:#fff; }
+    /* Section order list */
+    .sec-ord-list { display:flex; flex-direction:column; gap:5px; }
+    .sec-ord-item { display:flex; align-items:center; gap:8px; background:#f8fafc; border:1.5px solid var(--border); border-radius:7px; padding:7px 10px; cursor:grab; transition:border-color .12s; }
+    .sec-ord-item:active { cursor:grabbing; }
+    .sec-ord-item.dragging { opacity:.3; border-style:dashed; }
+    .sec-ord-item.drag-over { border-color:var(--accent); background:var(--accent-lite); }
+    .sec-ord-item.sec-hidden { opacity:.4; }
+    .sec-ord-handle { color:var(--muted); font-size:14px; flex-shrink:0; }
+    .sec-ord-icon { font-size:14px; flex-shrink:0; }
+    .sec-ord-rename { flex:1; font-size:11.5px; padding:3px 7px; border:1px solid var(--border); border-radius:5px; font-family:inherit; color:var(--text); background:#fff; min-width:0; }
+    .sec-ord-rename:focus { outline:none; border-color:var(--mid); }
+    .sec-vis-btn { background:none; border:none; cursor:pointer; font-size:15px; padding:2px; flex-shrink:0; transition:opacity .15s; }
+    .sec-vis-btn.hidden { opacity:.3; }
+    /* Customizer preview button */
+    .cust-pv-btn { width:100%; margin-top:14px; padding:12px; background:linear-gradient(135deg,#4f6ef7,#0d9488); color:#fff; border:none; border-radius:9px; font-size:13px; font-weight:700; font-family:inherit; cursor:pointer; letter-spacing:.2px; }
+    .cust-pv-btn:hover { opacity:.92; }
+
     /* ── API key ── */
     .keyrow { display:flex; gap:8px; align-items:center; }
     .keyrow input { flex:1; }
@@ -1050,6 +1094,33 @@
 
     </div>
 
+      <!-- 14. Custom ✦ — design from scratch -->
+      <div class="template-card" data-template="custom">
+        <div class="t-preview" style="overflow:hidden;position:relative">
+          <div style="position:absolute;left:0;top:0;bottom:0;width:6px;background:linear-gradient(180deg,#6366f1,#0d9488)"></div>
+          <div class="tp" style="padding-left:12px;background:linear-gradient(135deg,#f0f4ff,#f8fffe)">
+            <div class="tp-name" style="width:55%;background:#6366f1;margin-bottom:2px"></div>
+            <div class="tp-sub" style="width:70%;background:#a5b4fc;margin-bottom:5px"></div>
+            <div style="border-bottom:2px solid #6366f1;margin:2px 0 3px">
+              <div class="tp-line" style="background:#6366f1;width:42%;height:3px;margin-bottom:2px"></div>
+            </div>
+            <div style="display:flex;gap:2px;flex-wrap:wrap;margin-bottom:3px">
+              <div style="height:5px;width:16px;background:#eef2ff;border:1px solid #6366f1;border-radius:99px"></div>
+              <div style="height:5px;width:20px;background:#e0fdf4;border:1px solid #0d9488;border-radius:99px"></div>
+              <div style="height:5px;width:13px;background:#fef3c7;border:1px solid #d97706;border-radius:99px"></div>
+            </div>
+            <div class="tp-line" style="width:90%"></div>
+            <div class="tp-line" style="width:74%"></div>
+          </div>
+          <div style="position:absolute;top:5px;right:6px;font-size:12px;color:#6366f1;font-weight:900">✦</div>
+        </div>
+        <div class="t-name">Custom ✦</div>
+        <div class="t-desc">Design from scratch</div>
+        <button class="t-eye-btn" data-preview="custom">👁 Preview</button>
+      </div>
+
+    </div><!-- end .template-grid -->
+
     <!-- ── Font / Typography toolbar ── -->
     <div class="font-toolbar">
       <span class="ft-aa">Aa</span>
@@ -1089,6 +1160,113 @@
         </select>
       </div>
       <span class="ft-preview" id="ftSample">The quick brown fox</span>
+    </div>
+
+    <!-- ── Template Customizer (shown when Custom ✦ selected) ── -->
+    <div id="custPanel" class="cust-panel">
+      <div class="cust-hdr"><span>✦</span> Design your own template — changes apply live to preview</div>
+      <div class="cust-grid">
+        <!-- Header layout -->
+        <div class="cust-group">
+          <div class="cust-lbl">Header layout</div>
+          <select id="custHdrStyle" class="cust-sel">
+            <option value="plain-center">Centered (plain)</option>
+            <option value="plain-left">Left-aligned (plain)</option>
+            <option value="banner">Solid colour banner</option>
+            <option value="gradient-banner">Gradient banner</option>
+            <option value="dark-banner">Dark banner</option>
+            <option value="light-banner">Light colour banner</option>
+            <option value="top-stripe">Top stripe</option>
+            <option value="double-border">Double border (formal)</option>
+            <option value="accent-top">Accent top bar</option>
+            <option value="color-left">Vertical left stripe</option>
+          </select>
+        </div>
+        <!-- Accent colour -->
+        <div class="cust-group">
+          <div class="cust-lbl">Accent colour</div>
+          <div class="color-row">
+            <div class="cswatch on" style="background:#1a2744" data-color="#1a2744"></div>
+            <div class="cswatch" style="background:#1e3a5f" data-color="#1e3a5f"></div>
+            <div class="cswatch" style="background:#6366f1" data-color="#6366f1"></div>
+            <div class="cswatch" style="background:#0284c7" data-color="#0284c7"></div>
+            <div class="cswatch" style="background:#0d9488" data-color="#0d9488"></div>
+            <div class="cswatch" style="background:#1b3a2f" data-color="#1b3a2f"></div>
+            <div class="cswatch" style="background:#7f1d1d" data-color="#7f1d1d"></div>
+            <div class="cswatch" style="background:#78350f" data-color="#78350f"></div>
+            <div class="cswatch" style="background:#4b5563" data-color="#4b5563"></div>
+            <div class="cswatch" style="background:#111111" data-color="#111111"></div>
+            <input type="color" id="custAccentPicker" value="#1a2744" class="cpick">
+          </div>
+        </div>
+        <!-- Banner/header colour -->
+        <div class="cust-group" id="custBannerRow">
+          <div class="cust-lbl">Banner / header colour</div>
+          <div class="color-row">
+            <div class="cswatch on" style="background:#1a2744" data-bcolor="#1a2744"></div>
+            <div class="cswatch" style="background:#1b3a2f" data-bcolor="#1b3a2f"></div>
+            <div class="cswatch" style="background:#7f1d1d" data-bcolor="#7f1d1d"></div>
+            <div class="cswatch" style="background:#0d9488" data-bcolor="#0d9488"></div>
+            <div class="cswatch" style="background:#0369a1" data-bcolor="#0369a1"></div>
+            <div class="cswatch" style="background:#e0f2fe" data-bcolor="#e0f2fe"></div>
+            <div class="cswatch" style="background:#0f172a" data-bcolor="#0f172a"></div>
+            <input type="color" id="custBannerPicker" value="#1a2744" class="cpick">
+          </div>
+        </div>
+        <!-- Section dividers -->
+        <div class="cust-group">
+          <div class="cust-lbl">Section dividers</div>
+          <div class="cst-btns">
+            <button class="cst-btn on" data-sechdr="underline">— Underline</button>
+            <button class="cst-btn" data-sechdr="double">= Double</button>
+            <button class="cst-btn" data-sechdr="left-bar">| Left bar</button>
+            <button class="cst-btn" data-sechdr="block-bg">▬ Block</button>
+            <button class="cst-btn" data-sechdr="dots">… Dotted</button>
+            <button class="cst-btn" data-sechdr="caps-gray">Aa Gray</button>
+          </div>
+        </div>
+        <!-- Section label case -->
+        <div class="cust-group">
+          <div class="cust-lbl">Section label case</div>
+          <div class="cst-tog">
+            <button class="cst-tog-btn on" data-seccase="upper">ALL CAPS</button>
+            <button class="cst-tog-btn" data-seccase="title">Title Case</button>
+          </div>
+        </div>
+        <!-- Skills display -->
+        <div class="cust-group">
+          <div class="cust-lbl">Skills display</div>
+          <div class="cst-btns">
+            <button class="cst-btn on" data-skills="grid2">⊞ Grid</button>
+            <button class="cst-btn" data-skills="pills">◉ Pills</button>
+            <button class="cst-btn" data-skills="tags">‹› Tags</button>
+            <button class="cst-btn" data-skills="inline">· Inline</button>
+            <button class="cst-btn" data-skills="single">— List</button>
+          </div>
+        </div>
+        <!-- Page spacing -->
+        <div class="cust-group">
+          <div class="cust-lbl">Page spacing</div>
+          <div class="cst-tog">
+            <button class="cst-tog-btn" data-spacing="compact">Compact</button>
+            <button class="cst-tog-btn on" data-spacing="normal">Normal</button>
+            <button class="cst-tog-btn" data-spacing="spacious">Spacious</button>
+          </div>
+        </div>
+        <!-- Section order -->
+        <div class="cust-group cust-full">
+          <div class="cust-lbl">Section order — drag to rearrange · 👁 toggle visibility · rename labels</div>
+          <div class="sec-ord-list" id="custSecList">
+            <div class="sec-ord-item" data-sec="summary" draggable="true"><span class="sec-ord-handle">⣿</span><span class="sec-ord-icon">📄</span><input class="sec-ord-rename" value="PROFESSIONAL SUMMARY" data-sec="summary"><button class="sec-vis-btn" data-sec="summary">👁</button></div>
+            <div class="sec-ord-item" data-sec="skills" draggable="true"><span class="sec-ord-handle">⣿</span><span class="sec-ord-icon">⭐</span><input class="sec-ord-rename" value="KEY SKILLS" data-sec="skills"><button class="sec-vis-btn" data-sec="skills">👁</button></div>
+            <div class="sec-ord-item" data-sec="experience" draggable="true"><span class="sec-ord-handle">⣿</span><span class="sec-ord-icon">💼</span><input class="sec-ord-rename" value="WORK EXPERIENCE" data-sec="experience"><button class="sec-vis-btn" data-sec="experience">👁</button></div>
+            <div class="sec-ord-item" data-sec="tech" draggable="true"><span class="sec-ord-handle">⣿</span><span class="sec-ord-icon">🔧</span><input class="sec-ord-rename" value="TECHNICAL SKILLS" data-sec="tech"><button class="sec-vis-btn" data-sec="tech">👁</button></div>
+            <div class="sec-ord-item" data-sec="certs" draggable="true"><span class="sec-ord-handle">⣿</span><span class="sec-ord-icon">🏆</span><input class="sec-ord-rename" value="CERTIFICATIONS" data-sec="certs"><button class="sec-vis-btn" data-sec="certs">👁</button></div>
+            <div class="sec-ord-item" data-sec="edu" draggable="true"><span class="sec-ord-handle">⣿</span><span class="sec-ord-icon">🎓</span><input class="sec-ord-rename" value="EDUCATION" data-sec="edu"><button class="sec-vis-btn" data-sec="edu">👁</button></div>
+          </div>
+        </div>
+      </div>
+      <button class="cust-pv-btn" id="custPreviewBtn">👁 Preview My Custom Template</button>
     </div>
 
   </div>

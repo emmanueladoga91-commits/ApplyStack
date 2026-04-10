@@ -482,6 +482,208 @@ var TEMPLATES = {
   }
 };
 
+// ── Custom template config (mutable — edited live by the customizer UI) ───────
+var customConfig = {
+  FONT:'Calibri', B:22, NP:56, nameAlign:'CENTER',
+  secBorder:'SINGLE', secColor:'1a2744', secBorderSz:6,
+  MAR:900, secBefore:200, secAfter:80, bodyAfter:100, roleAfter:140,
+  order:['summary','skills','experience','tech','certs','edu'],
+  names:{ summary:'PROFESSIONAL SUMMARY', skills:'KEY SKILLS', experience:'WORK EXPERIENCE', tech:'TECHNICAL SKILLS', certs:'CERTIFICATIONS', edu:'EDUCATION' },
+  hidden:{},          // { sectionKey: true } — hidden sections
+  pvAccent:'#1a2744',
+  headerBg:'#1a2744', headerFg:'#ffffff',
+  hdrStyle:'banner', secHdr:'underline', secCase:'upper', skillsRender:'grid2',
+  spacing:'normal'    // 'compact' | 'normal' | 'spacious'
+};
+
+// ── Custom template helpers ───────────────────────────────────────────────
+function isLightColor(hex){
+  hex = hex.replace('#','');
+  var r = parseInt(hex.substring(0,2),16);
+  var g = parseInt(hex.substring(2,4),16);
+  var b = parseInt(hex.substring(4,6),16);
+  return (r*299 + g*587 + b*114) / 1000 > 155;
+}
+
+function applyCustomConfig(){
+  // Rebuild preview if custom template is selected
+  if(selectedTemplate !== 'custom') return;
+  var data = tailoredRef || getLoremData();
+  var pvPage = document.getElementById('pvPage');
+  if(pvPage) pvPage.innerHTML = buildResumeHtml(data, 'custom');
+  var tpvPage = document.getElementById('tpvPage');
+  if(tpvPage) tpvPage.innerHTML = buildResumeHtml(data, 'custom');
+}
+
+function initCustomizer(){
+  var panel = document.getElementById('custPanel');
+  if(!panel) return;
+
+  // ── Header layout ──
+  document.getElementById('custHdrStyle').addEventListener('change', function(){
+    customConfig.hdrStyle = this.value;
+    // Show/hide banner color row for layouts that use a background color
+    var hasBanner = ['banner','gradient-banner','dark-banner','light-banner'].indexOf(this.value) !== -1;
+    document.getElementById('custBannerRow').style.display = hasBanner ? '' : 'none';
+    applyCustomConfig();
+  });
+
+  // ── Accent colour swatches ──
+  panel.querySelectorAll('[data-color]').forEach(function(sw){
+    sw.addEventListener('click', function(){
+      panel.querySelectorAll('[data-color]').forEach(function(s){ s.classList.remove('on'); });
+      sw.classList.add('on');
+      customConfig.pvAccent = sw.getAttribute('data-color');
+      customConfig.secColor = sw.getAttribute('data-color').replace('#','');
+      document.getElementById('custAccentPicker').value = sw.getAttribute('data-color');
+      applyCustomConfig();
+    });
+  });
+  document.getElementById('custAccentPicker').addEventListener('input', function(){
+    panel.querySelectorAll('[data-color]').forEach(function(s){ s.classList.remove('on'); });
+    customConfig.pvAccent = this.value;
+    customConfig.secColor = this.value.replace('#','');
+    applyCustomConfig();
+  });
+
+  // ── Banner/header colour swatches ──
+  panel.querySelectorAll('[data-bcolor]').forEach(function(sw){
+    sw.addEventListener('click', function(){
+      panel.querySelectorAll('[data-bcolor]').forEach(function(s){ s.classList.remove('on'); });
+      sw.classList.add('on');
+      var col = sw.getAttribute('data-bcolor');
+      customConfig.headerBg = col;
+      customConfig.headerFg = isLightColor(col) ? '#1a2744' : '#ffffff';
+      document.getElementById('custBannerPicker').value = col;
+      applyCustomConfig();
+    });
+  });
+  document.getElementById('custBannerPicker').addEventListener('input', function(){
+    panel.querySelectorAll('[data-bcolor]').forEach(function(s){ s.classList.remove('on'); });
+    customConfig.headerBg = this.value;
+    customConfig.headerFg = isLightColor(this.value) ? '#1a2744' : '#ffffff';
+    applyCustomConfig();
+  });
+
+  // ── Section dividers ──
+  panel.querySelectorAll('[data-sechdr]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      panel.querySelectorAll('[data-sechdr]').forEach(function(b){ b.classList.remove('on'); });
+      btn.classList.add('on');
+      customConfig.secHdr = btn.getAttribute('data-sechdr');
+      applyCustomConfig();
+    });
+  });
+
+  // ── Section case ──
+  panel.querySelectorAll('[data-seccase]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      panel.querySelectorAll('[data-seccase]').forEach(function(b){ b.classList.remove('on'); });
+      btn.classList.add('on');
+      customConfig.secCase = btn.getAttribute('data-seccase');
+      applyCustomConfig();
+    });
+  });
+
+  // ── Skills display ──
+  panel.querySelectorAll('[data-skills]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      panel.querySelectorAll('[data-skills]').forEach(function(b){ b.classList.remove('on'); });
+      btn.classList.add('on');
+      customConfig.skillsRender = btn.getAttribute('data-skills');
+      applyCustomConfig();
+    });
+  });
+
+  // ── Page spacing ──
+  panel.querySelectorAll('[data-spacing]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      panel.querySelectorAll('[data-spacing]').forEach(function(b){ b.classList.remove('on'); });
+      btn.classList.add('on');
+      customConfig.spacing = btn.getAttribute('data-spacing');
+      applyCustomConfig();
+    });
+  });
+
+  // ── Section order — drag-and-drop ──
+  var secList = document.getElementById('custSecList');
+  var dragSrc = null;
+  secList.querySelectorAll('.sec-ord-item').forEach(function(item){
+    item.addEventListener('dragstart', function(e){
+      dragSrc = item;
+      item.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    item.addEventListener('dragend', function(){
+      item.classList.remove('dragging');
+      secList.querySelectorAll('.sec-ord-item').forEach(function(i){ i.classList.remove('drag-over'); });
+      // Sync order to customConfig
+      var order = [];
+      secList.querySelectorAll('.sec-ord-item').forEach(function(i){ order.push(i.getAttribute('data-sec')); });
+      customConfig.order = order;
+      applyCustomConfig();
+    });
+    item.addEventListener('dragover', function(e){
+      e.preventDefault();
+      if(item !== dragSrc){
+        secList.querySelectorAll('.sec-ord-item').forEach(function(i){ i.classList.remove('drag-over'); });
+        item.classList.add('drag-over');
+        // Insert before or after based on mouse position
+        var rect = item.getBoundingClientRect();
+        var mid  = rect.top + rect.height/2;
+        if(e.clientY < mid){
+          secList.insertBefore(dragSrc, item);
+        } else {
+          secList.insertBefore(dragSrc, item.nextSibling);
+        }
+      }
+    });
+    item.addEventListener('drop', function(e){ e.preventDefault(); });
+  });
+
+  // ── Visibility toggle buttons ──
+  secList.querySelectorAll('.sec-vis-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var sec = btn.getAttribute('data-sec');
+      var item = secList.querySelector('.sec-ord-item[data-sec="'+sec+'"]');
+      if(customConfig.hidden[sec]){
+        delete customConfig.hidden[sec];
+        btn.classList.remove('hidden');
+        if(item) item.classList.remove('sec-hidden');
+      } else {
+        customConfig.hidden[sec] = true;
+        btn.classList.add('hidden');
+        if(item) item.classList.add('sec-hidden');
+      }
+      applyCustomConfig();
+    });
+  });
+
+  // ── Rename section labels ──
+  secList.querySelectorAll('.sec-ord-rename').forEach(function(inp){
+    inp.addEventListener('input', function(){
+      var sec = inp.getAttribute('data-sec');
+      customConfig.names[sec] = inp.value;
+      applyCustomConfig();
+    });
+  });
+
+  // ── Preview button ──
+  document.getElementById('custPreviewBtn').addEventListener('click', function(){
+    var data = tailoredRef || getLoremData();
+    var pvPage = document.getElementById('pvPage');
+    if(pvPage) pvPage.innerHTML = buildResumeHtml(data, 'custom');
+    // Open template preview modal with custom
+    var tpvPage = document.getElementById('tpvPage');
+    if(tpvPage){
+      currentPreviewTemplate = 'custom';
+      renderTmplPreview();
+      document.getElementById('tmplPreviewModal').classList.add('on');
+      document.body.style.overflow = 'hidden';
+    }
+  });
+}
+
 // ── Init ───────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', function() {
   document.getElementById('pageSel').addEventListener('change', function() {
@@ -553,6 +755,9 @@ document.addEventListener('DOMContentLoaded', function() {
       document.querySelectorAll('.template-card').forEach(function(c) { c.classList.remove('selected'); });
       card.classList.add('selected');
       selectedTemplate = card.getAttribute('data-template');
+      // Show customizer panel only when Custom ✦ template is selected
+      var custPanel = document.getElementById('custPanel');
+      if(custPanel) custPanel.classList.toggle('on', selectedTemplate === 'custom');
     });
   });
 
@@ -609,6 +814,9 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(function() { guideCard.style.display = 'none'; }, 420);
     localStorage.setItem('tailorcv_guide_dismissed', '1');
   });
+
+  // ── Custom template builder ──
+  initCustomizer();
 });
 
 // ── Stepper ────────────────────────────────────────────────────────────────
@@ -840,14 +1048,26 @@ var PW=12240, PH=15840;
 function mkBul(ref){ return {reference:ref,levels:[{level:0,format:LevelFormat.BULLET,text:'\u2022',alignment:AlignmentType.LEFT,style:{paragraph:{indent:{left:360,hanging:360}}}}]}; }
 
 function getTmplCfg(tmplKey){
-  var base = TEMPLATES[tmplKey] || TEMPLATES.classic;
+  var base = (tmplKey === 'custom') ? customConfig : (TEMPLATES[tmplKey] || TEMPLATES.classic);
   // Apply user font overrides (font toolbar selections override template defaults)
-  return Object.assign({}, base, {
+  var cfg = Object.assign({}, base, {
     FONT: selectedFontFamily || base.FONT,
     B:    selectedFontSize   || base.B,
     _italic: selectedFontStyle === 'italic' || selectedFontStyle === 'bold-italic',
     _bold:   selectedFontStyle === 'bold'   || selectedFontStyle === 'bold-italic',
   });
+  // Apply spacing multiplier for custom template
+  if(tmplKey === 'custom' && customConfig.spacing){
+    var mult = customConfig.spacing === 'compact' ? 0.7 : customConfig.spacing === 'spacious' ? 1.4 : 1;
+    if(mult !== 1){
+      cfg.secBefore  = Math.round(base.secBefore  * mult);
+      cfg.secAfter   = Math.round(base.secAfter   * mult);
+      cfg.bodyAfter  = Math.round(base.bodyAfter  * mult);
+      cfg.roleAfter  = Math.round(base.roleAfter  * mult);
+      cfg.NP         = Math.round(base.NP         * mult);
+    }
+  }
+  return cfg;
 }
 
 // Section header paragraph
@@ -958,6 +1178,7 @@ function buildResumeDoc(d, tmplKey){
 
   // Sections in template order
   cfg.order.forEach(function(sec){
+    if(cfg.hidden && cfg.hidden[sec]) return; // skip hidden sections (custom template)
     var renderer = SECTION_RENDERERS[sec];
     if(renderer){ renderer(d,cfg).forEach(function(p){ ch.push(p); }); }
   });
@@ -1522,6 +1743,8 @@ function buildResumeHtml(d, tmplKey){
 
   // ── SECTIONS in template order ────────────────────────────────────────
   cfg.order.forEach(function(sec){
+    // Skip hidden sections (only applicable for custom template)
+    if(cfg.hidden && cfg.hidden[sec]) return;
     if(sec==='summary'){
       h+=secHdr(d.summaryTitle||cfg.names.summary);
       h+='<div class="pv-para">'+esc(d.summary)+'</div>';
@@ -1830,7 +2053,7 @@ function getLoremData() {
   return (!selectedProfile || isProjectProfile(selectedProfile)) ? LOREM_DATA : LOREM_DATA_BULLET;
 }
 
-var TEMPLATE_ORDER  = ['classic','executive','modern','professional','minimal','tech','consulting','academic','entrylevel','government','creative','healthcare','compact'];
+var TEMPLATE_ORDER  = ['classic','executive','modern','professional','minimal','tech','consulting','academic','entrylevel','government','creative','healthcare','compact','custom'];
 var TEMPLATE_LABELS = {
   classic:'Classic — Traditional, centered',    executive:'Executive — Serif, double rule',
   modern:'Modern — Indigo accent bar',           professional:'Professional — Navy sidebar',
@@ -1838,7 +2061,7 @@ var TEMPLATE_LABELS = {
   consulting:'Consulting — Burgundy, impact-first', academic:'Academic — Education first',
   entrylevel:'Entry Level — Education & skills first', government:'Government — Formal, federal',
   creative:'Creative — Teal left accent',        healthcare:'Healthcare — Clinical teal',
-  compact:'Compact — Dense, 1-page optimised'
+  compact:'Compact — Dense, 1-page optimised',   custom:'Custom ✦ — Design from scratch'
 };
 var currentPreviewTemplate = 'classic';
 
