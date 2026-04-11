@@ -3321,3 +3321,175 @@ function eagerLoadVault() {
     })
     .catch(function(){ /* silent */ });
 }
+
+// ════════════════════════════════════════════════════════════════
+//  VAULT — AUTO-FILL FROM UPLOADED RESUME
+//  Accepts a .docx or .pdf, extracts text, sends it to Claude
+//  to parse into structured vault JSON, then populates the form.
+// ════════════════════════════════════════════════════════════════
+
+(function initVaultImport() {
+  document.addEventListener('DOMContentLoaded', function() {
+    var fileInput = document.getElementById('vaultFileInput');
+    if (!fileInput) return;
+    fileInput.addEventListener('change', function(e) {
+      var file = e.target.files[0];
+      if (!file) return;
+      if (!file.name.match(/\.(pdf|docx)$/i)) {
+        showAlert('warn', 'Wrong file type', 'Upload a .docx or .pdf resume.');
+        fileInput.value = '';
+        return;
+      }
+      importResumeToVault(file);
+      fileInput.value = ''; // reset so same file can be re-selected
+    });
+  });
+})();
+
+async function importResumeToVault(file) {
+  var progressEl = document.getElementById('vaultImportProgress');
+  var statusEl   = document.getElementById('vaultImportStatus');
+  var importBar  = document.getElementById('vaultImportBar');
+  var importBtn  = document.getElementById('vaultImportBtn');
+
+  // Show progress
+  if (progressEl) progressEl.style.display = 'flex';
+  if (importBar)  importBar.style.display  = 'none';
+  if (statusEl)   statusEl.textContent = 'Extracting text from ' + file.name + '…';
+
+  try {
+    // Step 1: Read the file
+    var buffer = await new Promise(function(resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function(e) { resolve(e.target.result); };
+      reader.onerror = function() { reject(new Error('Could not read file.')); };
+      reader.readAsArrayBuffer(file);
+    });
+
+    // Step 2: Extract text using existing extractText function
+    var text;
+    if (file.name.match(/\.pdf$/i)) {
+      text = await extractPdfText(buffer);
+    } else {
+      text = await extractDocxText(buffer);
+    }
+
+    if (!text || text.trim().length < 50) {
+      throw new Error('Could not extract enough text from the file. Try a different resume.');
+    }
+
+    // Step 3: Send to Claude to parse into vault structure
+    if (statusEl) statusEl.textContent = 'AI is parsing your career data…';
+
+    var tok = getToken();
+    if (!tok) throw new Error('Please sign in first.');
+
+    var sys = [
+      'You are a resume parser. Extract structured career data from a resume.',
+      'Return ONLY valid JSON — no markdown, no commentary.',
+      'Be thorough: extract every job, every bullet point, every skill, every certification, every education entry.',
+      'For skills, return a single comma-separated string of ALL skills mentioned anywhere in the resume.',
+      'For job bullets, extract the EXACT text of each bullet/achievement — do not summarize or shorten.',
+    ].join(' ');
+
+    var prompt = [
+      'Parse this resume text into structured career data.',
+      '',
+      'RESUME TEXT:',
+      text.slice(0, 6000),
+      '',
+      'Return this exact JSON structure:',
+      '{',
+      '  "name": "Full Name",',
+      '  "email": "email@example.com",',
+      '  "phone": "+1 555-000-0000",',
+      '  "location": "City, State",',
+      '  "linkedin": "linkedin.com/in/...",',
+      '  "website": "",',
+      '  "summary": "Professional summary paragraph if present, otherwise empty string",',
+      '  "skills": "Skill1, Skill2, Skill3, ... (comma-separated, ALL skills found)",',
+      '  "jobs": [',
+      '    {',
+      '      "title": "Job Title",',
+      '      "company": "Company Name",',
+      '      "location": "City, State or Remote",',
+      '      "start": "Mon YYYY",',
+      '      "end": "Mon YYYY or Present",',
+      '      "bullets": ["Exact achievement/responsibility bullet 1", "Bullet 2", "..."]',
+      '    }',
+      '  ],',
+      '  "education": [',
+      '    { "degree": "B.S. Computer Science", "school": "University Name", "year": "2020", "gpa": "" }',
+      '  ],',
+      '  "certs": [',
+      '    { "name": "Certification Name", "issuer": "Issuing Body", "year": "2023" }',
+      '  ]',
+      '}',
+      '',
+      'Rules:',
+      '- Extract ALL jobs, most recent first',
+      '- Extract ALL bullet points per job verbatim — do not summarize',
+      '- If a field is not found in the resume, use an empty string',
+      '- skills must be a single comma-separated string',
+      '- Return ONLY the JSON object, nothing else',
+    ].join('\n');
+
+    var res = await fetch('/api/claude', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + tok,
+      },
+      body: JSON.stringify({
+        type: 'score', // use 'score' type — free for all users, no tailor count
+        system: sys,
+        userMsg: prompt,
+        maxTokens: 4000,
+        model: 'claude-sonnet-4-6'
+      })
+    });
+
+    if (!res.ok) {
+      var errData = await res.json().catch(function(){ return {}; });
+      throw new Error(errData.error || 'AI parsing failed (HTTP ' + res.status + ')');
+    }
+
+    var data = await res.json();
+    var rawText = (data.text || '').trim();
+
+    // Extract JSON robustly (handle markdown fencing)
+    var jsonStr = null;
+    var fenced = rawText.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fenced) {
+      jsonStr = fenced[1].trim();
+    } else {
+      var startIdx = rawText.indexOf('{');
+      if (startIdx !== -1) jsonStr = rawText.slice(startIdx, rawText.lastIndexOf('}') + 1);
+    }
+    if (!jsonStr) throw new Error('AI did not return valid JSON. Please try again.');
+
+    var parsed = JSON.parse(jsonStr);
+
+    // Step 4: Generate IDs for each entry
+    var jobId = 0, eduId = 0, certId = 0;
+    (parsed.jobs || []).forEach(function(j) { j.id = 'j' + (++jobId); });
+    (parsed.education || []).forEach(function(e) { e.id = 'e' + (++eduId); });
+    (parsed.certs || []).forEach(function(c) { c.id = 'c' + (++certId); });
+
+    // Step 5: Populate the vault form
+    if (statusEl) statusEl.textContent = 'Populating your vault…';
+    populateVaultForm(parsed);
+    setVaultStatusUI(vaultComputeStatus());
+
+    // Done — show success
+    if (progressEl) progressEl.style.display = 'none';
+    if (importBar)  importBar.style.display  = 'flex';
+    showAlert('info', 'Vault auto-filled!', 'Your resume data has been imported. Review the entries, then hit Save Vault.');
+
+  } catch (err) {
+    console.error('Vault import error:', err);
+    if (progressEl) progressEl.style.display = 'none';
+    if (importBar)  importBar.style.display  = 'flex';
+    showAlert('error', 'Import failed', err.message || 'Could not parse resume. Try again or fill in manually.');
+  }
+}
