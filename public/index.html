@@ -769,7 +769,8 @@
       <li><a href="#features">Features</a></li>
       <li><a href="#pricing">Pricing</a></li>
       <li><a href="#faq">FAQ</a></li>
-      <li><a href="/auth.html?tab=register" class="nav-cta">Start Free →</a></li>
+      <!-- Auth-aware CTA: swapped by JS below -->
+      <li id="navAuthItem"><a href="/auth.html?tab=register" class="nav-cta" id="navCta">Start Free →</a></li>
     </ul>
   </div>
 </nav>
@@ -1578,6 +1579,48 @@
       ring.style.transition = 'stroke-dashoffset 1.2s ease';
     }
   });
+</script>
+
+<script>
+/* ── Auth-aware navigation ──────────────────────────────────────────────
+   If the user has a valid JWT in localStorage they're already signed in.
+   Swap every "Start Free" CTA to "Open App" and show a signed-in badge.
+──────────────────────────────────────────────────────────────────────── */
+(function(){
+  var tok = localStorage.getItem('tailorcv_token');
+  if(!tok) return; // not signed in — keep default CTAs
+
+  /* Nav bar: replace "Start Free →" with two items: email badge + "Open App" */
+  var navItem = document.getElementById('navAuthItem');
+  if(navItem){
+    navItem.innerHTML =
+      '<span id="navUserBadge" style="' +
+        'display:inline-flex;align-items:center;gap:6px;' +
+        'background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.3);' +
+        'border-radius:99px;padding:5px 12px;font-size:.75rem;font-weight:600;' +
+        'color:#4f46e5;white-space:nowrap;vertical-align:middle' +
+      '">✦ Signed in</span>' +
+      '&nbsp;' +
+      '<a href="/app.html" class="nav-cta" style="background:#4f46e5">Open App →</a>';
+  }
+
+  /* Hero primary button */
+  var heroPrimary = document.querySelector('.hero-btns .btn-primary');
+  if(heroPrimary){
+    heroPrimary.href = '/app.html';
+    heroPrimary.innerHTML =
+      '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>' +
+      'Open App — Continue Building';
+  }
+
+  /* All other "Start Free" / "Start for Free" CTAs on the page */
+  document.querySelectorAll('a[href*="auth.html"]').forEach(function(a){
+    a.href = '/app.html';
+    if(a.textContent.trim().match(/start|free/i)){
+      a.textContent = 'Open App →';
+    }
+  });
+})();
 </script>
 </body>
 </html>
