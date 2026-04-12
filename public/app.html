@@ -1076,6 +1076,134 @@
     #checkMatchBtn:hover:not(:disabled) { opacity:.9; transform:translateY(-1px); box-shadow:0 6px 20px rgba(91,99,240,.45); }
     #checkMatchBtn:disabled { opacity:.5; cursor:not-allowed; transform:none; }
 
+    /* ═══════════════════════════════════════════════════
+       Template Carousel Modal
+    ═══════════════════════════════════════════════════ */
+    #tmplCarouselModal {
+      display:none; position:fixed; inset:0; z-index:1300; overflow:hidden;
+      background:#F5BE00;
+    }
+    #tmplCarouselModal.on { display:flex; flex-direction:column; align-items:center; justify-content:flex-start; padding:30px 16px 36px; }
+    .tmc-close-btn {
+      position:fixed; top:14px; right:18px;
+      background:rgba(0,0,0,.18); border:none; color:#1a1a1a;
+      border-radius:50%; width:38px; height:38px; font-size:18px;
+      cursor:pointer; display:flex; align-items:center; justify-content:center;
+      z-index:10; line-height:1; transition:background .15s;
+    }
+    .tmc-close-btn:hover { background:rgba(0,0,0,.3); }
+    .tmc-pill {
+      display:inline-flex; align-items:center; background:#1a4a4a;
+      color:#fff; border-radius:99px; padding:10px 36px;
+      font-size:17px; font-weight:700; margin-bottom:24px;
+      letter-spacing:.01em; box-shadow:0 4px 20px rgba(0,0,0,.22);
+    }
+    .tmc-tabs {
+      display:flex; gap:40px; justify-content:center; margin-bottom:28px;
+    }
+    .tmc-tab {
+      font-size:16px; font-weight:600; color:rgba(0,0,0,.38);
+      border:none; background:transparent; cursor:pointer; padding:4px 0;
+      border-bottom:3px solid transparent; transition:all .2s; font-family:inherit;
+    }
+    .tmc-tab.active { color:#1a1a1a; border-bottom-color:#1a1a1a; }
+    .tmc-tab:hover  { color:#1a1a1a; }
+
+    /* Stage = arrows + cards */
+    .tmc-stage {
+      display:flex; align-items:center; justify-content:center; gap:14px;
+      width:100%; max-width:1060px; flex:0 0 auto;
+    }
+    .tmc-arr {
+      background:rgba(255,255,255,.88); border:none; border-radius:50%;
+      width:48px; height:48px; flex-shrink:0; font-size:26px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      box-shadow:0 2px 14px rgba(0,0,0,.16); transition:all .15s;
+      color:#1a1a1a; font-family:Arial,sans-serif; line-height:1;
+    }
+    .tmc-arr:hover { background:#fff; transform:scale(1.1); box-shadow:0 4px 22px rgba(0,0,0,.22); }
+
+    /* Card container row */
+    .tmc-cards {
+      display:flex; align-items:center; gap:18px; flex:1; justify-content:center;
+    }
+
+    /* Each card slot */
+    .tmc-slot {
+      border-radius:14px; overflow:hidden; background:#fff;
+      flex-shrink:0; position:relative;
+      transition:transform .35s cubic-bezier(.4,0,.2,1), opacity .35s, box-shadow .35s;
+    }
+    .tmc-slot-side {
+      width:265px; height:364px;
+      transform:scale(0.92); opacity:0.82; cursor:pointer;
+      box-shadow:0 4px 18px rgba(0,0,0,.13);
+    }
+    .tmc-slot-side:hover { opacity:0.93; transform:scale(0.95); }
+    .tmc-slot-center {
+      width:312px; height:432px;
+      transform:scale(1.0); opacity:1;
+      box-shadow:0 10px 44px rgba(0,0,0,.24); z-index:2;
+    }
+
+    /* Scaled preview inside each slot */
+    .tmc-scaler {
+      position:absolute; top:0; left:0;
+      transform-origin:top left; pointer-events:none;
+      font-size:11px; /* reset font inside preview */
+    }
+
+    /* Gradient footer overlay on center card */
+    .tmc-center-foot {
+      position:absolute; bottom:0; left:0; right:0;
+      background:linear-gradient(to top, rgba(255,255,255,1) 0%, rgba(255,255,255,.92) 55%, transparent 100%);
+      padding:28px 16px 16px; text-align:center; z-index:3;
+    }
+    .tmc-center-name {
+      font-size:13px; font-weight:700; color:#1a1a1a; margin-bottom:9px;
+      letter-spacing:.01em;
+    }
+    .tmc-use-btn {
+      background:#1a4a4a; color:#fff; border:none; border-radius:9px;
+      padding:9px 24px; font-size:13px; font-weight:700; cursor:pointer;
+      font-family:inherit; box-shadow:0 2px 10px rgba(0,0,0,.2); transition:all .15s;
+    }
+    .tmc-use-btn:hover { background:#143838; transform:translateY(-1px); box-shadow:0 4px 16px rgba(0,0,0,.25); }
+
+    /* Navigation dots */
+    .tmc-dots {
+      display:flex; justify-content:center; gap:8px; margin-top:26px; flex-wrap:wrap; max-width:440px;
+    }
+    .tmc-dot {
+      width:10px; height:10px; border-radius:50%; background:rgba(0,0,0,.25);
+      cursor:pointer; transition:all .22s; border:none; padding:0;
+    }
+    .tmc-dot.active { background:#1a1a1a; width:24px; border-radius:99px; }
+    .tmc-dot:hover { background:rgba(0,0,0,.5); }
+
+    /* Browse all button in template section */
+    .browse-all-btn {
+      background:rgba(99,102,241,.1); color:#4f46e5;
+      border:1.5px solid rgba(99,102,241,.3); border-radius:8px;
+      padding:6px 14px; font-size:12px; font-weight:700; cursor:pointer;
+      font-family:inherit; transition:all .15s; white-space:nowrap;
+    }
+    .browse-all-btn:hover { background:rgba(99,102,241,.18); }
+
+    /* CL Browse button */
+    .cl-browse-btn {
+      background:rgba(99,102,241,.08); color:#4f46e5;
+      border:1.5px solid rgba(99,102,241,.25); border-radius:8px;
+      padding:5px 12px; font-size:12px; font-weight:700; cursor:pointer;
+      font-family:inherit; transition:all .15s; margin-left:8px;
+    }
+    .cl-browse-btn:hover { background:rgba(99,102,241,.15); }
+
+    @media(max-width:700px) {
+      .tmc-slot-side { display:none; }
+      .tmc-slot-center { width:290px; height:400px; }
+    }
+
     /* ── Cover Letter Settings card ── */
     .cl-settings { margin-bottom:12px; }
     .cl-settings-row { display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-bottom:10px; }
@@ -1607,6 +1735,7 @@
         <h2>Choose a template style</h2>
         <p>14 templates · all ATS-compatible · use the font toolbar to customise typography</p>
       </div>
+      <button class="browse-all-btn" onclick="openTmplCarousel('resume')">🎨 Browse &amp; Preview All</button>
     </div>
     <div class="template-grid">
 
@@ -2141,6 +2270,7 @@
         <h2>Cover letter settings</h2>
         <p>Choose length and visual template before building</p>
       </div>
+      <button class="browse-all-btn" onclick="openTmplCarousel('cl')">🎨 Browse &amp; Preview All</button>
     </div>
     <!-- Length selector -->
     <div class="cl-settings-row">
@@ -2234,6 +2364,47 @@
   </div>
 
 </main>
+
+<!-- ════════════════════════════════════════════════════════
+     Template Carousel Modal
+     Gold background · 3-card slider · Resumes + Cover Letters
+════════════════════════════════════════════════════════ -->
+<div id="tmplCarouselModal">
+  <button class="tmc-close-btn" onclick="closeTmplCarousel()" title="Close">✕</button>
+
+  <div class="tmc-pill">Resume &amp; Cover Letter Templates</div>
+
+  <div class="tmc-tabs">
+    <button class="tmc-tab active" data-tab="resume" onclick="switchCarouselTab('resume')">Resumes</button>
+    <button class="tmc-tab"        data-tab="cl"     onclick="switchCarouselTab('cl')">Cover Letters</button>
+  </div>
+
+  <div class="tmc-stage">
+    <button class="tmc-arr" onclick="tmcNav(-1)">&#8592;</button>
+
+    <div class="tmc-cards">
+      <!-- Left side card (click to go back) -->
+      <div class="tmc-slot tmc-slot-side" id="tmcLeft" onclick="tmcNav(-1)"></div>
+
+      <!-- Center card (active) -->
+      <div class="tmc-slot tmc-slot-center" id="tmcCenter">
+        <div id="tmcCenterContent"></div>
+        <div class="tmc-center-foot">
+          <div class="tmc-center-name" id="tmcCenterLabel">Classic</div>
+          <button class="tmc-use-btn" onclick="tmcUseTemplate()">✓ Use This Template</button>
+        </div>
+      </div>
+
+      <!-- Right side card (click to go forward) -->
+      <div class="tmc-slot tmc-slot-side" id="tmcRight" onclick="tmcNav(1)"></div>
+    </div>
+
+    <button class="tmc-arr" onclick="tmcNav(1)">&#8594;</button>
+  </div>
+
+  <!-- Navigation dots -->
+  <div class="tmc-dots" id="tmcDots"></div>
+</div>
 
 <!-- Template Preview Modal (Lorem Ipsum) -->
 <div id="tmplPreviewModal">

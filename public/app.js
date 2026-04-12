@@ -674,17 +674,8 @@ function initCustomizer(){
 
   // ── Preview button ──
   document.getElementById('custPreviewBtn').addEventListener('click', function(){
-    var data = tailoredRef || getLoremData();
-    var pvPage = document.getElementById('pvPage');
-    if(pvPage) pvPage.innerHTML = buildResumeHtml(data, 'custom');
-    // Open template preview modal with custom
-    var tpvPage = document.getElementById('tpvPage');
-    if(tpvPage){
-      currentPreviewTemplate = 'custom';
-      renderTmplPreview();
-      document.getElementById('tmplPreviewModal').classList.add('on');
-      document.body.style.overflow = 'hidden';
-    }
+    // Open carousel at the custom template entry
+    openTmplCarousel('resume', 'custom');
   });
 }
 
@@ -770,11 +761,11 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById(id).addEventListener('input', refreshStepper);
   });
 
-  // ── Template Preview (eye buttons) ──
+  // ── Template Preview (eye buttons) — open new carousel ──
   document.querySelectorAll('.t-eye-btn').forEach(function(btn) {
     btn.addEventListener('click', function(e) {
-      e.stopPropagation(); // don't also trigger card selection
-      openTmplPreview(btn.getAttribute('data-preview'));
+      e.stopPropagation();
+      openTmplCarousel('resume', btn.getAttribute('data-preview'));
     });
   });
   document.getElementById('tpvClose').addEventListener('click', closeTmplPreview);
@@ -2151,6 +2142,161 @@ function selectPreviewedTemplate() {
   selectedTemplate = currentPreviewTemplate;
   closeTmplPreview();
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ── TEMPLATE CAROUSEL MODAL ───────────────────────────────────────────────────
+// Gold-background 3-card slider with Resumes + Cover Letters tabs
+// ══════════════════════════════════════════════════════════════════════════════
+var _tmcTab  = 'resume';
+var _tmcIdx  = 0;
+var _tmcHtmlCache = {};  // cacheKey → rendered html string
+
+// Template lists for each tab
+var _tmcResumeList = ['classic','executive','modern','professional','minimal','tech','consulting','academic','entrylevel','government','creative','healthcare','compact','custom'];
+var _tmcCLList     = ['classic','modern','executive','minimalist','bold','creative','technical','elegant','corporate','compact'];
+
+// Sample cover letter data used in previews
+var _tmcCLSample = {
+  name:'Alex Chen', phone:'(555) 123-4567', email:'alex.chen@email.com',
+  coverLetter:{
+    recipientTitle:'Hiring Manager', recipientOrg:'Acme Corp', recipientLocation:'New York, NY',
+    reLine:'Senior Marketing Manager - Competition #MKT-25',
+    openingParagraph:'I am writing to apply for the Senior Marketing Manager position at Acme Corp. With 7+ years driving growth across B2B and B2C channels, I bring a proven track record of integrated campaigns that consistently exceed pipeline targets.',
+    bodyParagraph1:'In my current role at WeWork, I led a team of 12 across demand generation, content, and brand — hitting 120% of pipeline targets. I designed campaigns across paid, organic, and email that grew MQL volume by 45% year-over-year while reducing cost-per-acquisition by 22%.',
+    bodyParagraph2:'',
+    closingParagraph:'Thank you for your time and consideration. I would welcome the opportunity to discuss how my background aligns with your goals.'
+  }
+};
+
+function openTmplCarousel(tab, key) {
+  _tmcTab = tab || 'resume';
+  var list = _tmcTab === 'cl' ? _tmcCLList : _tmcResumeList;
+  _tmcIdx  = (key && list.indexOf(key) >= 0) ? list.indexOf(key) : 0;
+  _tmcSyncTabs();
+  _tmcRender();
+  document.getElementById('tmplCarouselModal').classList.add('on');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeTmplCarousel() {
+  document.getElementById('tmplCarouselModal').classList.remove('on');
+  document.body.style.overflow = '';
+}
+
+function switchCarouselTab(tab) {
+  _tmcTab = tab;
+  _tmcIdx = 0;
+  _tmcSyncTabs();
+  _tmcRender();
+}
+
+function _tmcSyncTabs() {
+  document.querySelectorAll('.tmc-tab').forEach(function(t) {
+    t.classList.toggle('active', t.dataset.tab === _tmcTab);
+  });
+}
+
+function tmcNav(dir) {
+  var list = _tmcTab === 'cl' ? _tmcCLList : _tmcResumeList;
+  _tmcIdx = (_tmcIdx + dir + list.length) % list.length;
+  _tmcRender();
+}
+
+function tmcNavTo(idx) {
+  _tmcIdx = idx;
+  _tmcRender();
+}
+
+function tmcUseTemplate() {
+  var list = _tmcTab === 'cl' ? _tmcCLList : _tmcResumeList;
+  var key  = list[_tmcIdx];
+  if (_tmcTab === 'cl') {
+    setCLTemplate(key);
+    showAlert('info','Cover letter template set','Switched to the ' + ((CL_TMPL_DEFS[key]||{}).label || key) + ' template.');
+  } else {
+    document.querySelectorAll('.template-card').forEach(function(c){ c.classList.remove('selected'); });
+    var card = document.querySelector('.template-card[data-template="'+key+'"]');
+    if(card){ card.classList.add('selected'); card.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+    selectedTemplate = key;
+    // Refresh live previews
+    var pv = document.getElementById('pvPage');
+    if(pv && pv.innerHTML) pv.innerHTML = buildResumeHtml(tailoredRef || getLoremData(), key);
+    var tp = document.getElementById('tpvPage');
+    if(tp && tp.innerHTML) tp.innerHTML = buildResumeHtml(getLoremData(), key);
+    showAlert('info','Template selected',(TEMPLATE_LABELS[key]||key).split('\u2014')[0].trim()+' template is now active.');
+  }
+  closeTmplCarousel();
+}
+
+// Build preview HTML for a given template key and tab
+function _tmcBuildHtml(key) {
+  var cacheKey = _tmcTab + ':' + key;
+  if(_tmcHtmlCache[cacheKey]) return _tmcHtmlCache[cacheKey];
+  var html;
+  if(_tmcTab === 'cl') {
+    // Wrap CL html in a fixed 860px container so scaler math is uniform
+    html = '<div style="width:860px;background:#fff">' + buildCoverLetterHtml(_tmcCLSample, key) + '</div>';
+  } else {
+    html = buildResumeHtml(getLoremData(), key);
+  }
+  _tmcHtmlCache[cacheKey] = html;
+  return html;
+}
+
+// Fill one slot with scaled preview content
+function _tmcFillSlot(elId, key, cardW) {
+  var el = document.getElementById(elId);
+  if(!el) return;
+  var NATURAL_W = 860;
+  var scale = (cardW / NATURAL_W).toFixed(4);
+  el.innerHTML = '<div class="tmc-scaler" style="width:'+NATURAL_W+'px;transform:scale('+scale+')">' + _tmcBuildHtml(key) + '</div>';
+}
+
+function _tmcRender() {
+  var list = _tmcTab === 'cl' ? _tmcCLList : _tmcResumeList;
+  var n    = list.length;
+  var prev = list[(_tmcIdx - 1 + n) % n];
+  var curr = list[_tmcIdx];
+  var next = list[(_tmcIdx + 1) % n];
+
+  // Side cards (265px wide)
+  _tmcFillSlot('tmcLeft',  prev, 265);
+  _tmcFillSlot('tmcRight', next, 265);
+
+  // Center card (312px wide)
+  var centerContent = document.getElementById('tmcCenterContent');
+  if(centerContent){
+    var NATURAL_W = 860;
+    var scale = (312 / NATURAL_W).toFixed(4);
+    centerContent.innerHTML = '<div class="tmc-scaler" style="width:'+NATURAL_W+'px;transform:scale('+scale+')">' + _tmcBuildHtml(curr) + '</div>';
+  }
+
+  // Label
+  var label = _tmcTab === 'cl'
+    ? ((CL_TMPL_DEFS[curr]||{}).label || curr)
+    : (TEMPLATE_LABELS[curr]||curr).split('\u2014')[0].trim();
+  var labelEl = document.getElementById('tmcCenterLabel');
+  if(labelEl) labelEl.textContent = label;
+
+  // Dots
+  var dotsEl = document.getElementById('tmcDots');
+  if(dotsEl){
+    var dHtml = '';
+    for(var i = 0; i < n; i++){
+      dHtml += '<button class="tmc-dot'+(i===_tmcIdx?' active':'')+'" onclick="tmcNavTo('+i+')" title="'+list[i]+'"></button>';
+    }
+    dotsEl.innerHTML = dHtml;
+  }
+}
+
+// Keyboard nav for carousel
+document.addEventListener('keydown', function(e) {
+  var modal = document.getElementById('tmplCarouselModal');
+  if(!modal || !modal.classList.contains('on')) return;
+  if(e.key === 'ArrowLeft')  tmcNav(-1);
+  if(e.key === 'ArrowRight') tmcNav(1);
+  if(e.key === 'Escape')     closeTmplCarousel();
+});
 
 // ══════════════════════════════════════════════════════════════════════════════
 // ── SESSION SAVE / RESTORE ────────────────────────────────────────────────────
