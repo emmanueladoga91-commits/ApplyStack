@@ -503,23 +503,25 @@
     .pv-bar h3 { font-size:14px; font-weight:700; flex:1; }
     .pv-dl-btn { background:rgba(255,255,255,.15); border:none; color:#fff; border-radius:8px; padding:8px 15px; font-size:13px; font-weight:700; font-family:inherit; cursor:pointer; }
     .pv-close  { background:rgba(255,255,255,.1); border:none; color:#fff; border-radius:8px; padding:8px 12px; font-size:17px; cursor:pointer; line-height:1; }
+    /* ── Global pv-* rules — apply everywhere buildResumeHtml() is used ── */
+    .pv-name    { font-size:22pt; font-weight:700; text-align:center; margin:0 0 5px; }
+    .pv-contact { text-align:center; font-size:10pt; margin-bottom:4px; }
+    .pv-loc     { text-align:center; font-style:italic; font-size:10pt; margin-bottom:18px; }
+    .pv-sec     { font-weight:700; border-bottom:1.5px solid #111; margin:16px 0 7px; padding-bottom:3px; font-size:10.5pt; }
+    .pv-para    { text-align:justify; margin-bottom:10px; font-size:10pt; }
+    .pv-grid2   { display:grid; grid-template-columns:1fr 1fr; gap:3px 20px; margin-bottom:8px; }
+    .pv-comp    { font-size:10pt; padding:1px 0; }
+    .pv-role-hdr { display:flex; justify-content:space-between; align-items:baseline; margin:12px 0 3px; flex-wrap:wrap; gap:2px; }
+    .pv-rtitle  { font-weight:700; font-size:10.5pt; }
+    .pv-rdates  { font-style:italic; font-size:10pt; white-space:nowrap; margin-left:8px; }
+    .pv-proj    { font-size:10pt; margin:4px 0; text-align:justify; }
+    .pv-resp-lbl { font-weight:700; font-size:10pt; margin:7px 0 3px; }
+    .pv-ul      { margin:0 0 6px 20px; padding:0; }
+    .pv-ul li   { font-size:10pt; margin-bottom:2px; text-align:justify; }
+    .pv-tech    { font-size:10pt; margin-bottom:4px; }
+    .pv-edu     { font-size:10pt; margin-bottom:5px; }
+    /* ── #pvPage keeps its own background/padding ── */
     #pvPage { background:#fff; padding:52px 62px; font-family:Calibri,Georgia,serif; font-size:10pt; line-height:1.45; color:#111; border-radius:0 0 12px 12px; }
-    #pvPage .pv-name    { font-size:22pt; font-weight:700; text-align:center; margin:0 0 5px; }
-    #pvPage .pv-contact { text-align:center; font-size:10pt; margin-bottom:4px; }
-    #pvPage .pv-loc     { text-align:center; font-style:italic; font-size:10pt; margin-bottom:18px; }
-    #pvPage .pv-sec     { font-weight:700; border-bottom:1.5px solid #111; margin:16px 0 7px; padding-bottom:3px; font-size:10.5pt; }
-    #pvPage .pv-para    { text-align:justify; margin-bottom:10px; font-size:10pt; }
-    #pvPage .pv-grid2   { display:grid; grid-template-columns:1fr 1fr; gap:3px 20px; margin-bottom:8px; }
-    #pvPage .pv-comp    { font-size:10pt; padding:1px 0; }
-    #pvPage .pv-role-hdr { display:flex; justify-content:space-between; align-items:baseline; margin:12px 0 3px; }
-    #pvPage .pv-rtitle  { font-weight:700; font-size:10.5pt; }
-    #pvPage .pv-rdates  { font-style:italic; font-size:10pt; white-space:nowrap; margin-left:8px; }
-    #pvPage .pv-proj    { font-size:10pt; margin:4px 0; text-align:justify; }
-    #pvPage .pv-resp-lbl { font-weight:700; font-size:10pt; margin:7px 0 3px; }
-    #pvPage .pv-ul      { margin:0 0 6px 20px; padding:0; }
-    #pvPage .pv-ul li   { font-size:10pt; margin-bottom:2px; text-align:justify; }
-    #pvPage .pv-tech    { font-size:10pt; margin-bottom:4px; }
-    #pvPage .pv-edu     { font-size:10pt; margin-bottom:5px; }
 
     /* ── Onboarding Guide ── */
     #guideCard {
@@ -620,22 +622,7 @@
     .tpv-select-btn { background:#6366f1; border:none; color:#fff; border-radius:8px; padding:7px 14px; font-size:12px; font-weight:700; font-family:inherit; cursor:pointer; white-space:nowrap; }
     .tpv-close { background:rgba(255,255,255,.1); border:none; color:#fff; border-radius:8px; padding:7px 11px; font-size:16px; cursor:pointer; line-height:1; }
     #tpvPage { background:#fff; padding:52px 62px; font-family:Calibri,Georgia,serif; font-size:10pt; line-height:1.45; color:#111; border-radius:0 0 12px 12px; min-height:500px; }
-    #tpvPage .pv-name    { font-size:22pt; font-weight:700; margin:0 0 5px; }
-    #tpvPage .pv-contact { font-size:10pt; margin-bottom:4px; }
-    #tpvPage .pv-loc     { font-style:italic; font-size:10pt; margin-bottom:18px; }
-    #tpvPage .pv-sec     { font-weight:700; border-bottom:1.5px solid #111; margin:16px 0 7px; padding-bottom:3px; font-size:10.5pt; }
-    #tpvPage .pv-para    { text-align:justify; margin-bottom:10px; font-size:10pt; }
-    #tpvPage .pv-grid2   { display:grid; grid-template-columns:1fr 1fr; gap:3px 20px; margin-bottom:8px; }
-    #tpvPage .pv-comp    { font-size:10pt; padding:1px 0; }
-    #tpvPage .pv-role-hdr { display:flex; justify-content:space-between; align-items:baseline; margin:12px 0 3px; flex-wrap:wrap; gap:4px; }
-    #tpvPage .pv-rtitle  { font-weight:700; font-size:10.5pt; }
-    #tpvPage .pv-rdates  { font-style:italic; font-size:10pt; white-space:nowrap; }
-    #tpvPage .pv-proj    { font-size:10pt; margin:4px 0; text-align:justify; }
-    #tpvPage .pv-resp-lbl { font-weight:700; font-size:10pt; margin:7px 0 3px; }
-    #tpvPage .pv-ul      { margin:0 0 6px 20px; padding:0; }
-    #tpvPage .pv-ul li   { font-size:10pt; margin-bottom:2px; text-align:justify; }
-    #tpvPage .pv-tech    { font-size:10pt; margin-bottom:4px; }
-    #tpvPage .pv-edu     { font-size:10pt; margin-bottom:5px; }
+    /* #tpvPage pv-* rules inherited from global .pv-* above */
 
     /* ── Job Tracker Sidebar ── */
     .tracker-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.3); z-index:880; backdrop-filter:blur(2px); }
