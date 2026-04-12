@@ -2234,12 +2234,12 @@ function _tmcBuildHtml(key) {
   if(_tmcHtmlCache[cacheKey]) return _tmcHtmlCache[cacheKey];
   var html;
   if(_tmcTab === 'cl') {
-    // CL templates have their own internal padding — just fix width
-    html = '<div style="width:860px;background:#fff;box-sizing:border-box">' + buildCoverLetterHtml(_tmcCLSample, key) + '</div>';
+    // CL templates carry their own internal padding — fix width + ensure full A4 height
+    html = '<div style="width:860px;background:#fff;box-sizing:border-box;min-height:1122px">' + buildCoverLetterHtml(_tmcCLSample, key) + '</div>';
   } else {
     // Resume templates use margin:-52px -62px on banners — they MUST be inside
     // a 52px/62px padded container or the bleed overflows incorrectly.
-    html = '<div style="padding:52px 62px;background:#fff;box-sizing:border-box;min-height:800px">' + buildResumeHtml(getLoremData(), key) + '</div>';
+    html = '<div style="padding:52px 62px;background:#fff;box-sizing:border-box;min-height:1122px">' + buildResumeHtml(getLoremData(), key) + '</div>';
   }
   _tmcHtmlCache[cacheKey] = html;
   return html;

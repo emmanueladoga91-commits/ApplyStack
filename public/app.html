@@ -1291,16 +1291,17 @@
     .tmcz-page-wrap {
       background:#fff; border-radius:12px;
       box-shadow:0 20px 70px rgba(0,0,0,.6);
-      overflow:visible;
+      overflow:hidden;
       transition:zoom .22s cubic-bezier(.4,0,.2,1);
-      /* Match the natural preview width templates are designed for */
       width:860px;
+      /* A4 page height at 96 dpi so the white page always looks full */
+      min-height:1122px;
     }
-    /* No extra padding — each template's HTML already carries its own margins */
     .tmcz-page-inner {
       padding:0;
       font-family:Calibri,Georgia,serif;
       font-size:10pt; line-height:1.45; color:#111;
+      min-height:1122px;
     }
 
     @media(max-width:700px) {
