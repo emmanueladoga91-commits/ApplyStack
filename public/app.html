@@ -504,9 +504,11 @@
     .pv-dl-btn { background:rgba(255,255,255,.15); border:none; color:#fff; border-radius:8px; padding:8px 15px; font-size:13px; font-weight:700; font-family:inherit; cursor:pointer; }
     .pv-close  { background:rgba(255,255,255,.1); border:none; color:#fff; border-radius:8px; padding:8px 12px; font-size:17px; cursor:pointer; line-height:1; }
     /* ── Global pv-* rules — apply everywhere buildResumeHtml() is used ── */
-    .pv-name    { font-size:22pt; font-weight:700; text-align:center; margin:0 0 5px; }
-    .pv-contact { text-align:center; font-size:10pt; margin-bottom:4px; }
-    .pv-loc     { text-align:center; font-style:italic; font-size:10pt; margin-bottom:18px; }
+    /* Note: text-align is intentionally not set here — each template controls
+       alignment via its outer container or inline style on the element */
+    .pv-name    { font-size:22pt; font-weight:700; margin:0 0 5px; }
+    .pv-contact { font-size:10pt; margin-bottom:4px; }
+    .pv-loc     { font-style:italic; font-size:10pt; margin-bottom:18px; }
     .pv-sec     { font-weight:700; border-bottom:1.5px solid #111; margin:16px 0 7px; padding-bottom:3px; font-size:10.5pt; }
     .pv-para    { text-align:justify; margin-bottom:10px; font-size:10pt; }
     .pv-grid2   { display:grid; grid-template-columns:1fr 1fr; gap:3px 20px; margin-bottom:8px; }
@@ -1282,6 +1284,7 @@
     .tmcz-body {
       display:flex; justify-content:center;
       padding:24px 20px 48px;
+      overflow-x:auto;
     }
 
     /* The white page wrapper — shrinks/expands with zoom */

@@ -2234,10 +2234,12 @@ function _tmcBuildHtml(key) {
   if(_tmcHtmlCache[cacheKey]) return _tmcHtmlCache[cacheKey];
   var html;
   if(_tmcTab === 'cl') {
-    // Wrap CL html in a fixed 860px container so scaler math is uniform
-    html = '<div style="width:860px;background:#fff">' + buildCoverLetterHtml(_tmcCLSample, key) + '</div>';
+    // CL templates have their own internal padding — just fix width
+    html = '<div style="width:860px;background:#fff;box-sizing:border-box">' + buildCoverLetterHtml(_tmcCLSample, key) + '</div>';
   } else {
-    html = buildResumeHtml(getLoremData(), key);
+    // Resume templates use margin:-52px -62px on banners — they MUST be inside
+    // a 52px/62px padded container or the bleed overflows incorrectly.
+    html = '<div style="padding:52px 62px;background:#fff;box-sizing:border-box;min-height:800px">' + buildResumeHtml(getLoremData(), key) + '</div>';
   }
   _tmcHtmlCache[cacheKey] = html;
   return html;
@@ -2538,8 +2540,8 @@ document.addEventListener('DOMContentLoaded', function() {
   // Eager-load career vault in background (silent — populates form before user opens tab)
   setTimeout(eagerLoadVault, 800);
 
-  // Inject real template HTML previews into the template grid cards
-  setTimeout(initTemplatePreviews, 0);
+  // Inject real template HTML previews after first paint so offsetWidth is available
+  requestAnimationFrame(function(){ requestAnimationFrame(initTemplatePreviews); });
 });
 
 // ── Real template thumbnail previews ─────────────────────────────────────────
