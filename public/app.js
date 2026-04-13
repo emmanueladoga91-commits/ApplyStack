@@ -3856,3 +3856,178 @@ async function importResumeToVault(file) {
     showAlert('error', 'Import failed', err.message || 'Could not parse resume. Try again or fill in manually.');
   }
 }
+
+// ═══════════════════════════════════════════════════════════════
+//  JOB MATCH ENGINE
+// ═══════════════════════════════════════════════════════════════
+var _jmSource = 'vault'; // 'vault' | 'resume'
+
+function openJobMatch() {
+  document.getElementById('jmOverlay').classList.add('on');
+  document.body.style.overflow = 'hidden';
+  // Auto-select source based on what's loaded
+  if (extractedText && !fileBuffer) {
+    // vault text is loaded
+    jmSetSource('vault');
+  } else if (fileBuffer || extractedText) {
+    jmSetSource('resume');
+  }
+}
+
+function closeJobMatch(e) {
+  if (e && e.target !== document.getElementById('jmOverlay')) return;
+  document.getElementById('jmOverlay').classList.remove('on');
+  document.body.style.overflow = '';
+}
+
+function jmSetSource(src) {
+  _jmSource = src;
+  document.getElementById('jmSrcVault').classList.toggle('active', src === 'vault');
+  document.getElementById('jmSrcResume').classList.toggle('active', src === 'resume');
+}
+
+async function runJobMatch() {
+  var body   = document.getElementById('jmBody');
+  var runBtn = document.getElementById('jmRunBtn');
+  var tok    = getToken();
+  if (!tok) { body.innerHTML = '<div class="jm-error">Please sign in to use Job Match.</div>'; return; }
+
+  // ── Build resume text from selected source ────────────────
+  var resumeText = '';
+  if (_jmSource === 'vault') {
+    var vault = readVaultFromForm();
+    if (!vault.name && !vault.jobs.length && !vault.skills) {
+      body.innerHTML = '<div class="jm-error">Your Career Vault appears to be empty. Fill it in or switch source to "Uploaded Resume".</div>';
+      return;
+    }
+    resumeText = vaultToResumeText(vault);
+  } else {
+    resumeText = extractedText;
+    if (!resumeText || resumeText.length < 80) {
+      body.innerHTML = '<div class="jm-error">No resume loaded. Upload a resume file or switch source to "Career Vault".</div>';
+      return;
+    }
+  }
+
+  // ── Show loading ──────────────────────────────────────────
+  runBtn.disabled = true;
+  runBtn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:jmSpin .7s linear infinite"></span> Analysing…';
+  body.innerHTML = '<div class="jm-loading"><div class="jm-spinner"></div><span>Claude is analysing your profile and finding the best-fit roles…</span></div>';
+
+  // ── Claude prompt ─────────────────────────────────────────
+  var systemPrompt = 'You are an expert career coach and job market analyst. Analyse the provided resume and return ONLY a valid JSON object — no markdown, no explanation. The JSON must follow this exact structure:\n{\n  "roles": [\n    {\n      "title": "Senior Product Manager",\n      "seniority": "Senior",\n      "industry": "SaaS / Technology",\n      "match_score": 91,\n      "salary_range": "$140k – $175k",\n      "why_match": "One sentence explaining why this role fits the candidate\'s background.",\n      "key_skills": ["Skill1","Skill2","Skill3","Skill4"],\n      "search_query": "Senior Product Manager SaaS"\n    }\n  ],\n  "top_keywords": ["keyword1","keyword2","keyword3","keyword4","keyword5"],\n  "inferred_location": "New York, NY"\n}\nReturn 6 diverse but highly relevant roles, ranked by match score. Match score is 0-100. Be specific and realistic about salary ranges for the candidate\'s level and location.';
+
+  var userMsg = 'Here is the candidate\'s resume:\n\n' + resumeText.slice(0, 4000) + '\n\nAnalyse this profile and return the JSON job match results.';
+
+  try {
+    var res = await fetch('/api/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
+      body: JSON.stringify({ type: 'jobs', system: systemPrompt, userMsg: userMsg, maxTokens: 1800 })
+    });
+
+    if (res.status === 402) {
+      body.innerHTML = '<div class="jm-error" style="text-align:center;padding:32px 20px"><div style="font-size:2rem;margin-bottom:12px">🔒</div><div style="font-size:.95rem;font-weight:700;color:#fff;margin-bottom:8px">Pro Feature</div><p style="color:rgba(255,255,255,.5);font-size:.85rem;line-height:1.6">Job Match Engine is available on TailorCV Pro.</p><a href="/app.html#upgrade" style="display:inline-block;margin-top:16px;background:linear-gradient(135deg,#7c3aed,#5b63f0);color:#fff;padding:10px 24px;border-radius:99px;font-weight:700;font-size:.85rem;text-decoration:none">Upgrade to Pro →</a></div>';
+      return;
+    }
+    if (!res.ok) throw new Error('Server error ' + res.status);
+
+    var data = await res.json();
+    var raw  = (data.text || '').trim();
+
+    // Strip any markdown code fences if Claude wrapped it
+    raw = raw.replace(/^```json\s*/i,'').replace(/^```\s*/,'').replace(/```\s*$/,'').trim();
+
+    var parsed = JSON.parse(raw);
+    renderJobMatchResults(parsed);
+
+  } catch (err) {
+    console.error('Job match error:', err);
+    body.innerHTML = '<div class="jm-error">Something went wrong: ' + (err.message || 'Unknown error') + '. Please try again.</div>';
+  } finally {
+    runBtn.disabled = false;
+    runBtn.innerHTML = '<span>✨</span> Find Matching Jobs';
+  }
+}
+
+function renderJobMatchResults(data) {
+  var body     = document.getElementById('jmBody');
+  var roles    = data.roles || [];
+  var keywords = data.top_keywords || [];
+  var location = data.inferred_location || '';
+
+  if (!roles.length) {
+    body.innerHTML = '<div class="jm-empty"><div class="jm-empty-icon">😕</div><p>No roles found. Try adding more detail to your vault or resume.</p></div>';
+    return;
+  }
+
+  var html = '<div class="jm-cards">';
+  roles.forEach(function(role) {
+    var q  = encodeURIComponent(role.search_query || role.title);
+    var loc = encodeURIComponent(location);
+    var liUrl  = 'https://www.linkedin.com/jobs/search/?keywords=' + q + (loc ? '&location=' + loc : '');
+    var indUrl = 'https://www.indeed.com/jobs?q=' + q + (loc ? '&l=' + loc : '');
+    var gdUrl  = 'https://www.glassdoor.com/Job/jobs.htm?suggestCount=0&typedKeyword=' + q + (loc ? '&locT=N&locId=0' : '');
+
+    var scoreColor = role.match_score >= 85 ? '#86efac' : role.match_score >= 70 ? '#fcd34d' : '#fca5a5';
+    var skills = (role.key_skills || []).slice(0, 5);
+
+    html += '<div class="jm-card">';
+    html += '<div class="jm-card-top">';
+    html += '<div class="jm-card-left">';
+    html += '<div class="jm-card-title">' + escJm(role.title) + '</div>';
+    html += '<div class="jm-card-meta">';
+    html += '<span class="jm-tag">' + escJm(role.seniority || '') + '</span>';
+    html += '<span class="jm-tag">' + escJm(role.industry  || '') + '</span>';
+    if (role.salary_range) html += '<span class="jm-tag salary">💰 ' + escJm(role.salary_range) + '</span>';
+    html += '<span class="jm-tag match">✓ ' + (role.match_score || '–') + '% match</span>';
+    html += '</div></div>';
+    html += '<div class="jm-score" style="background:' + scoreColor + '1a;border:2px solid ' + scoreColor + '55">';
+    html += '<span class="jm-score-num" style="color:' + scoreColor + '">' + (role.match_score || '–') + '</span>';
+    html += '<span style="font-size:.6rem;color:rgba(255,255,255,.35)">match</span>';
+    html += '</div>';
+    html += '</div>';
+
+    if (role.why_match) html += '<div class="jm-why">' + escJm(role.why_match) + '</div>';
+    if (skills.length) {
+      html += '<div class="jm-skills">';
+      skills.forEach(function(s){ html += '<span class="jm-skill-chip">' + escJm(s) + '</span>'; });
+      html += '</div>';
+    }
+    html += '<div class="jm-actions">';
+    html += '<button class="jm-action-btn primary" onclick="jmUseRole(\'' + escJmAttr(role.title) + '\',\'' + escJmAttr(role.search_query || role.title) + '\')">🎯 Tailor resume for this role</button>';
+    html += '<a class="jm-action-btn" href="' + liUrl + '" target="_blank" rel="noopener">🔗 LinkedIn Jobs</a>';
+    html += '<a class="jm-action-btn" href="' + indUrl + '" target="_blank" rel="noopener">🔍 Indeed</a>';
+    html += '<a class="jm-action-btn" href="' + gdUrl + '" target="_blank" rel="noopener">📊 Glassdoor</a>';
+    html += '</div>';
+    html += '</div>'; // .jm-card
+  });
+  html += '</div>'; // .jm-cards
+
+  if (keywords.length) {
+    html += '<div class="jm-kw-section">';
+    html += '<div class="jm-kw-title">Top keywords to add to your resume</div>';
+    html += '<div class="jm-kw-chips">';
+    keywords.forEach(function(kw){ html += '<span class="jm-kw-chip">' + escJm(kw) + '</span>'; });
+    html += '</div></div>';
+  }
+
+  body.innerHTML = html;
+}
+
+function jmUseRole(title, searchQuery) {
+  // Pre-fill the "Role you're applying for" field and close modal
+  var roleEl = document.getElementById('role');
+  if (roleEl) roleEl.value = title;
+  closeJobMatch();
+  // Scroll to job details section and focus JD textarea
+  var jdEl = document.getElementById('jd');
+  if (jdEl) {
+    jdEl.focus();
+    jdEl.placeholder = 'Paste a job description for "' + title + '" here, or use the URL field above to fetch one…';
+    jdEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+}
+
+function escJm(s)     { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function escJmAttr(s) { return String(s||'').replace(/'/g,'&#39;').replace(/"/g,'&quot;'); }

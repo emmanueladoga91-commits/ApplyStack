@@ -1377,6 +1377,142 @@
     }
     .ftb-upgrade:hover { transform:translateY(-1px); box-shadow:0 5px 14px rgba(26,39,68,.4); }
 
+  /* ═══════════════════════════════════════════════
+     JOB MATCH ENGINE
+  ═══════════════════════════════════════════════ */
+  .jm-btn {
+    position: fixed; right: 88px; bottom: 26px;
+    background: linear-gradient(135deg, #7c3aed, #5b63f0);
+    color: #fff; border: none; border-radius: 50px;
+    height: 48px; padding: 0 20px;
+    font-size: 13px; font-weight: 800; letter-spacing: .01em;
+    cursor: pointer; display: flex; align-items: center; gap: 8px;
+    box-shadow: 0 6px 24px rgba(91,99,240,.45), 0 2px 8px rgba(91,99,240,.25);
+    z-index: 800; transition: all .2s;
+    white-space: nowrap;
+  }
+  .jm-btn:hover { transform: translateY(-2px) scale(1.03); box-shadow: 0 10px 32px rgba(91,99,240,.55); }
+  .jm-overlay {
+    position: fixed; inset: 0; background: rgba(4,9,20,.7);
+    z-index: 1100; display: none; align-items: center; justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .jm-overlay.on { display: flex; }
+  .jm-modal {
+    background: #0d1b35; border: 1px solid rgba(255,255,255,.1);
+    border-radius: 20px; width: min(860px, 96vw); max-height: 90vh;
+    display: flex; flex-direction: column; overflow: hidden;
+    box-shadow: 0 32px 80px rgba(0,0,0,.6);
+  }
+  .jm-hdr {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 24px 16px; border-bottom: 1px solid rgba(255,255,255,.08);
+    flex-shrink: 0;
+  }
+  .jm-hdr-left { display: flex; flex-direction: column; gap: 4px; }
+  .jm-title { font-size: 1.05rem; font-weight: 800; color: #fff; }
+  .jm-subtitle { font-size: .78rem; color: rgba(255,255,255,.4); }
+  .jm-close {
+    width: 34px; height: 34px; border-radius: 50%;
+    background: rgba(255,255,255,.08); border: none; color: rgba(255,255,255,.6);
+    font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all .15s;
+  }
+  .jm-close:hover { background: rgba(239,68,68,.25); color: #fff; }
+  .jm-source-bar {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 14px 24px; border-bottom: 1px solid rgba(255,255,255,.06);
+    background: rgba(255,255,255,.02); flex-shrink: 0;
+  }
+  .jm-source-label { font-size: .75rem; color: rgba(255,255,255,.4); font-weight: 600; white-space: nowrap; }
+  .jm-source-chip {
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
+    color: rgba(255,255,255,.6); font-size: .78rem; font-weight: 600;
+    padding: 6px 14px; border-radius: 99px; cursor: pointer; transition: all .15s;
+  }
+  .jm-source-chip.active {
+    background: rgba(91,99,240,.25); border-color: rgba(91,99,240,.5); color: #a5b4fc;
+  }
+  .jm-run-btn {
+    margin-left: auto; background: linear-gradient(135deg,#7c3aed,#5b63f0);
+    color: #fff; border: none; border-radius: 99px;
+    padding: 9px 22px; font-size: .82rem; font-weight: 800; cursor: pointer;
+    display: flex; align-items: center; gap: 7px; transition: all .15s; white-space: nowrap;
+    box-shadow: 0 4px 14px rgba(91,99,240,.35);
+  }
+  .jm-run-btn:hover { opacity: .9; transform: translateY(-1px); }
+  .jm-run-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+  .jm-body { overflow-y: auto; padding: 20px 24px; flex: 1; }
+  .jm-empty {
+    text-align: center; padding: 48px 20px; color: rgba(255,255,255,.3);
+  }
+  .jm-empty-icon { font-size: 3rem; margin-bottom: 12px; }
+  .jm-empty p { font-size: .9rem; line-height: 1.6; }
+  .jm-loading {
+    display: flex; flex-direction: column; align-items: center; gap: 14px;
+    padding: 48px 20px; color: rgba(255,255,255,.5);
+  }
+  .jm-spinner {
+    width: 38px; height: 38px; border: 3px solid rgba(91,99,240,.25);
+    border-top-color: #7c3aed; border-radius: 50%;
+    animation: jmSpin .8s linear infinite;
+  }
+  @keyframes jmSpin { to { transform: rotate(360deg); } }
+  .jm-cards { display: flex; flex-direction: column; gap: 14px; }
+  .jm-card {
+    background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.09);
+    border-radius: 14px; padding: 18px 20px; transition: border-color .15s;
+  }
+  .jm-card:hover { border-color: rgba(91,99,240,.4); }
+  .jm-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+  .jm-card-left { flex: 1; }
+  .jm-card-title { font-size: .97rem; font-weight: 800; color: #fff; margin-bottom: 4px; }
+  .jm-card-meta { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+  .jm-tag {
+    font-size: .7rem; font-weight: 700; padding: 3px 10px; border-radius: 99px;
+    background: rgba(255,255,255,.07); color: rgba(255,255,255,.55);
+    border: 1px solid rgba(255,255,255,.1);
+  }
+  .jm-tag.match { background: rgba(34,197,94,.12); color: #86efac; border-color: rgba(34,197,94,.25); }
+  .jm-tag.salary { background: rgba(251,191,36,.1); color: #fcd34d; border-color: rgba(251,191,36,.2); }
+  .jm-score {
+    flex-shrink: 0; width: 52px; height: 52px; border-radius: 50%;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: .65rem; font-weight: 700; color: rgba(255,255,255,.5); gap: 1px;
+  }
+  .jm-score-num { font-size: 1.1rem; font-weight: 900; color: #86efac; line-height: 1; }
+  .jm-why { font-size: .81rem; color: rgba(255,255,255,.55); line-height: 1.6; margin-bottom: 12px; }
+  .jm-skills { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 14px; }
+  .jm-skill-chip {
+    font-size: .7rem; font-weight: 600; padding: 3px 10px; border-radius: 99px;
+    background: rgba(91,99,240,.15); color: #a5b4fc; border: 1px solid rgba(91,99,240,.3);
+  }
+  .jm-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .jm-action-btn {
+    font-size: .75rem; font-weight: 700; padding: 7px 14px; border-radius: 8px;
+    border: 1px solid rgba(255,255,255,.15); background: rgba(255,255,255,.07);
+    color: rgba(255,255,255,.7); cursor: pointer; text-decoration: none;
+    display: flex; align-items: center; gap: 5px; transition: all .15s;
+  }
+  .jm-action-btn:hover { background: rgba(255,255,255,.14); color: #fff; }
+  .jm-action-btn.primary {
+    background: linear-gradient(135deg,#1a3356,#1e3a5f);
+    border-color: rgba(255,255,255,.2); color: #fff;
+  }
+  .jm-action-btn.primary:hover { opacity: .9; }
+  .jm-kw-section { margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(255,255,255,.07); }
+  .jm-kw-title { font-size: .72rem; font-weight: 700; text-transform: uppercase; letter-spacing: .08em; color: rgba(255,255,255,.3); margin-bottom: 10px; }
+  .jm-kw-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .jm-kw-chip {
+    font-size: .72rem; font-weight: 600; padding: 4px 12px; border-radius: 99px;
+    background: rgba(91,99,240,.12); color: #c7d2fe; border: 1px solid rgba(91,99,240,.25);
+  }
+  .jm-error { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.3); border-radius: 12px; padding: 16px 20px; color: #fca5a5; font-size: .85rem; }
+  @media(max-width:640px){
+    .jm-btn { right: 80px; bottom: 22px; padding: 0 14px; font-size: 12px; height: 44px; }
+    .jm-source-bar { flex-direction: column; align-items: flex-start; }
+    .jm-run-btn { margin-left: 0; }
+  }
   </style>
 </head>
 <body>
@@ -2373,6 +2509,37 @@
 </aside>
 
 <!-- Floating Tracker Toggle -->
+<!-- ═══ JOB MATCH ENGINE button + modal ═══ -->
+<button class="jm-btn" id="jmBtn" onclick="openJobMatch()" title="Find Matching Jobs">
+  🎯 Find Jobs
+</button>
+
+<div class="jm-overlay" id="jmOverlay" onclick="closeJobMatch(event)">
+  <div class="jm-modal" onclick="event.stopPropagation()">
+    <div class="jm-hdr">
+      <div class="jm-hdr-left">
+        <div class="jm-title">🎯 Job Match Engine</div>
+        <div class="jm-subtitle">AI finds the best-fit roles based on your resume or career vault</div>
+      </div>
+      <button class="jm-close" onclick="closeJobMatch()">✕</button>
+    </div>
+    <div class="jm-source-bar">
+      <span class="jm-source-label">Source:</span>
+      <button class="jm-source-chip active" id="jmSrcVault"   onclick="jmSetSource('vault')">🗄️ Career Vault</button>
+      <button class="jm-source-chip"        id="jmSrcResume"  onclick="jmSetSource('resume')">📎 Uploaded Resume</button>
+      <button class="jm-run-btn" id="jmRunBtn" onclick="runJobMatch()">
+        <span id="jmRunIcon">✨</span> Find Matching Jobs
+      </button>
+    </div>
+    <div class="jm-body" id="jmBody">
+      <div class="jm-empty" id="jmEmpty">
+        <div class="jm-empty-icon">🔍</div>
+        <p>Load your Career Vault or upload a resume, then click<br/><strong style="color:rgba(255,255,255,.7)">Find Matching Jobs</strong> to see AI-curated roles.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
 <button class="tracker-toggle" id="trackerToggle" title="Job Application Tracker" style="position:relative">
   📋
   <span class="tracker-badge" id="trackerBadge">0</span>
