@@ -676,76 +676,61 @@
     /* ── ATS comparison demo ─────────────────────────── */
     .ats-demo-wrap { margin-bottom: 56px; }
     .ats-compare {
-      display: grid; grid-template-columns: 1fr auto 1fr; gap: 0;
+      display: grid; grid-template-columns: 1fr 88px 1fr;
       background: rgba(255,255,255,.03);
       border: 1px solid rgba(255,255,255,.1);
       border-radius: 20px; overflow: hidden;
     }
-    .ats-panel { padding: 28px 28px 24px; display: flex; flex-direction: column; gap: 0; }
-    .ats-panel-before { border-right: 1px solid rgba(255,255,255,.08); }
-    .ats-panel-header {
+    .ats-col { display: flex; flex-direction: column; }
+    .ats-col-hdr {
       display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 16px;
+      padding: 18px 22px 14px; border-bottom: 1px solid rgba(255,255,255,.06);
     }
-    .ats-panel-label {
-      font-size: .72rem; font-weight: 700; letter-spacing: .08em;
+    .ats-col-label {
+      font-size: .68rem; font-weight: 800; letter-spacing: .1em;
       text-transform: uppercase; color: rgba(255,255,255,.35);
     }
-    .ats-score-badge {
-      display: flex; align-items: center; gap: 8px;
-    }
-    .ats-score-ring {
-      width: 48px; height: 48px; flex-shrink: 0;
-    }
-    .ats-score-num {
-      font-size: 1.25rem; font-weight: 900; line-height: 1;
-    }
+    .ats-score-badge { display: flex; align-items: center; gap: 8px; }
+    .ats-score-ring  { width: 42px; height: 42px; flex-shrink: 0; }
+    .ats-score-num   { font-size: 1.2rem; font-weight: 900; line-height: 1; }
     .ats-score-num.before { color: #f59e0b; }
     .ats-score-num.after  { color: #22c55e; }
-    .ats-score-sub { font-size: .68rem; color: rgba(255,255,255,.35); margin-top: 1px; }
-    .ats-resume-snippet {
-      background: white; border-radius: 10px; padding: 18px 20px;
-      font-family: 'Calibri', sans-serif; font-size: 11px; line-height: 1.55;
-      color: #1a1a2e; flex: 1;
+    .ats-score-sub   { font-size: .65rem; color: rgba(255,255,255,.3); margin-top: 1px; }
+    .ats-rv {
+      overflow: hidden; flex: 1; cursor: default;
+      box-shadow: inset 0 -40px 40px -10px rgba(10,17,40,.7);
     }
-    .ats-snip-name { font-size: 14px; font-weight: 800; color: #0f1c3f; margin-bottom: 2px; }
-    .ats-snip-contact { font-size: 9.5px; color: #64748b; margin-bottom: 10px; }
-    .ats-snip-sec { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: .07em; color: #0f1c3f; border-bottom: 1.5px solid #e2e8f0; padding-bottom: 3px; margin: 10px 0 6px; }
-    .ats-snip-body { font-size: 10px; color: #334155; line-height: 1.6; }
-    .ats-snip-body li { margin-bottom: 3px; }
-    .ats-kw-miss { background: #fee2e2; color: #991b1b; border-radius: 3px; padding: 0 3px; text-decoration: line-through; }
-    .ats-kw-hit  { background: #dcfce7; color: #166534; border-radius: 3px; padding: 0 3px; font-weight: 600; }
-    .ats-kw-new  { background: #dbeafe; color: #1e40af; border-radius: 3px; padding: 0 3px; font-weight: 600; }
-    .ats-keywords-row {
-      display: flex; flex-wrap: wrap; gap: 5px; margin-top: 12px;
+    .ats-rv-inner { transform-origin: top left; }
+    .ats-kw-row {
+      display: flex; flex-wrap: wrap; gap: 5px;
+      padding: 14px 18px; border-top: 1px solid rgba(255,255,255,.06);
+      min-height: 56px;
     }
     .ats-kw-chip {
-      font-size: 9.5px; font-weight: 600; padding: 3px 9px; border-radius: 99px;
-      display: flex; align-items: center; gap: 4px;
+      font-size: 9.5px; font-weight: 700; padding: 3px 9px; border-radius: 99px;
+      display: flex; align-items: center; gap: 3px;
     }
     .ats-kw-chip.miss { background: rgba(239,68,68,.15); color: #fca5a5; border: 1px solid rgba(239,68,68,.3); }
     .ats-kw-chip.hit  { background: rgba(34,197,94,.15);  color: #86efac; border: 1px solid rgba(34,197,94,.3); }
-    .ats-kw-chip.miss::before { content: '✕ '; }
-    .ats-kw-chip.hit::before  { content: '✓ '; }
-    .ats-divider-col {
+    .ats-mid-col {
       display: flex; flex-direction: column; align-items: center;
-      justify-content: center; padding: 0 20px; gap: 10px;
+      justify-content: center; gap: 10px;
+      border-left: 1px solid rgba(255,255,255,.08);
+      border-right: 1px solid rgba(255,255,255,.08);
+      background: rgba(79,110,247,.06);
     }
     .ats-arrow-icon {
-      width: 36px; height: 36px; background: var(--indigo);
-      border-radius: 50%; display: flex; align-items: center; justify-content: center;
-      color: white; font-size: 1rem; flex-shrink: 0;
+      width: 38px; height: 38px; background: var(--indigo); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 1rem;
     }
-    .ats-improvement {
-      font-size: .72rem; font-weight: 700; color: #86efac;
-      text-align: center; line-height: 1.3;
-    }
-    @media(max-width:820px){
+    .ats-improvement { font-size: .7rem; font-weight: 800; color: #86efac; text-align: center; line-height: 1.4; }
+    /* highlight spans injected by JS into the after doc */
+    .ats-hl { background: #d1fae5; color: #065f46; border-radius: 3px; padding: 0 2px; font-weight: 700; }
+    @media(max-width:860px){
       .ats-compare { grid-template-columns: 1fr; }
-      .ats-panel-before { border-right: none; border-bottom: 1px solid rgba(255,255,255,.08); }
-      .ats-divider-col { flex-direction: row; padding: 16px 20px; }
+      .ats-mid-col { flex-direction: row; padding: 12px; border: none; border-top: 1px solid rgba(255,255,255,.08); border-bottom: 1px solid rgba(255,255,255,.08); }
     }
-
     /* ─── NICHES ──────────────────────────────────────── */
     .niches-wrap {
       background: var(--gray50);
@@ -1570,101 +1555,74 @@
     <div class="ats-demo-wrap reveal">
       <div class="ats-compare">
 
-        <!-- BEFORE panel -->
-        <div class="ats-panel ats-panel-before">
-          <div class="ats-panel-header">
-            <div class="ats-panel-label">Before TailorCV</div>
+        <!-- BEFORE col -->
+        <div class="ats-col">
+          <div class="ats-col-hdr">
+            <div class="ats-col-label">Before TailorCV</div>
             <div class="ats-score-badge">
               <svg class="ats-score-ring" viewBox="0 0 48 48">
-                <circle cx="24" cy="24" r="20" fill="none" stroke="rgba(0,0,0,.08)" stroke-width="5"/>
+                <circle cx="24" cy="24" r="20" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="5"/>
                 <circle cx="24" cy="24" r="20" fill="none" stroke="#f59e0b" stroke-width="5"
                   stroke-dasharray="125.6" stroke-dashoffset="75" stroke-linecap="round"
                   transform="rotate(-90 24 24)"/>
               </svg>
               <div>
                 <div class="ats-score-num before">41%</div>
-                <div class="ats-score-sub">ATS score</div>
+                <div class="ats-score-sub">ATS match</div>
               </div>
             </div>
           </div>
-          <div class="ats-resume-snippet">
-            <div class="ats-snip-name">Jordan Mitchell</div>
-            <div class="ats-snip-contact">jordan.mitchell@email.com &middot; San Francisco, CA</div>
-            <div class="ats-snip-sec">Experience</div>
-            <div class="ats-snip-body">
-              <strong>Software Engineer &mdash; Acme Inc</strong><br/>
-              <ul style="margin:4px 0 0 14px;padding:0">
-                <li>Built internal tools to improve team productivity</li>
-                <li>Worked with databases to store and retrieve data</li>
-                <li>Helped with cloud infrastructure tasks</li>
-                <li>Participated in code reviews and team meetings</li>
-              </ul>
-            </div>
-            <div class="ats-snip-sec">Skills</div>
-            <div class="ats-snip-body">Python &middot; JavaScript &middot; SQL &middot; Git</div>
+          <div class="ats-rv" id="atsBeforeVP">
+            <div class="ats-rv-inner" id="atsBeforeDoc"></div>
           </div>
-          <div class="ats-keywords-row">
-            <span class="ats-kw-chip miss">Kubernetes</span>
-            <span class="ats-kw-chip miss">CI/CD pipeline</span>
-            <span class="ats-kw-chip miss">REST APIs</span>
-            <span class="ats-kw-chip miss">Agile / Scrum</span>
-            <span class="ats-kw-chip miss">TypeScript</span>
-            <span class="ats-kw-chip miss">AWS</span>
+          <div class="ats-kw-row">
+            <span class="ats-kw-chip miss">✕ Kubernetes</span>
+            <span class="ats-kw-chip miss">✕ CI/CD pipeline</span>
+            <span class="ats-kw-chip miss">✕ REST APIs</span>
+            <span class="ats-kw-chip miss">✕ AWS</span>
+            <span class="ats-kw-chip miss">✕ TypeScript</span>
+            <span class="ats-kw-chip miss">✕ Agile/Scrum</span>
           </div>
         </div>
 
         <!-- Arrow divider -->
-        <div class="ats-divider-col">
+        <div class="ats-mid-col">
           <div class="ats-arrow-icon">&#8594;</div>
-          <div class="ats-improvement">+44pts<br/>in seconds</div>
+          <div class="ats-improvement">+44 pts</div>
         </div>
 
-        <!-- AFTER panel -->
-        <div class="ats-panel ats-panel-after">
-          <div class="ats-panel-header">
-            <div class="ats-panel-label">After TailorCV</div>
+        <!-- AFTER col -->
+        <div class="ats-col">
+          <div class="ats-col-hdr">
+            <div class="ats-col-label">After TailorCV</div>
             <div class="ats-score-badge">
               <svg class="ats-score-ring" viewBox="0 0 48 48">
-                <circle cx="24" cy="24" r="20" fill="none" stroke="rgba(0,0,0,.08)" stroke-width="5"/>
+                <circle cx="24" cy="24" r="20" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="5"/>
                 <circle cx="24" cy="24" r="20" fill="none" stroke="#22c55e" stroke-width="5"
                   stroke-dasharray="125.6" stroke-dashoffset="19" stroke-linecap="round"
                   transform="rotate(-90 24 24)"/>
               </svg>
               <div>
                 <div class="ats-score-num after">85%</div>
-                <div class="ats-score-sub">ATS score</div>
+                <div class="ats-score-sub">ATS match</div>
               </div>
             </div>
           </div>
-          <div class="ats-resume-snippet">
-            <div class="ats-snip-name">Jordan Mitchell</div>
-            <div class="ats-snip-contact">jordan.mitchell@email.com &middot; San Francisco, CA</div>
-            <div class="ats-snip-sec">Experience</div>
-            <div class="ats-snip-body">
-              <strong>Software Engineer &mdash; Acme Inc</strong><br/>
-              <ul style="margin:4px 0 0 14px;padding:0">
-                <li>Developed internal <span class="ats-kw-hit">REST APIs</span> and microservices, reducing deployment time by 40% via <span class="ats-kw-hit">CI/CD pipeline</span> automation</li>
-                <li>Managed <span class="ats-kw-hit">AWS</span> infrastructure including containerised services on <span class="ats-kw-hit">Kubernetes</span>, cutting cloud costs by 22%</li>
-                <li>Delivered features in <span class="ats-kw-hit">Agile / Scrum</span> sprints, consistently hitting two-week cycle goals</li>
-                <li>Reviewed and refactored legacy Python to <span class="ats-kw-hit">TypeScript</span>, improving type safety across 3 services</li>
-              </ul>
-            </div>
-            <div class="ats-snip-sec">Skills</div>
-            <div class="ats-snip-body">Python &middot; <span class="ats-kw-hit">TypeScript</span> &middot; SQL &middot; Git &middot; <span class="ats-kw-hit">AWS</span> &middot; <span class="ats-kw-hit">Kubernetes</span> &middot; <span class="ats-kw-hit">REST APIs</span></div>
+          <div class="ats-rv" id="atsAfterVP">
+            <div class="ats-rv-inner" id="atsAfterDoc"></div>
           </div>
-          <div class="ats-keywords-row">
-            <span class="ats-kw-chip hit">Kubernetes</span>
-            <span class="ats-kw-chip hit">CI/CD pipeline</span>
-            <span class="ats-kw-chip hit">REST APIs</span>
-            <span class="ats-kw-chip hit">Agile / Scrum</span>
-            <span class="ats-kw-chip hit">TypeScript</span>
-            <span class="ats-kw-chip hit">AWS</span>
+          <div class="ats-kw-row">
+            <span class="ats-kw-chip hit">✓ Kubernetes</span>
+            <span class="ats-kw-chip hit">✓ CI/CD pipeline</span>
+            <span class="ats-kw-chip hit">✓ REST APIs</span>
+            <span class="ats-kw-chip hit">✓ AWS</span>
+            <span class="ats-kw-chip hit">✓ TypeScript</span>
+            <span class="ats-kw-chip hit">✓ Agile/Scrum</span>
           </div>
         </div>
 
       </div>
     </div>
-
     <div class="features-grid stagger reveal">
       <div class="feat-card">
         <div class="feat-ico">🎯</div>
@@ -2052,28 +2010,129 @@
     }, delay);
   }
 
-  // Trigger when ATS demo enters viewport
-  var atsObserver = new IntersectionObserver(function(entries) {
-    entries.forEach(function(e) {
-      if (e.isIntersecting) {
-        var rings = e.target.querySelectorAll('circle[stroke="#22c55e"], circle[stroke="#38bdf8"]');
-        rings.forEach(function(r, i) {
-          var finalOffset = r.getAttribute('stroke-dashoffset');
-          r.setAttribute('stroke-dashoffset', '251');
-          r.style.transition = 'stroke-dashoffset 1.4s cubic-bezier(.4,0,.2,1) ' + (i * 300 + 200) + 'ms';
-          requestAnimationFrame(function() {
-            requestAnimationFrame(function() {
-              r.setAttribute('stroke-dashoffset', finalOffset);
-            });
-          });
-        });
-        atsObserver.unobserve(e.target);
+  // ── ATS before/after real resume comparison ──────────────────────────────
+  var ATS_BEFORE_DATA = {
+    name: 'Jordan Mitchell',
+    phone: '+1 (415) 882-3301',
+    email: 'jordan.mitchell@email.com',
+    locationPreference: 'San Francisco, CA  |  Open to Remote',
+    summaryTitle: 'PROFESSIONAL SUMMARY',
+    summary: 'Experienced software engineer with a background in building tools and working with various technologies. Good communicator and team player with the ability to work on different projects and contribute to team goals.',
+    coreCompetencies: ['Python','JavaScript','SQL','Git','Linux','HTML/CSS','Problem Solving','Team Collaboration','Code Review','Documentation','Database Management','Backend Development'],
+    workExperience: [
+      {
+        title: 'Software Engineer', company: 'Acme Inc', location: 'San Francisco, CA',
+        dates: 'Mar 2021 — Present', projects: [],
+        responsibilities: [
+          'Built internal tools to improve team productivity and reduce manual work',
+          'Worked with databases to store and retrieve data efficiently for internal applications',
+          'Helped with cloud infrastructure tasks and server maintenance',
+          'Participated in code reviews and weekly team meetings',
+          'Worked on various backend services to fix bugs and add small features'
+        ]
+      },
+      {
+        title: 'Junior Developer', company: 'StartupXYZ', location: 'Oakland, CA',
+        dates: 'Jun 2019 — Feb 2021', projects: [],
+        responsibilities: [
+          'Assisted senior engineers with development tasks across web applications',
+          'Wrote JavaScript code for frontend features and small backend endpoints',
+          'Fixed bugs and updated technical documentation for internal use'
+        ]
       }
-    });
-  }, { threshold: 0.3 });
+    ],
+    technicalSkills: [
+      { category: 'Languages', items: 'Python, JavaScript, SQL, HTML/CSS' },
+      { category: 'Tools',     items: 'Git, Linux, Jira, VS Code' },
+      { category: 'Databases', items: 'PostgreSQL, MySQL' }
+    ],
+    certifications: [],
+    education: [{ degree: 'B.S. Computer Science', institution: 'UC Davis', location: 'Davis, CA' }]
+  };
 
-  var atsDemoEl = document.querySelector('.ats-demo-wrap');
-  if (atsDemoEl) atsObserver.observe(atsDemoEl);
+  var ATS_AFTER_DATA = {
+    name: 'Jordan Mitchell',
+    phone: '+1 (415) 882-3301',
+    email: 'jordan.mitchell@email.com',
+    locationPreference: 'San Francisco, CA  |  Open to Remote',
+    summaryTitle: 'PROFESSIONAL SUMMARY',
+    summary: 'Results-driven Software Engineer with 4+ years delivering scalable microservices and REST APIs on AWS. Proven track record of reducing deployment time through CI/CD pipeline automation and leading cross-functional Agile/Scrum delivery. Proficient in TypeScript, Python, and Kubernetes-based infrastructure with a focus on reliability and performance.',
+    coreCompetencies: ['Python','TypeScript','REST APIs','AWS','Kubernetes','CI/CD pipeline','Agile/Scrum','SQL','Git','Microservices','PostgreSQL','Docker'],
+    workExperience: [
+      {
+        title: 'Software Engineer', company: 'Acme Inc', location: 'San Francisco, CA',
+        dates: 'Mar 2021 — Present', projects: [],
+        responsibilities: [
+          'Architected and deployed 12 REST APIs using Python and TypeScript, serving 2M+ daily requests on AWS Lambda with 99.95% uptime SLA',
+          'Reduced deployment time by 68% by designing a CI/CD pipeline using GitHub Actions and ArgoCD, enabling same-day production releases',
+          'Containerised 8 microservices on Kubernetes (EKS), cutting cloud infrastructure costs by 22% and improving horizontal scaling response time',
+          'Led Agile/Scrum ceremonies for a 6-engineer squad — sprint planning, retrospectives, and daily standups — shipping features every two weeks',
+          'Refactored 40k lines of legacy JavaScript to TypeScript, eliminating a class of runtime type errors and reducing production incidents by 35%'
+        ]
+      },
+      {
+        title: 'Junior Developer', company: 'StartupXYZ', location: 'Oakland, CA',
+        dates: 'Jun 2019 — Feb 2021', projects: [],
+        responsibilities: [
+          'Contributed REST API endpoints in Python/Flask integrated with PostgreSQL, supporting 15k active users on AWS EC2',
+          'Participated in Agile/Scrum sprints, delivering 3-5 story points per week and consistently meeting two-week cycle goals',
+          'Migrated build process to a CI/CD pipeline via CircleCI, reducing manual QA effort by 4 hours per release cycle'
+        ]
+      }
+    ],
+    technicalSkills: [
+      { category: 'Languages',       items: 'Python, TypeScript, JavaScript, SQL' },
+      { category: 'Cloud & DevOps',  items: 'AWS (Lambda, EC2, EKS, S3), Kubernetes, Docker, CI/CD pipeline (GitHub Actions, ArgoCD, CircleCI)' },
+      { category: 'APIs & Services', items: 'REST APIs, GraphQL, PostgreSQL, MySQL, Redis' },
+      { category: 'Practices',       items: 'Agile/Scrum, Microservices, TDD, Code Review, Git' }
+    ],
+    certifications: ['AWS Certified Developer — Associate (DVA-C02), Amazon Web Services, 2023'],
+    education: [{ degree: 'B.S. Computer Science', institution: 'UC Davis', location: 'Davis, CA' }]
+  };
+
+  var ATS_KEYWORDS = ['REST APIs','CI/CD pipeline','Agile/Scrum','Kubernetes','TypeScript','AWS','microservices','Microservices'];
+
+  function atsHighlight(html) {
+    ATS_KEYWORDS.forEach(function(kw) {
+      var re = new RegExp('(?<![\\w/])('+kw.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')(?![\\w/])','g');
+      html = html.replace(re,'<mark class="ats-hl">$1</mark>');
+    });
+    return html;
+  }
+
+  function initAtsComparison() {
+    var beforeVP = document.getElementById('atsBeforeVP');
+    var afterVP  = document.getElementById('atsAfterVP');
+    var beforeDoc = document.getElementById('atsBeforeDoc');
+    var afterDoc  = document.getElementById('atsAfterDoc');
+    if (!beforeVP || !afterVP || typeof buildResumeHtml === 'undefined') return;
+
+    var vpW = beforeVP.offsetWidth || 480;
+    var scale = (vpW / 860).toFixed(4);
+    var showH = Math.round(920 / scale); // doc px to show before fade
+
+    function wrap(innerHtml) {
+      return '<div style="padding:52px 62px;background:#fff;box-sizing:border-box;min-height:1122px;text-align:left">' + innerHtml + '</div>';
+    }
+
+    var beforeHtml = wrap(buildResumeHtml(ATS_BEFORE_DATA, 'classic'));
+    var afterHtml  = atsHighlight(wrap(buildResumeHtml(ATS_AFTER_DATA, 'classic')));
+
+    beforeDoc.style.cssText = 'transform:scale('+scale+');transform-origin:top left;width:860px';
+    beforeDoc.innerHTML = beforeHtml;
+    beforeVP.style.height = Math.round(showH * scale) + 'px';
+
+    afterDoc.style.cssText = 'transform:scale('+scale+');transform-origin:top left;width:860px';
+    afterDoc.innerHTML = afterHtml;
+    afterVP.style.height = Math.round(showH * scale) + 'px';
+  }
+
+  // Run once buildResumeHtml is available (after carousel JS loads)
+  if (document.readyState === 'complete') {
+    initAtsComparison();
+  } else {
+    window.addEventListener('load', initAtsComparison);
+  }
 
     /* ════ LANDING CAROUSEL (real template renderer) ════ */
   var TEMPLATES = {
