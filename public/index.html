@@ -697,10 +697,15 @@
     .ats-score-num.after  { color: #22c55e; }
     .ats-score-sub   { font-size: .65rem; color: rgba(255,255,255,.3); margin-top: 1px; }
     .ats-rv {
-      overflow: hidden; flex: 1; cursor: default;
-      box-shadow: inset 0 -40px 40px -10px rgba(10,17,40,.7);
+      overflow: hidden; position: relative; cursor: default;
+      /* height set by JS */ min-height: 200px;
+      box-shadow: inset 0 -60px 50px -10px rgba(10,17,40,.85);
     }
-    .ats-rv-inner { transform-origin: top left; }
+    .ats-rv-inner {
+      position: absolute; top: 0; left: 0;
+      transform-origin: top left;
+      /* width:860px and transform:scale() set by JS */
+    }
     .ats-kw-row {
       display: flex; flex-wrap: wrap; gap: 5px;
       padding: 14px 18px; border-top: 1px solid rgba(255,255,255,.06);
@@ -2101,38 +2106,45 @@
   }
 
   function initAtsComparison() {
-    var beforeVP = document.getElementById('atsBeforeVP');
-    var afterVP  = document.getElementById('atsAfterVP');
+    var beforeVP  = document.getElementById('atsBeforeVP');
+    var afterVP   = document.getElementById('atsAfterVP');
     var beforeDoc = document.getElementById('atsBeforeDoc');
     var afterDoc  = document.getElementById('atsAfterDoc');
     if (!beforeVP || !afterVP || typeof buildResumeHtml === 'undefined') return;
 
-    var vpW = beforeVP.offsetWidth || 480;
-    var scale = (vpW / 860).toFixed(4);
-    var showH = Math.round(920 / scale); // doc px to show before fade
+    // Use the compare container width to get accurate column width
+    var compareEl = beforeVP.closest('.ats-compare');
+    var totalW    = compareEl ? compareEl.offsetWidth : (window.innerWidth > 900 ? 900 : window.innerWidth - 48);
+    var midW      = 88;
+    var colW      = Math.floor((totalW - midW) / 2);
+    var scale     = Math.min((colW / 860), 0.62).toFixed(4); // cap at 0.62
+    var showDocPx = 900; // how many px of the full-height doc to reveal
 
+    // Wrap with explicit white bg + dark text so inherited color doesn't bleed
     function wrap(innerHtml) {
-      return '<div style="padding:52px 62px;background:#fff;box-sizing:border-box;min-height:1122px;text-align:left">' + innerHtml + '</div>';
+      return '<div style="padding:52px 62px;background:#fff;box-sizing:border-box;'
+           + 'min-height:1122px;text-align:left;color:#1a1a2e;font-size:10pt">'
+           + innerHtml + '</div>';
     }
 
     var beforeHtml = wrap(buildResumeHtml(ATS_BEFORE_DATA, 'classic'));
     var afterHtml  = atsHighlight(wrap(buildResumeHtml(ATS_AFTER_DATA, 'classic')));
 
-    beforeDoc.style.cssText = 'transform:scale('+scale+');transform-origin:top left;width:860px';
+    var docStyle = 'position:absolute;top:0;left:0;width:860px;transform-origin:top left;transform:scale('+scale+')';
+    beforeDoc.style.cssText = docStyle;
     beforeDoc.innerHTML = beforeHtml;
-    beforeVP.style.height = Math.round(showH * scale) + 'px';
 
-    afterDoc.style.cssText = 'transform:scale('+scale+');transform-origin:top left;width:860px';
+    afterDoc.style.cssText = docStyle;
     afterDoc.innerHTML = afterHtml;
-    afterVP.style.height = Math.round(showH * scale) + 'px';
+
+    // Set viewport height = scaled doc height we want to show
+    var vpH = Math.round(showDocPx * scale) + 'px';
+    beforeVP.style.height = vpH;
+    afterVP.style.height  = vpH;
   }
 
-  // Run once buildResumeHtml is available (after carousel JS loads)
-  if (document.readyState === 'complete') {
-    initAtsComparison();
-  } else {
-    window.addEventListener('load', initAtsComparison);
-  }
+  // Run after page load so layout is settled and offsetWidths are accurate
+  window.addEventListener('load', initAtsComparison);
 
     /* ════ LANDING CAROUSEL (real template renderer) ════ */
   var TEMPLATES = {
