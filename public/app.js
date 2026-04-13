@@ -3860,7 +3860,8 @@ async function importResumeToVault(file) {
 // ═══════════════════════════════════════════════════════════════
 //  JOB MATCH ENGINE
 // ═══════════════════════════════════════════════════════════════
-var _jmSource = 'vault'; // 'vault' | 'resume'
+var _jmSource   = 'vault'; // 'vault' | 'resume'
+var _jmWorkType = 'any';  // 'any' | 'remote' | 'hybrid' | 'onsite'
 
 function openJobMatch() {
   document.getElementById('jmOverlay').classList.add('on');
@@ -3884,6 +3885,13 @@ function jmSetSource(src) {
   _jmSource = src;
   document.getElementById('jmSrcVault').classList.toggle('active', src === 'vault');
   document.getElementById('jmSrcResume').classList.toggle('active', src === 'resume');
+}
+
+function jmSetWorkType(wt) {
+  _jmWorkType = wt;
+  document.querySelectorAll('#jmWtGroup .jm-wt-chip').forEach(function(btn) {
+    btn.classList.toggle('active', btn.dataset.wt === wt);
+  });
 }
 
 async function runJobMatch() {
@@ -3914,10 +3922,22 @@ async function runJobMatch() {
   runBtn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:jmSpin .7s linear infinite"></span> Analysing…';
   body.innerHTML = '<div class="jm-loading"><div class="jm-spinner"></div><span>Claude is analysing your profile and finding the best-fit roles…</span></div>';
 
-  // ── Claude prompt ─────────────────────────────────────────
-  var systemPrompt = 'You are an expert career coach and job market analyst. Analyse the provided resume and return ONLY a valid JSON object — no markdown, no explanation. The JSON must follow this exact structure:\n{\n  "roles": [\n    {\n      "title": "Senior Product Manager",\n      "seniority": "Senior",\n      "industry": "SaaS / Technology",\n      "match_score": 91,\n      "salary_range": "$140k – $175k",\n      "why_match": "One sentence explaining why this role fits the candidate\'s background.",\n      "key_skills": ["Skill1","Skill2","Skill3","Skill4"],\n      "search_query": "Senior Product Manager SaaS"\n    }\n  ],\n  "top_keywords": ["keyword1","keyword2","keyword3","keyword4","keyword5"],\n  "inferred_location": "New York, NY"\n}\nReturn exactly 10 diverse but highly relevant roles, ranked by match score descending. Match score is 0-100. Be specific and realistic about salary ranges for the candidate\'s level and location.';
+  // ── Location + work type preferences ─────────────────────
+  var locPref  = (document.getElementById('jmLocInput') || {}).value || '';
+  locPref = locPref.trim();
+  var wtLabel  = { any: 'any work type', remote: 'Remote only', hybrid: 'Hybrid', onsite: 'On-site only' }[_jmWorkType] || 'any work type';
 
-  var userMsg = 'Here is the candidate\'s resume:\n\n' + resumeText.slice(0, 4000) + '\n\nAnalyse this profile and return the JSON job match results.';
+  var locInstruction = '';
+  if (locPref) locInstruction += ' The candidate prefers roles in or near: ' + locPref + '.';
+  if (_jmWorkType !== 'any') locInstruction += ' Work arrangement preference: ' + wtLabel + '. Prioritise and clearly note ' + wtLabel.toLowerCase() + ' roles.';
+  if (!locPref && _jmWorkType === 'any') locInstruction = ' Infer the most likely location from the resume and set "inferred_location" accordingly.';
+
+  // ── Claude prompt ─────────────────────────────────────────
+  var systemPrompt = 'You are an expert career coach and job market analyst. Analyse the provided resume and return ONLY a valid JSON object — no markdown, no explanation. The JSON must follow this exact structure:\n{\n  "roles": [\n    {\n      "title": "Senior Product Manager",\n      "seniority": "Senior",\n      "industry": "SaaS / Technology",\n      "match_score": 91,\n      "salary_range": "$140k – $175k",\n      "why_match": "One sentence explaining why this role fits the candidate\'s background.",\n      "key_skills": ["Skill1","Skill2","Skill3","Skill4"],\n      "search_query": "Senior Product Manager SaaS",\n      "work_type": "Remote"\n    }\n  ],\n  "top_keywords": ["keyword1","keyword2","keyword3","keyword4","keyword5"],\n  "inferred_location": "New York, NY"\n}\nReturn exactly 10 diverse but highly relevant roles, ranked by match score descending. Match score is 0-100. Be specific and realistic about salary ranges for the candidate\'s level and location.' + locInstruction;
+
+  var userMsg = 'Here is the candidate\'s resume:\n\n' + resumeText.slice(0, 4000) + '\n\nAnalyse this profile and return the JSON job match results.'
+    + (locPref ? '\n\nLocation preference: ' + locPref : '')
+    + (_jmWorkType !== 'any' ? '\nWork type preference: ' + wtLabel : '');
 
   try {
     var res = await fetch('/api/claude', {
@@ -3954,20 +3974,32 @@ function renderJobMatchResults(data) {
   var body     = document.getElementById('jmBody');
   var roles    = data.roles || [];
   var keywords = data.top_keywords || [];
-  var location = data.inferred_location || '';
+  // Use user-typed location if available, otherwise fall back to AI-inferred
+  var userLoc  = ((document.getElementById('jmLocInput') || {}).value || '').trim();
+  var location = userLoc || data.inferred_location || '';
 
   if (!roles.length) {
     body.innerHTML = '<div class="jm-empty"><div class="jm-empty-icon">😕</div><p>No roles found. Try adding more detail to your vault or resume.</p></div>';
     return;
   }
 
-  var html = '<div class="jm-cards">';
+  // LinkedIn work-type filter params
+  var liWtParam = { remote: '&f_WT=2', hybrid: '&f_WT=3', onsite: '&f_WT=1' }[_jmWorkType] || '';
+  // Indeed remote param
+  var indRemote = _jmWorkType === 'remote' ? '&remotejob=1' : '';
+
+  var wtLabels = { any: '', remote: '🌐 Remote', hybrid: '🏠 Hybrid', onsite: '🏢 On-site' };
+  var metaLine = [location ? '📍 ' + location : '', wtLabels[_jmWorkType] || ''].filter(Boolean).join('  ·  ');
+  var html = metaLine
+    ? '<div style="font-size:.75rem;color:rgba(255,255,255,.35);margin-bottom:14px;font-weight:600">' + escJm(metaLine) + '</div>'
+    : '';
+  html += '<div class="jm-cards">';
   roles.forEach(function(role) {
-    var q  = encodeURIComponent(role.search_query || role.title);
+    var q   = encodeURIComponent(role.search_query || role.title);
     var loc = encodeURIComponent(location);
-    var liUrl  = 'https://www.linkedin.com/jobs/search/?keywords=' + q + (loc ? '&location=' + loc : '');
-    var indUrl = 'https://www.indeed.com/jobs?q=' + q + (loc ? '&l=' + loc : '');
-    var gdUrl  = 'https://www.glassdoor.com/Job/jobs.htm?suggestCount=0&typedKeyword=' + q + (loc ? '&locT=N&locId=0' : '');
+    var liUrl  = 'https://www.linkedin.com/jobs/search/?keywords=' + q + (loc ? '&location=' + loc : '') + liWtParam;
+    var indUrl = 'https://www.indeed.com/jobs?q=' + q + (loc ? '&l=' + loc : '') + indRemote;
+    var gdUrl  = 'https://www.glassdoor.com/Job/jobs.htm?suggestCount=0&typedKeyword=' + q + (loc ? '&locKeyword=' + loc : '');
 
     var scoreColor = role.match_score >= 85 ? '#86efac' : role.match_score >= 70 ? '#fcd34d' : '#fca5a5';
     var skills = (role.key_skills || []).slice(0, 5);
@@ -3977,8 +4009,12 @@ function renderJobMatchResults(data) {
     html += '<div class="jm-card-left">';
     html += '<div class="jm-card-title">' + escJm(role.title) + '</div>';
     html += '<div class="jm-card-meta">';
-    html += '<span class="jm-tag">' + escJm(role.seniority || '') + '</span>';
-    html += '<span class="jm-tag">' + escJm(role.industry  || '') + '</span>';
+    if (role.seniority) html += '<span class="jm-tag">' + escJm(role.seniority) + '</span>';
+    if (role.industry)  html += '<span class="jm-tag">' + escJm(role.industry)  + '</span>';
+    if (role.work_type) {
+      var wtIcon = { Remote:'🌐', Hybrid:'🏠', 'On-site':'🏢', Onsite:'🏢' }[role.work_type] || '📍';
+      html += '<span class="jm-tag" style="background:rgba(16,185,129,.12);color:#6ee7b7;border-color:rgba(16,185,129,.3)">' + wtIcon + ' ' + escJm(role.work_type) + '</span>';
+    }
     if (role.salary_range) html += '<span class="jm-tag salary">💰 ' + escJm(role.salary_range) + '</span>';
     html += '<span class="jm-tag match">✓ ' + (role.match_score || '–') + '% match</span>';
     html += '</div></div>';

@@ -1510,10 +1510,36 @@
     background: rgba(91,99,240,.12); color: #c7d2fe; border: 1px solid rgba(91,99,240,.25);
   }
   .jm-error { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.3); border-radius: 12px; padding: 16px 20px; color: #fca5a5; font-size: .85rem; }
+  /* Location filter bar */
+  .jm-loc-bar {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 10px 24px 12px; border-bottom: 1px solid rgba(255,255,255,.06);
+    background: rgba(255,255,255,.015); flex-shrink: 0;
+  }
+  .jm-loc-icon { font-size: .9rem; flex-shrink: 0; }
+  .jm-loc-input {
+    flex: 1; min-width: 160px; max-width: 280px;
+    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+    border-radius: 8px; padding: 6px 12px; font-size: .8rem; color: #fff;
+    font-family: inherit; outline: none; transition: border-color .15s;
+  }
+  .jm-loc-input::placeholder { color: rgba(255,255,255,.28); }
+  .jm-loc-input:focus { border-color: rgba(91,99,240,.5); }
+  .jm-wt-group { display: flex; gap: 5px; flex-wrap: wrap; }
+  .jm-wt-chip {
+    font-size: .72rem; font-weight: 700; padding: 5px 12px; border-radius: 99px;
+    border: 1px solid rgba(255,255,255,.12); background: rgba(255,255,255,.06);
+    color: rgba(255,255,255,.5); cursor: pointer; transition: all .15s;
+  }
+  .jm-wt-chip.active {
+    background: rgba(16,185,129,.2); border-color: rgba(16,185,129,.45); color: #6ee7b7;
+  }
   @media(max-width:640px){
     .jm-btn { right: 80px; bottom: 22px; padding: 0 14px; font-size: 12px; height: 44px; }
     .jm-source-bar { flex-direction: column; align-items: flex-start; }
     .jm-run-btn { margin-left: 0; }
+    .jm-loc-bar { flex-direction: column; align-items: flex-start; }
+    .jm-loc-input { max-width: 100%; width: 100%; }
   }
   </style>
 </head>
@@ -2533,6 +2559,16 @@
       <button class="jm-run-btn" id="jmRunBtn" onclick="runJobMatch()">
         <span id="jmRunIcon">✨</span> Find Matching Jobs
       </button>
+    </div>
+    <div class="jm-loc-bar">
+      <span class="jm-loc-icon">📍</span>
+      <input class="jm-loc-input" id="jmLocInput" type="text" placeholder="City, state or country (e.g. London, Remote, New York)" />
+      <div class="jm-wt-group" id="jmWtGroup">
+        <button class="jm-wt-chip active" data-wt="any"    onclick="jmSetWorkType('any')">Any</button>
+        <button class="jm-wt-chip"        data-wt="remote" onclick="jmSetWorkType('remote')">🌐 Remote</button>
+        <button class="jm-wt-chip"        data-wt="hybrid" onclick="jmSetWorkType('hybrid')">🏠 Hybrid</button>
+        <button class="jm-wt-chip"        data-wt="onsite" onclick="jmSetWorkType('onsite')">🏢 On-site</button>
+      </div>
     </div>
     <div class="jm-body" id="jmBody">
       <div class="jm-empty" id="jmEmpty">
