@@ -1540,7 +1540,16 @@
     .jm-run-btn { margin-left: 0; }
     .jm-loc-bar { flex-direction: column; align-items: flex-start; }
     .jm-loc-input { max-width: 100%; width: 100%; }
+    .jm-filter-bar { flex-direction: column; align-items: flex-start; }
   }
+  /* Date + extra filter bar */
+  .jm-filter-bar {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    padding: 8px 24px 12px; border-bottom: 1px solid rgba(255,255,255,.06);
+    background: rgba(255,255,255,.01); flex-shrink: 0;
+  }
+  .jm-filter-label { font-size: .72rem; color: rgba(255,255,255,.35); font-weight: 700; white-space: nowrap; text-transform: uppercase; letter-spacing: .05em; }
+  .jm-filter-sep { width: 1px; height: 18px; background: rgba(255,255,255,.1); flex-shrink: 0; }
   </style>
 </head>
 <body>
@@ -2568,6 +2577,23 @@
         <button class="jm-wt-chip"        data-wt="remote" onclick="jmSetWorkType('remote')">🌐 Remote</button>
         <button class="jm-wt-chip"        data-wt="hybrid" onclick="jmSetWorkType('hybrid')">🏠 Hybrid</button>
         <button class="jm-wt-chip"        data-wt="onsite" onclick="jmSetWorkType('onsite')">🏢 On-site</button>
+      </div>
+    </div>
+    <div class="jm-filter-bar">
+      <span class="jm-filter-label">Posted:</span>
+      <div class="jm-wt-group" id="jmDateGroup">
+        <button class="jm-wt-chip active" data-dp="any"   onclick="jmSetDatePosted('any')">Any time</button>
+        <button class="jm-wt-chip"        data-dp="today" onclick="jmSetDatePosted('today')">Today</button>
+        <button class="jm-wt-chip"        data-dp="week"  onclick="jmSetDatePosted('week')">This week</button>
+        <button class="jm-wt-chip"        data-dp="month" onclick="jmSetDatePosted('month')">This month</button>
+      </div>
+      <div class="jm-filter-sep"></div>
+      <span class="jm-filter-label">Exp:</span>
+      <div class="jm-wt-group" id="jmExpGroup">
+        <button class="jm-wt-chip active" data-exp="any"    onclick="jmSetExp('any')">Any</button>
+        <button class="jm-wt-chip"        data-exp="entry"  onclick="jmSetExp('entry')">Entry</button>
+        <button class="jm-wt-chip"        data-exp="mid"    onclick="jmSetExp('mid')">Mid</button>
+        <button class="jm-wt-chip"        data-exp="senior" onclick="jmSetExp('senior')">Senior</button>
       </div>
     </div>
     <div class="jm-body" id="jmBody">

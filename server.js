@@ -1221,8 +1221,15 @@ app.get('/api/jobs-test', requireAuth, async (req, res) => {
 // Priority: Serper.dev Google Jobs → JSearch (RapidAPI) → Remotive fallback
 // Supports pagination via `start` param (0, 10, 20…).
 app.post('/api/jobs-search', requireAuth, async (req, res) => {
-  const { query, location, workType, start = 0 } = req.body || {};
+  const { query, location, workType, datePosted = 'any', exp = 'any', start = 0 } = req.body || {};
   if (!query) return res.status(400).json({ error: 'query is required' });
+
+  // Map date filter to Serper values
+  const dateMap = { today: 'today', week: 'week', month: 'month' };
+  const tbsMap  = { today: 'qdr:d', week: 'qdr:w', month: 'qdr:m' }; // for /search tbs param
+
+  // Map experience level to query suffix
+  const expSuffix = { entry: ' entry level junior', mid: ' mid level', senior: ' senior' }[exp] || '';
 
   const serperKey  = process.env.SERPER_API_KEY;
   const rapidKey   = process.env.RAPIDAPI_KEY;
@@ -1272,14 +1279,14 @@ app.post('/api/jobs-search', requireAuth, async (req, res) => {
 
     // Strategy A: dedicated /jobs endpoint
     try {
-      let q = query.trim();
-      if (workType === 'remote') q += ' remote jobs';
-      else if (location)         q += ' ' + location.trim();
+      let q = query.trim() + expSuffix;
+      if (workType === 'remote') q += ' remote';
 
       const body = { q, num: 10 };
       if (start > 0) body.start = start;
       if (gl) body.gl = gl;
-      if (location && workType !== 'remote') body.location = location.trim();
+      // Note: do NOT pass `location` text to /jobs — gl is enough and location can break results
+      if (dateMap[datePosted]) body.datePosted = dateMap[datePosted];
 
       const sresp = await fetch('https://google.serper.dev/jobs', {
         method:  'POST',
@@ -1301,14 +1308,17 @@ app.post('/api/jobs-search', requireAuth, async (req, res) => {
       errors.push('Serper /jobs: ' + err.message);
     }
 
-    // Strategy B: /search endpoint — broader Google web results for jobs
+    // Strategy B: /search endpoint scoped to job board domains
     try {
-      let q = query.trim() + ' jobs';
+      // Scope to major job boards so organic results are actual listings
+      const jobSites = 'site:linkedin.com/jobs OR site:indeed.com/viewjob OR site:glassdoor.com/job-listing OR site:ca.indeed.com OR site:jobs.lever.co OR site:boards.greenhouse.io OR site:workday.com OR site:careers.google.com';
+      let q = `"${query.trim()}"${expSuffix} (${jobSites})`;
       if (workType === 'remote') q += ' remote';
       if (location) q += ' ' + location.trim();
 
       const body = { q, num: 10, gl: gl || 'us' };
       if (start > 0) body.start = start;
+      if (tbsMap[datePosted]) body.tbs = tbsMap[datePosted];
 
       const sresp = await fetch('https://google.serper.dev/search', {
         method:  'POST',
@@ -1319,32 +1329,42 @@ app.post('/api/jobs-search', requireAuth, async (req, res) => {
       if (!sresp.ok) throw new Error(`Serper /search HTTP ${sresp.status}`);
       const sdata = await sresp.json();
 
-      // Pull from jobs block if present, else organic results
+      // Pull from jobs block if present
       if ((sdata.jobs || []).length > 0) {
         const jobs = sdata.jobs.map(normaliseSerperJob);
         return res.json({ jobs, source: 'google', hasMore: jobs.length >= 10 });
       }
 
-      // Map organic results as job cards (title, company from displayedLink, snippet)
+      // Map organic results — these are now scoped to job board URLs
       const organic = (sdata.organic || []).slice(0, 10);
       if (organic.length > 0) {
-        const jobs = organic.map((r, i) => ({
-          id:             'organic-' + i,
-          title:          r.title,
-          company:        r.displayedLink || r.domain || '',
-          companyLogo:    null,
-          location:       location || '',
-          isRemote:       workType === 'remote',
-          applyUrl:       r.link,
-          applyOptions:   [],
-          description:    r.snippet || '',
-          salary:         null,
-          employmentType: null,
-          posted:         null,
-          source:         'Google Search',
-          via:            null,
-        }));
-        return res.json({ jobs, source: 'google-search', hasMore: false });
+        // Extract company name from display link (e.g. "linkedin.com › jobs › view")
+        const knownBoards = { 'linkedin.com': 'LinkedIn', 'indeed.com': 'Indeed', 'ca.indeed.com': 'Indeed CA',
+          'glassdoor.com': 'Glassdoor', 'lever.co': 'Lever', 'greenhouse.io': 'Greenhouse',
+          'workday.com': 'Workday', 'careers.google.com': 'Google Careers' };
+        const jobs = organic.map((r, i) => {
+          let via = null;
+          try { const host = new URL(r.link).hostname.replace('www.',''); via = knownBoards[host] || host; } catch(e){}
+          // Clean up title: remove "- Company | LinkedIn" suffix patterns
+          const cleanTitle = (r.title || '').replace(/\s*[|\-–]\s*(LinkedIn|Indeed|Glassdoor|Workday|Lever).*$/i, '').trim();
+          return {
+            id:             'organic-' + i,
+            title:          cleanTitle || r.title,
+            company:        r.displayedLink || '',
+            companyLogo:    null,
+            location:       location || '',
+            isRemote:       workType === 'remote' || (r.snippet || '').toLowerCase().includes('remote'),
+            applyUrl:       r.link,
+            applyOptions:   [],
+            description:    r.snippet || '',
+            salary:         null,
+            employmentType: null,
+            posted:         null,
+            source:         'Google Jobs',
+            via:            via,
+          };
+        });
+        return res.json({ jobs, source: 'google-search', hasMore: organic.length >= 10 });
       }
       errors.push('Serper /search: 0 results');
     } catch (err) {
@@ -1360,11 +1380,12 @@ app.post('/api/jobs-search', requireAuth, async (req, res) => {
       if (workType === 'remote') searchQ += ' remote';
       else if (location)         searchQ += ' ' + location.trim();
 
+      const jDateMap = { today: 'today', week: 'week', month: 'month' };
       const params = new URLSearchParams({
-        query:       searchQ,
+        query:       searchQ + expSuffix,
         page:        String(Math.floor(start / 10) + 1),
         num_pages:   '1',
-        date_posted: 'month',
+        date_posted: jDateMap[datePosted] || 'month',
       });
       if (workType === 'remote') params.set('remote_jobs_only', 'true');
 

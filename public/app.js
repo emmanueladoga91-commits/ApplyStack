@@ -3862,6 +3862,8 @@ async function importResumeToVault(file) {
 // ═══════════════════════════════════════════════════════════════
 var _jmSource      = 'vault'; // 'vault' | 'resume'
 var _jmWorkType    = 'any';   // 'any' | 'remote' | 'hybrid' | 'onsite'
+var _jmDatePosted  = 'any';   // 'any' | 'today' | 'week' | 'month'
+var _jmExp         = 'any';   // 'any' | 'entry' | 'mid' | 'senior'
 var _jmSearchState = null;    // { searches, locPref, workType, page, allJobs, seenIds, hasMore }
 
 function openJobMatch() {
@@ -3892,6 +3894,20 @@ function jmSetWorkType(wt) {
   _jmWorkType = wt;
   document.querySelectorAll('#jmWtGroup .jm-wt-chip').forEach(function(btn) {
     btn.classList.toggle('active', btn.dataset.wt === wt);
+  });
+}
+
+function jmSetDatePosted(dp) {
+  _jmDatePosted = dp;
+  document.querySelectorAll('#jmDateGroup .jm-wt-chip').forEach(function(btn) {
+    btn.classList.toggle('active', btn.dataset.dp === dp);
+  });
+}
+
+function jmSetExp(exp) {
+  _jmExp = exp;
+  document.querySelectorAll('#jmExpGroup .jm-wt-chip').forEach(function(btn) {
+    btn.classList.toggle('active', btn.dataset.exp === exp);
   });
 }
 
@@ -3974,7 +3990,7 @@ async function runJobMatch() {
         var r = await fetch('/api/jobs-search', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
-          body: JSON.stringify({ query: s.query, location: locPref, workType: _jmWorkType, start: 0 })
+          body: JSON.stringify({ query: s.query, location: locPref, workType: _jmWorkType, datePosted: _jmDatePosted, exp: _jmExp, start: 0 })
         });
         if (!r.ok) { apiErrors.push('HTTP ' + r.status + ' for "' + s.query + '"'); return; }
         var d = await r.json();
@@ -3991,7 +4007,7 @@ async function runJobMatch() {
     }));
 
     // Store state for load-more
-    _jmSearchState = { searches: searches, locPref: locPref, workType: _jmWorkType, page: 1, allJobs: allJobs, seenIds: seenIds, topKeywords: topKeywords };
+    _jmSearchState = { searches: searches, locPref: locPref, workType: _jmWorkType, datePosted: _jmDatePosted, exp: _jmExp, page: 1, allJobs: allJobs, seenIds: seenIds, topKeywords: topKeywords };
 
     // Show API error/diagnostic banner if no jobs returned
     if (!allJobs.length) {
@@ -4042,7 +4058,7 @@ async function loadMoreJobs() {
       var r = await fetch('/api/jobs-search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
-        body: JSON.stringify({ query: s.query, location: st.locPref, workType: st.workType, start: nextStart })
+        body: JSON.stringify({ query: s.query, location: st.locPref, workType: st.workType, datePosted: st.datePosted, exp: st.exp, start: nextStart })
       });
       if (!r.ok) return;
       var d = await r.json();
