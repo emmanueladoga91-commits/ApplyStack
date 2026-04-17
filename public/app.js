@@ -3993,15 +3993,22 @@ async function runJobMatch() {
     // Store state for load-more
     _jmSearchState = { searches: searches, locPref: locPref, workType: _jmWorkType, page: 1, allJobs: allJobs, seenIds: seenIds, topKeywords: topKeywords };
 
-    // Show API error banner if no jobs and errors exist
-    if (!allJobs.length && apiErrors.length) {
-      var uniqueErrors = apiErrors.filter(function(e, i, a){ return a.indexOf(e) === i; });
-      body.innerHTML = '<div class="jm-error" style="margin-bottom:16px">'
-        + '<strong>⚠️ Job search API issue:</strong><br>'
-        + uniqueErrors.map(function(e){ return escJm(e); }).join('<br>')
-        + '<br><br><small style="opacity:.7">Check your API key in Render environment variables, or visit <code>/api/jobs-test</code> while logged in to diagnose.</small>'
-        + '</div>';
-      // Still show search-link fallback below the error
+    // Show API error/diagnostic banner if no jobs returned
+    if (!allJobs.length) {
+      var diagHtml = '<div class="jm-error" style="margin-bottom:16px;line-height:1.7">';
+      if (apiErrors.length) {
+        var uniqueErrors = apiErrors.filter(function(e, i, a){ return a.indexOf(e) === i; });
+        diagHtml += '<strong>⚠️ Job API error:</strong><br>'
+          + uniqueErrors.map(function(e){ return escJm(e); }).join('<br>') + '<br><br>';
+      } else {
+        diagHtml += '<strong>⚠️ No live listings returned</strong><br>'
+          + 'The API responded but returned 0 jobs for this query.<br><br>';
+      }
+      diagHtml += '<small style="opacity:.75">👉 Open this URL while logged in to see a full diagnostic:<br>'
+        + '<code style="background:rgba(255,255,255,.1);padding:2px 6px;border-radius:4px">'
+        + window.location.origin + '/api/jobs-test'
+        + '</code><br>Then share the result with support.</small></div>';
+      body.innerHTML = diagHtml;
       renderRealJobs(allJobs, topKeywords, locPref, searches, false);
       return;
     }

@@ -1163,18 +1163,33 @@ app.get('/api/jobs-test', requireAuth, async (req, res) => {
   };
 
   if (serperKey) {
+    // Test /jobs endpoint
     try {
       const r = await fetch('https://google.serper.dev/jobs', {
         method: 'POST',
         headers: { 'X-API-KEY': serperKey, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ q: 'software engineer canada', num: 2 }),
+        body: JSON.stringify({ q: 'business analyst canada', gl: 'ca', num: 3 }),
         signal: AbortSignal.timeout(10000),
       });
       const d = await r.json();
-      result.tests.serper = r.ok
-        ? { ok: true, jobCount: (d.jobs || []).length, firstJob: (d.jobs||[])[0]?.title || 'none' }
-        : { ok: false, status: r.status, body: JSON.stringify(d).slice(0, 200) };
-    } catch(e) { result.tests.serper = { ok: false, error: e.message }; }
+      result.tests.serper_jobs = r.ok
+        ? { ok: true, status: r.status, jobCount: (d.jobs || []).length, rawKeys: Object.keys(d), firstJob: (d.jobs||[])[0]?.title || 'none', rawSnippet: JSON.stringify(d).slice(0, 400) }
+        : { ok: false, status: r.status, rawSnippet: JSON.stringify(d).slice(0, 400) };
+    } catch(e) { result.tests.serper_jobs = { ok: false, error: e.message }; }
+
+    // Also test /search endpoint (backup strategy)
+    try {
+      const r = await fetch('https://google.serper.dev/search', {
+        method: 'POST',
+        headers: { 'X-API-KEY': serperKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ q: 'business analyst jobs canada', gl: 'ca', num: 3 }),
+        signal: AbortSignal.timeout(10000),
+      });
+      const d = await r.json();
+      result.tests.serper_search = r.ok
+        ? { ok: true, status: r.status, organicCount: (d.organic||[]).length, rawKeys: Object.keys(d) }
+        : { ok: false, status: r.status, rawSnippet: JSON.stringify(d).slice(0, 200) };
+    } catch(e) { result.tests.serper_search = { ok: false, error: e.message }; }
   }
 
   if (rapidKey) {
@@ -1230,8 +1245,32 @@ app.post('/api/jobs-search', requireAuth, async (req, res) => {
     return null;
   }
 
-  // ── 1. Serper.dev Google Jobs ─────────────────────────────────
+  // ── 1. Serper.dev ─────────────────────────────────────────────
   if (serperKey) {
+    const gl = countryCode(location);
+
+    // Helper to normalise a Serper job object (handles both camelCase and snake_case)
+    function normaliseSerperJob(j) {
+      const ext = j.detectedExtensions || j.detected_extensions || {};
+      return {
+        id:             j.jobId || j.job_id || (j.companyName + '|' + j.title),
+        title:          j.title,
+        company:        j.companyName || j.company_name || '',
+        companyLogo:    null,
+        location:       j.location || '',
+        isRemote:       (j.location || '').toLowerCase().includes('remote') || workType === 'remote',
+        applyUrl:       j.applyLink || j.applyOptions?.[0]?.link || j.link || null,
+        applyOptions:   (j.applyOptions || []).map(o => ({ title: o.title, link: o.link })),
+        description:    (j.description || j.snippet || '').replace(/\s+/g, ' ').slice(0, 400),
+        salary:         ext.salary || ext.salaryInfo || null,
+        employmentType: ext.scheduleType || ext.schedule_type || null,
+        posted:         ext.postedAt || ext.posted_at || null,
+        source:         'Google Jobs',
+        via:            j.via || null,
+      };
+    }
+
+    // Strategy A: dedicated /jobs endpoint
     try {
       let q = query.trim();
       if (workType === 'remote') q += ' remote jobs';
@@ -1239,7 +1278,6 @@ app.post('/api/jobs-search', requireAuth, async (req, res) => {
 
       const body = { q, num: 10 };
       if (start > 0) body.start = start;
-      const gl = countryCode(location);
       if (gl) body.gl = gl;
       if (location && workType !== 'remote') body.location = location.trim();
 
@@ -1249,34 +1287,69 @@ app.post('/api/jobs-search', requireAuth, async (req, res) => {
         body:    JSON.stringify(body),
         signal:  AbortSignal.timeout(10000),
       });
-      if (!sresp.ok) throw new Error(`Serper HTTP ${sresp.status}`);
+      if (!sresp.ok) throw new Error(`Serper /jobs HTTP ${sresp.status}`);
+      const sdata = await sresp.json();
+      const jobs = (sdata.jobs || []).map(normaliseSerperJob);
+      console.log(`Serper /jobs returned ${jobs.length} results for "${q}"`);
+
+      if (jobs.length > 0) {
+        return res.json({ jobs, source: 'google', hasMore: jobs.length >= 10 });
+      }
+      // 0 results — fall through to Strategy B
+    } catch (err) {
+      console.error('Serper /jobs error:', err.message);
+      errors.push('Serper /jobs: ' + err.message);
+    }
+
+    // Strategy B: /search endpoint — broader Google web results for jobs
+    try {
+      let q = query.trim() + ' jobs';
+      if (workType === 'remote') q += ' remote';
+      if (location) q += ' ' + location.trim();
+
+      const body = { q, num: 10, gl: gl || 'us' };
+      if (start > 0) body.start = start;
+
+      const sresp = await fetch('https://google.serper.dev/search', {
+        method:  'POST',
+        headers: { 'X-API-KEY': serperKey, 'Content-Type': 'application/json' },
+        body:    JSON.stringify(body),
+        signal:  AbortSignal.timeout(10000),
+      });
+      if (!sresp.ok) throw new Error(`Serper /search HTTP ${sresp.status}`);
       const sdata = await sresp.json();
 
-      const jobs = (sdata.jobs || []).map(j => {
-        const ext = j.detected_extensions || {};
-        return {
-          id:             j.jobId || (j.companyName + '|' + j.title),
-          title:          j.title,
-          company:        j.companyName,
-          companyLogo:    null,
-          location:       j.location || '',
-          isRemote:       (j.location || '').toLowerCase().includes('remote') || workType === 'remote',
-          applyUrl:       j.applyOptions?.[0]?.link || j.link || null,
-          applyOptions:   (j.applyOptions || []).map(o => ({ title: o.title, link: o.link })),
-          description:    (j.description || '').replace(/\s+/g, ' ').slice(0, 400),
-          salary:         ext.salary || null,
-          employmentType: ext.schedule_type || null,
-          posted:         ext.posted_at || null,
-          source:         'Google Jobs',
-          via:            j.via || null,
-        };
-      });
+      // Pull from jobs block if present, else organic results
+      if ((sdata.jobs || []).length > 0) {
+        const jobs = sdata.jobs.map(normaliseSerperJob);
+        return res.json({ jobs, source: 'google', hasMore: jobs.length >= 10 });
+      }
 
-      return res.json({ jobs, source: 'google', hasMore: jobs.length >= 10 });
+      // Map organic results as job cards (title, company from displayedLink, snippet)
+      const organic = (sdata.organic || []).slice(0, 10);
+      if (organic.length > 0) {
+        const jobs = organic.map((r, i) => ({
+          id:             'organic-' + i,
+          title:          r.title,
+          company:        r.displayedLink || r.domain || '',
+          companyLogo:    null,
+          location:       location || '',
+          isRemote:       workType === 'remote',
+          applyUrl:       r.link,
+          applyOptions:   [],
+          description:    r.snippet || '',
+          salary:         null,
+          employmentType: null,
+          posted:         null,
+          source:         'Google Search',
+          via:            null,
+        }));
+        return res.json({ jobs, source: 'google-search', hasMore: false });
+      }
+      errors.push('Serper /search: 0 results');
     } catch (err) {
-      console.error('Serper error:', err.message);
-      errors.push('Serper: ' + err.message);
-      // fall through to JSearch
+      console.error('Serper /search error:', err.message);
+      errors.push('Serper /search: ' + err.message);
     }
   }
 
