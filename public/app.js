@@ -722,7 +722,19 @@ document.addEventListener('DOMContentLoaded', function() {
     updateFontSample();
   });
 
-  document.getElementById('buildBtn').addEventListener('click', build);
+  document.getElementById('buildBtn').addEventListener('click', function() {
+    window._jmBuildMode = 'both'; build();
+  });
+  document.getElementById('buildResumeBtn').addEventListener('click', function() {
+    window._jmBuildMode = 'resume';
+    document.getElementById('buildBtn').textContent = '⚡ Build Resume only';
+    build();
+  });
+  document.getElementById('buildCoverBtn').addEventListener('click', function() {
+    window._jmBuildMode = 'cover';
+    document.getElementById('buildBtn').textContent = '⚡ Build Cover Letter only';
+    build();
+  });
   document.getElementById('previewBtn').addEventListener('click', openPreview);
   document.getElementById('pvClose').addEventListener('click', closePreview);
   document.getElementById('previewModal').addEventListener('click', function(e) { if (e.target === this) closePreview(); });
@@ -1268,7 +1280,9 @@ async function build(){
   if(!jd)                               return showAlert('warn','Job description missing.','Paste the job description in Step 3.');
 
   busy=true;
-  document.getElementById('buildBtn').disabled=true;
+  ['buildBtn','buildResumeBtn','buildCoverBtn'].forEach(function(id){
+    var el = document.getElementById(id); if(el) el.disabled = true;
+  });
   document.getElementById('buildBtn').innerHTML='<span class="spin"></span> Building\u2026';
   document.getElementById('prog').classList.add('on');
 
@@ -1408,7 +1422,9 @@ async function build(){
     console.error(err);
   } finally {
     busy=false;
-    document.getElementById('buildBtn').disabled=false;
+    ['buildBtn','buildResumeBtn','buildCoverBtn'].forEach(function(id){
+      var el = document.getElementById(id); if(el) el.disabled = false;
+    });
     document.getElementById('buildBtn').innerHTML='\u26A1 Build Resume, Cover Letter &amp; Full Analysis';
     document.getElementById('buildBtn').removeAttribute('data-jm-mode');
   }

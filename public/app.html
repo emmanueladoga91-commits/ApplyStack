@@ -391,21 +391,39 @@
     .alert.info  { background:#eff6ff; color:#1e40af; border:1px solid #93c5fd; }
     .alert strong { font-size:14px; }
 
-    /* ── Build button ── */
-    #buildBtn {
-      width:100%; padding:17px;
-      background:linear-gradient(135deg,#1a3356,#1e3a5f 40%,#2d5a8e);
-      color:#fff; border:none; border-radius:var(--r);
-      font-size:16px; font-weight:700; font-family:inherit; letter-spacing:.1px;
+    /* ── Build buttons ── */
+    .build-btn-group { display:flex; flex-direction:column; gap:10px; }
+    .build-btn {
+      width:100%; padding:15px 20px;
+      border:none; border-radius:var(--r);
+      font-size:15px; font-weight:700; font-family:inherit; letter-spacing:.1px;
       cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px;
-      transition:all var(--t);
-      box-shadow:0 4px 16px rgba(30,58,95,.35),0 2px 6px rgba(30,58,95,.2);
-      position:relative; overflow:hidden;
+      transition:all var(--t); position:relative; overflow:hidden;
     }
-    #buildBtn::after { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(255,255,255,.08),transparent 50%,rgba(255,255,255,.04)); pointer-events:none; }
-    #buildBtn:hover:not(:disabled) { box-shadow:0 6px 24px rgba(30,58,95,.45),0 3px 10px rgba(30,58,95,.25); transform:translateY(-1px); }
-    #buildBtn:active:not(:disabled) { transform:translateY(0); }
-    #buildBtn:disabled { opacity:.5; cursor:not-allowed; }
+    .build-btn::after { content:''; position:absolute; inset:0; background:linear-gradient(135deg,rgba(255,255,255,.08),transparent 50%,rgba(255,255,255,.04)); pointer-events:none; }
+    .build-btn:hover:not(:disabled) { transform:translateY(-1px); }
+    .build-btn:active:not(:disabled) { transform:translateY(0); }
+    .build-btn:disabled { opacity:.5; cursor:not-allowed; }
+    /* Primary — Resume + Cover Letter (full width, most prominent) */
+    #buildBtn {
+      background:linear-gradient(135deg,#1a3356,#1e3a5f 40%,#2d5a8e); color:#fff;
+      box-shadow:0 4px 16px rgba(30,58,95,.35),0 2px 6px rgba(30,58,95,.2);
+      font-size:16px; padding:17px;
+    }
+    #buildBtn:hover:not(:disabled) { box-shadow:0 6px 24px rgba(30,58,95,.45),0 3px 10px rgba(30,58,95,.25); }
+    /* Secondary row — Resume only + Cover Letter only side by side */
+    .build-btn-row { display:flex; gap:10px; }
+    .build-btn-row .build-btn { flex:1; font-size:14px; padding:13px 12px; }
+    #buildResumeBtn {
+      background:linear-gradient(135deg,#1e3a5f,#1a4a7a); color:#fff;
+      box-shadow:0 3px 12px rgba(30,58,95,.3);
+    }
+    #buildResumeBtn:hover:not(:disabled) { box-shadow:0 5px 18px rgba(30,58,95,.4); }
+    #buildCoverBtn {
+      background:linear-gradient(135deg,#2d1b6e,#3b2090); color:#fff;
+      box-shadow:0 3px 12px rgba(91,48,246,.25);
+    }
+    #buildCoverBtn:hover:not(:disabled) { box-shadow:0 5px 18px rgba(91,48,246,.35); }
 
     /* ── Progress ── */
     .prog { display:none; flex-direction:column; gap:7px; }
@@ -2357,7 +2375,14 @@
   </div>
 
   <button id="saveProgressBtn">💾 Save Progress</button>
-  <button id="buildBtn">⚡ Build Resume, Cover Letter &amp; Full Analysis</button>
+
+  <div class="build-btn-group">
+    <button id="buildBtn" class="build-btn">⚡ Build Resume, Cover Letter &amp; Full Analysis</button>
+    <div class="build-btn-row">
+      <button id="buildResumeBtn" class="build-btn">📋 Resume only</button>
+      <button id="buildCoverBtn"  class="build-btn">✉️ Cover Letter only</button>
+    </div>
+  </div>
 
   <!-- Progress -->
   <div class="card prog" id="prog">
