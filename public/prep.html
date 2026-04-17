@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TailorCV | Interview Prep</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --navy:#1e3a5f; --navy2:#243057; --indigo:#4f6ef7; --indigo2:#3a5ce4;
+      --gray50:#f8fafc; --gray100:#f1f5f9; --gray200:#e2e8f0;
+      --gray400:#94a3b8; --gray600:#475569; --gray800:#1e293b;
+      --green:#166534; --green-bg:#dcfce7; --green-bd:#86efac;
+      --red:#991b1b; --red-bg:#fef2f2;
+      --purple:#7c3aed; --purple-bg:#f5f3ff; --purple-bd:#c4b5fd;
+      --blue:#2563eb; --blue-bg:#dbeafe; --blue-bd:#93c5fd;
+      --teal:#0f766e; --teal-bg:#f0fdfa; --teal-bd:#5eead4;
+      --orange:#c2410c; --orange-bg:#fff7ed; --orange-bd:#fed7aa;
+      --radius:12px;
+    }
+    body { font-family:'Inter',system-ui,sans-serif; background:var(--gray50); color:var(--gray800); min-height:100vh; }
+
+    /* ── Header/Nav ── */
+    header {
+      background:#fff; border-bottom:1px solid var(--gray200); padding:14px 28px; display:flex; align-items:center; gap:12px; position:sticky; top:0; z-index:10;
+    }
+    .logo { font-size:1.3rem; font-weight:900; color:var(--navy); text-decoration:none; }
+    .logo span { color:var(--indigo); }
+    nav { margin-left:auto; display:flex; align-items:center; gap:12px; }
+    .nav-link { font-size:.9rem; color:var(--gray600); text-decoration:none; font-weight:500; }
+    .nav-link:hover { color:var(--navy); }
+    .nav-link.active { color:var(--indigo); font-weight:700; }
+    .btn-nav { padding:9px 20px; background:var(--indigo); color:#fff; border-radius:50px; font-size:.88rem; font-weight:700; text-decoration:none; }
+
+    /* ── Layout ── */
+    main { max-width:1000px; margin:0 auto; padding:32px 20px 80px; }
+    .page-title { font-size:1.7rem; font-weight:900; color:var(--navy); margin-bottom:28px; }
+
+    /* ── Setup Card ── */
+    #setupCard { background:#fff; border:1px solid var(--gray200); border-radius:var(--radius); padding:28px; margin-bottom:28px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+    .setup-title { font-size:1.1rem; font-weight:800; color:var(--navy); margin-bottom:20px; }
+    .setup-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+    @media (max-width:640px) { .setup-row { grid-template-columns:1fr; } }
+    .form-group { display:flex; flex-direction:column; }
+    .form-group label { font-size:.78rem; font-weight:700; color:var(--gray600); text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px; }
+    .form-group input, .form-group textarea {
+      padding:11px 14px; border:1.5px solid var(--gray200); border-radius:8px; font-size:.95rem; font-family:inherit; outline:none; transition:border-color .2s;
+    }
+    .form-group input:focus, .form-group textarea:focus { border-color:var(--indigo); box-shadow:0 0 0 3px rgba(79,110,247,.1); }
+    .form-group textarea { resize:vertical; min-height:100px; }
+    .form-row-full { grid-column:1/-1; }
+    .btn-generate {
+      width:100%; padding:14px 20px; background:var(--indigo); color:#fff; border:none; border-radius:var(--radius);
+      font-size:.95rem; font-weight:700; cursor:pointer; transition:opacity .2s;
+    }
+    .btn-generate:hover { opacity:.88; }
+    .btn-generate:disabled { opacity:.5; cursor:not-allowed; }
+
+    /* ── Loading state ── */
+    #prepLoading { display:none; text-align:center; padding:60px 20px; }
+    #prepLoading.show { display:block; }
+    .spinner {
+      display:inline-block; width:40px; height:40px; border:4px solid var(--gray200); border-top-color:var(--indigo); border-radius:50%; animation:spin .8s linear infinite; margin-bottom:16px;
+    }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    #prepLoading p { font-size:1rem; color:var(--gray600); margin-bottom:0; }
+
+    /* ── Cards (Brief & Questions) ── */
+    .result-card { display:none; background:#fff; border:1px solid var(--gray200); border-radius:var(--radius); padding:28px; margin-bottom:28px; box-shadow:0 1px 3px rgba(0,0,0,.05); }
+    .result-card.show { display:block; }
+    .card-title { font-size:1.2rem; font-weight:800; color:var(--navy); margin-bottom:18px; display:flex; align-items:center; gap:8px; }
+    .card-title-icon { font-size:1.4rem; }
+
+    /* ── Brief Card Sections ── */
+    .brief-section { margin-bottom:24px; }
+    .brief-section-title { font-size:.95rem; font-weight:700; color:var(--navy); text-transform:uppercase; letter-spacing:.04em; margin-bottom:10px; display:block; }
+    .brief-about { font-size:.95rem; line-height:1.6; color:var(--gray800); }
+    .culture-chips { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:0; }
+    .chip { display:inline-block; padding:8px 14px; background:var(--indigo); color:#fff; border-radius:50px; font-size:.85rem; font-weight:600; }
+    .chip.alt1 { background:var(--purple-bg); color:var(--purple); }
+    .chip.alt2 { background:var(--teal-bg); color:var(--teal); }
+    .chip.alt3 { background:var(--orange-bg); color:var(--orange); }
+    .brief-list { list-style:none; }
+    .brief-list li { padding:10px 0; padding-left:28px; position:relative; font-size:.95rem; line-height:1.5; color:var(--gray800); }
+    .brief-list li::before { content:'✓'; position:absolute; left:0; color:var(--green); font-weight:700; font-size:1.1rem; }
+    .brief-qa { margin-bottom:14px; padding-bottom:14px; border-bottom:1px solid var(--gray200); }
+    .brief-qa:last-child { border-bottom:none; margin-bottom:0; padding-bottom:0; }
+    .brief-q { font-size:.95rem; font-weight:600; color:var(--navy); margin-bottom:8px; }
+    .brief-copy-btn {
+      display:inline-block; padding:5px 10px; background:var(--gray100); color:var(--gray600); border:none; border-radius:6px; font-size:.78rem; font-weight:600; cursor:pointer; transition:background .2s;
+    }
+    .brief-copy-btn:hover { background:var(--indigo); color:#fff; }
+
+    /* ── Question Filters ── */
+    .filter-tabs { display:flex; gap:8px; margin-bottom:24px; flex-wrap:wrap; border-bottom:1px solid var(--gray200); padding-bottom:12px; }
+    .filter-tab {
+      padding:10px 16px; border:none; background:none; font-size:.9rem; font-weight:600; color:var(--gray600); cursor:pointer; transition:color .2s; position:relative;
+    }
+    .filter-tab:hover, .filter-tab.active { color:var(--indigo); }
+    .filter-tab.active::after {
+      content:''; position:absolute; bottom:-13px; left:0; right:0; height:3px; background:var(--indigo); border-radius:2px;
+    }
+
+    /* ── Question Items ── */
+    .questions-list { display:grid; gap:16px; }
+    .question-card {
+      border:1px solid var(--gray200); border-radius:var(--radius); padding:20px; background:#fff; transition:border-color .2s, box-shadow .2s;
+    }
+    .question-card:hover { border-color:var(--indigo); box-shadow:0 4px 12px rgba(79,110,247,.1); }
+    .q-header { display:flex; align-items:flex-start; gap:12px; margin-bottom:12px; }
+    .q-badge {
+      display:inline-block; padding:6px 12px; border-radius:50px; font-size:.75rem; font-weight:700; white-space:nowrap; flex-shrink:0;
+    }
+    .q-badge.behavioural { background:var(--purple-bg); color:var(--purple); }
+    .q-badge.technical { background:var(--blue-bg); color:var(--blue); }
+    .q-badge.situational { background:var(--teal-bg); color:var(--teal); }
+    .q-badge.culture-fit { background:var(--orange-bg); color:var(--orange); }
+    .q-text { font-size:.95rem; font-weight:600; color:var(--navy); flex:1; line-height:1.5; }
+    .q-toggle-btn {
+      display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border:1.5px solid var(--gray200); background:#fff; border-radius:6px; font-size:.85rem; font-weight:600; color:var(--gray700); cursor:pointer; transition:all .2s;
+    }
+    .q-toggle-btn:hover { border-color:var(--indigo); color:var(--indigo); }
+    .q-answer { display:none; margin-top:16px; padding:14px; background:var(--gray50); border-left:3px solid var(--indigo); border-radius:6px; font-size:.9rem; line-height:1.6; color:var(--gray800); }
+    .q-answer.show { display:block; }
+
+    /* ── Print Button ── */
+    .print-section { display:flex; justify-content:flex-end; margin-bottom:20px; }
+    .btn-print {
+      display:inline-flex; align-items:center; gap:8px; padding:12px 20px; background:var(--gray100); border:1.5px solid var(--gray200); border-radius:var(--radius); font-size:.9rem; font-weight:600; color:var(--gray800); cursor:pointer; transition:all .2s;
+    }
+    .btn-print:hover { border-color:var(--indigo); color:var(--indigo); }
+
+    /* ── Print styles ── */
+    @media print {
+      body { background:#fff; }
+      header, nav, .page-title, #setupCard, .filter-tabs, .btn-print, .print-section { display:none !important; }
+      main { max-width:100%; padding:0; margin:0; }
+      .result-card { page-break-inside:avoid; }
+      .question-card { page-break-inside:avoid; }
+      .q-answer { display:block !important; }
+      .q-toggle-btn { display:none !important; }
+    }
+
+    /* ── Responsive ── */
+    @media (max-width:640px) {
+      header { padding:12px 16px; }
+      .logo { font-size:1.1rem; }
+      nav { gap:8px; font-size:.85rem; }
+      main { padding:20px 16px 60px; }
+      .page-title { font-size:1.4rem; margin-bottom:20px; }
+      #setupCard, .result-card { padding:18px; }
+      .setup-title, .card-title { font-size:1rem; }
+      .filter-tabs { gap:6px; }
+      .filter-tab { padding:8px 12px; font-size:.85rem; }
+      .q-header { flex-direction:column; gap:8px; }
+      .q-badge { align-self:flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <a href="/" class="logo">Tailor<span>CV</span></a>
+  <nav>
+    <a href="/app.html" class="nav-link">🏠 Home</a>
+    <a href="/tracker.html" class="nav-link">📋 Tracker</a>
+    <a href="/prep.html" class="nav-link active">🎤 Interview Prep</a>
+    <a href="/negotiate.html" class="nav-link">💰 Negotiate</a>
+    <a href="/account.html" class="nav-link">Account</a>
+  </nav>
+</header>
+
+<main>
+  <div class="page-title">🎤 Interview Prep</div>
+
+  <!-- Setup Card -->
+  <div id="setupCard" class="result-card show">
+    <div class="setup-title">Prepare for Your Interview</div>
+
+    <div class="setup-row">
+      <div class="form-group">
+        <label>Company *</label>
+        <input type="text" id="prepCompany" placeholder="e.g., Google, Stripe, Tesla" />
+      </div>
+      <div class="form-group">
+        <label>Position *</label>
+        <input type="text" id="prepRole" placeholder="e.g., Product Manager, Software Engineer" />
+      </div>
+    </div>
+
+    <div class="form-group form-row-full">
+      <label>Job Description</label>
+      <textarea id="prepJd" placeholder="Paste the job description here for tailored questions..."></textarea>
+    </div>
+
+    <div class="form-group form-row-full">
+      <label>Your Professional Summary (optional)</label>
+      <textarea id="prepSummary" placeholder="Paste your professional summary or key accomplishments for personalized answer suggestions..."></textarea>
+    </div>
+
+    <button class="btn-generate" id="prepBtn">🚀 Generate Interview Prep</button>
+  </div>
+
+  <!-- Loading State -->
+  <div id="prepLoading">
+    <div class="spinner"></div>
+    <p>Researching company and crafting questions...</p>
+  </div>
+
+  <!-- Company Brief Card -->
+  <div id="briefCard" class="result-card">
+    <div class="card-title">
+      <span class="card-title-icon">🏢</span>
+      <span>Company Brief — <span id="briefCompanyName"></span></span>
+    </div>
+
+    <div class="brief-section">
+      <span class="brief-section-title">About</span>
+      <div class="brief-about" id="briefAbout"></div>
+    </div>
+
+    <div class="brief-section">
+      <span class="brief-section-title">Culture & Values</span>
+      <div class="culture-chips" id="briefCulture"></div>
+    </div>
+
+    <div class="brief-section">
+      <span class="brief-section-title">Recent Developments</span>
+      <ul class="brief-list" id="briefNews"></ul>
+    </div>
+
+    <div class="brief-section">
+      <span class="brief-section-title">What They Look For</span>
+      <ul class="brief-list" id="briefLooking"></ul>
+    </div>
+
+    <div class="brief-section">
+      <span class="brief-section-title">Smart Questions to Ask Them</span>
+      <div id="briefQA"></div>
+    </div>
+  </div>
+
+  <!-- Interview Questions Card -->
+  <div id="questionsCard" class="result-card">
+    <div class="card-title">
+      <span class="card-title-icon">❓</span>
+      <span>Interview Questions</span>
+    </div>
+
+    <div class="print-section">
+      <button class="btn-print" onclick="window.print()">🖨️ Print / Save as PDF</button>
+    </div>
+
+    <div class="filter-tabs">
+      <button class="filter-tab active" data-filter="all">All</button>
+      <button class="filter-tab" data-filter="behavioural">Behavioural</button>
+      <button class="filter-tab" data-filter="technical">Technical</button>
+      <button class="filter-tab" data-filter="situational">Situational</button>
+      <button class="filter-tab" data-filter="culture-fit">Culture-fit</button>
+    </div>
+
+    <div class="questions-list" id="questionsList"></div>
+  </div>
+</main>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  Interview Prep · Client-side Logic
+// ══════════════════════════════════════════════════════════════
+
+let _currentQuestions = [];
+let _currentFilter = 'all';
+
+// ── Auth guard ──────────────────────────────────────────────────
+(function() {
+  const token = localStorage.getItem('tc_token');
+  if (!token) { window.location.href = '/auth.html'; }
+})();
+
+// ── Pre-fill from localStorage ──────────────────────────────────
+(function() {
+  const ctx = localStorage.getItem('tc_interview_ctx');
+  if (ctx) {
+    try {
+      const data = JSON.parse(ctx);
+      if (data.company) document.getElementById('prepCompany').value = data.company;
+      if (data.role) document.getElementById('prepRole').value = data.role;
+      if (data.jd) document.getElementById('prepJd').value = data.jd;
+    } catch(e) {}
+  }
+})();
+
+// ── Generate button ─────────────────────────────────────────────
+document.getElementById('prepBtn').addEventListener('click', async function() {
+  const company = document.getElementById('prepCompany').value.trim();
+  const role = document.getElementById('prepRole').value.trim();
+  const jd = document.getElementById('prepJd').value.trim();
+  const summary = document.getElementById('prepSummary').value.trim();
+
+  if (!company || !role) {
+    alert('Please enter company name and position.');
+    return;
+  }
+
+  // Save context for future use
+  localStorage.setItem('tc_interview_ctx', JSON.stringify({ company, role, jd }));
+
+  // Show loading
+  document.getElementById('setupCard').classList.remove('show');
+  document.getElementById('briefCard').classList.remove('show');
+  document.getElementById('questionsCard').classList.remove('show');
+  document.getElementById('prepLoading').classList.add('show');
+
+  const token = localStorage.getItem('tc_token');
+
+  try {
+    const res = await fetch('/api/interview-prep', {
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + token,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        company, role, jd, resumeSummary: summary
+      }),
+    });
+
+    if (!res.ok) {
+      const err = await res.json();
+      if (err.error === 'upgrade_required') {
+        alert('Interview Prep requires TailorCV Pro. Upgrade to unlock this feature.');
+        window.location.href = '/account.html';
+        return;
+      }
+      alert('Error: ' + (err.error || 'Unknown error'));
+      document.getElementById('prepLoading').classList.remove('show');
+      document.getElementById('setupCard').classList.add('show');
+      return;
+    }
+
+    const data = await res.json();
+    const brief = data.brief || {};
+    const questions = data.questions || [];
+
+    // Render brief
+    document.getElementById('briefCompanyName').textContent = company;
+    document.getElementById('briefAbout').textContent = brief.about || '';
+
+    let cultureHtml = '';
+    (brief.culture || []).forEach((v, i) => {
+      const classes = ['', 'alt1', 'alt2', 'alt3'];
+      cultureHtml += '<div class="chip ' + (classes[i] || '') + '">' + esc(v) + '</div>';
+    });
+    document.getElementById('briefCulture').innerHTML = cultureHtml;
+
+    let newsHtml = '';
+    (brief.recentNews || []).forEach(n => {
+      newsHtml += '<li>' + esc(n) + '</li>';
+    });
+    document.getElementById('briefNews').innerHTML = newsHtml;
+
+    let lookingHtml = '';
+    (brief.lookingFor || []).forEach(l => {
+      lookingHtml += '<li>' + esc(l) + '</li>';
+    });
+    document.getElementById('briefLooking').innerHTML = lookingHtml;
+
+    let qaHtml = '';
+    (brief.questionsToAsk || []).forEach(q => {
+      qaHtml += '<div class="brief-qa"><div class="brief-q">' + esc(q) + '</div><button class="brief-copy-btn" onclick="copyToClipboard(\'' + esc(q).replace(/'/g, "\\'") + '\')">📋 Copy</button></div>';
+    });
+    document.getElementById('briefQA').innerHTML = qaHtml;
+
+    // Store and render questions
+    _currentQuestions = questions;
+    _currentFilter = 'all';
+    renderQuestions();
+
+    // Hide loading and show results
+    document.getElementById('prepLoading').classList.remove('show');
+    document.getElementById('briefCard').classList.add('show');
+    document.getElementById('questionsCard').classList.add('show');
+
+  } catch (err) {
+    console.error('Error:', err);
+    alert('Failed to generate interview prep. Please try again.');
+    document.getElementById('prepLoading').classList.remove('show');
+    document.getElementById('setupCard').classList.add('show');
+  }
+});
+
+// ── Filter tabs ─────────────────────────────────────────────────
+document.querySelectorAll('.filter-tab').forEach(tab => {
+  tab.addEventListener('click', function() {
+    _currentFilter = this.getAttribute('data-filter');
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+    renderQuestions();
+  });
+});
+
+// ── Render questions ────────────────────────────────────────────
+function renderQuestions() {
+  const filtered = _currentFilter === 'all'
+    ? _currentQuestions
+    : _currentQuestions.filter(q => q.type.toLowerCase().replace(/\s+/g, '-') === _currentFilter);
+
+  let html = '';
+  filtered.forEach((q, i) => {
+    const typeSlug = q.type.toLowerCase().replace(/\s+/g, '-');
+    const typeLabel = q.type;
+    html += `
+      <div class="question-card">
+        <div class="q-header">
+          <span class="q-badge ${typeSlug}">${esc(typeLabel)}</span>
+          <div class="q-text">${(i + 1)}. ${esc(q.question)}</div>
+        </div>
+        <button class="q-toggle-btn" onclick="toggleAnswer(this)">💡 Show suggested answer</button>
+        <div class="q-answer">${esc(q.suggestedAnswer)}</div>
+      </div>
+    `;
+  });
+  document.getElementById('questionsList').innerHTML = html;
+}
+
+// ── Toggle answer ───────────────────────────────────────────────
+function toggleAnswer(btn) {
+  const answer = btn.nextElementSibling;
+  const isShowing = answer.classList.contains('show');
+  answer.classList.toggle('show');
+  btn.textContent = isShowing ? '💡 Show suggested answer' : '✕ Hide suggested answer';
+}
+
+// ── Escape HTML ─────────────────────────────────────────────────
+function esc(str) {
+  return String(str || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// ── Copy to clipboard ───────────────────────────────────────────
+function copyToClipboard(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    alert('Question copied to clipboard!');
+  }).catch(err => {
+    console.error('Copy failed:', err);
+  });
+}
+</script>
+
+</body>
+</html>

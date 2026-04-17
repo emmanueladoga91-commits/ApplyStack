@@ -1147,6 +1147,207 @@ app.get('/api/referral', requireAuth, async (req, res) => {
 });
 
 // ══════════════════════════════════════════════════════════════
+//  INTERVIEW PREP ENDPOINT
+// ══════════════════════════════════════════════════════════════
+app.post('/api/interview-prep', requireAuth, aiLimiter, async (req, res) => {
+  const { company, role, jd, resumeSummary } = req.body || {};
+
+  if (!company || !role) {
+    return res.status(400).json({ error: 'Company and role are required.' });
+  }
+
+  const serperKey = process.env.SERPER_API_KEY;
+  const user = req.user;
+
+  // Gating: interview prep requires Pro
+  const isOwner = OWNER_EMAIL && user.email === OWNER_EMAIL;
+  const isPro = isOwner || (user.plan === 'pro' && ['active', 'beta'].includes(user.subscription_status));
+  if (!isPro) {
+    return res.status(402).json({
+      error: 'upgrade_required',
+      message: 'Interview Prep requires a TailorCV Pro subscription.',
+    });
+  }
+
+  if (!CLAUDE_KEY) {
+    return res.status(503).json({ error: 'AI service not configured. Please contact support.' });
+  }
+
+  try {
+    // Parallel execution: Company Brief + Interview Questions
+    const results = await Promise.all([
+      // Task 1: Company Brief
+      (async () => {
+        try {
+          let briefContext = '';
+
+          // Try Serper search if available
+          if (serperKey) {
+            try {
+              const searches = [
+                `"${company}" company culture values`,
+                `"${company}" ${role} interview`
+              ];
+
+              for (const query of searches) {
+                const sresp = await fetch('https://google.serper.dev/search', {
+                  method: 'POST',
+                  headers: { 'X-API-KEY': serperKey, 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ q: query, num: 5 }),
+                  signal: AbortSignal.timeout(8000),
+                });
+
+                if (sresp.ok) {
+                  const sdata = await sresp.json();
+                  const snippets = (sdata.organic || []).slice(0, 5).map(r => r.snippet || '').filter(Boolean);
+                  briefContext += snippets.join('\n') + '\n';
+                }
+              }
+            } catch (e) {
+              console.error('Serper search error:', e.message);
+              // Continue with Claude-only fallback
+            }
+          }
+
+          // Call Claude to generate company brief
+          const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+              'x-api-key': CLAUDE_KEY,
+              'anthropic-version': '2023-06-01',
+              'content-type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'claude-sonnet-4-6',
+              max_tokens: 1000,
+              system: 'You are an expert recruiter. Generate a JSON object for a company brief. Return ONLY valid JSON, no markdown.',
+              messages: [{
+                role: 'user',
+                content: [
+                  `Generate a company brief for "${company}" applying for a "${role}" role.`,
+                  briefContext ? `Use this research context:\n${briefContext}` : 'Use your training knowledge.',
+                  `Return exactly this JSON structure:`,
+                  `{`,
+                  `  "about": "2-3 sentence company overview",`,
+                  `  "culture": ["value 1", "value 2", "value 3", "value 4"],`,
+                  `  "recentNews": ["news point 1", "news point 2", "news point 3"],`,
+                  `  "lookingFor": ["trait/skill 1", "trait/skill 2", "trait/skill 3", "trait/skill 4"],`,
+                  `  "questionsToAsk": ["Smart question 1?", "Smart question 2?", "Smart question 3?"]`,
+                  `}`
+                ].join('\n')
+              }],
+            }),
+          });
+
+          if (!claudeRes.ok) {
+            console.error('Claude brief error:', claudeRes.status);
+            // Return fallback brief
+            return {
+              about: 'Unable to generate company brief. Please research the company before your interview.',
+              culture: ['Innovation', 'Collaboration', 'Excellence', 'Growth'],
+              recentNews: ['Check LinkedIn for recent company news.', 'Review their latest press releases.', 'Browse their social media.'],
+              lookingFor: ['Technical skills', 'Problem-solving', 'Team collaboration', 'Communication'],
+              questionsToAsk: ['What does success look like in this role?', 'How does the team measure impact?', 'What are the key priorities for the next quarter?']
+            };
+          }
+
+          const json = await claudeRes.json();
+          let text = json.content[0].text.trim();
+
+          // Extract JSON robustly
+          let briefData = null;
+          const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+          if (fenced) { text = fenced[1].trim(); }
+          const s = text.indexOf('{');
+          if (s !== -1) text = text.slice(s, text.lastIndexOf('}') + 1);
+
+          briefData = JSON.parse(text);
+          return briefData;
+        } catch (err) {
+          console.error('Company brief error:', err.message);
+          // Return fallback brief
+          return {
+            about: 'Unable to generate company brief. Please research the company before your interview.',
+            culture: ['Innovation', 'Collaboration', 'Excellence', 'Growth'],
+            recentNews: ['Check LinkedIn for recent company news.', 'Review their latest press releases.', 'Browse their social media.'],
+            lookingFor: ['Technical skills', 'Problem-solving', 'Team collaboration', 'Communication'],
+            questionsToAsk: ['What does success look like in this role?', 'How does the team measure impact?', 'What are the key priorities for the next quarter?']
+          };
+        }
+      })(),
+
+      // Task 2: Interview Questions
+      (async () => {
+        try {
+          const jdExcerpt = (jd || '').slice(0, 1500);
+          const summaryText = resumeSummary ? `Resume summary:\n${resumeSummary}\n\n` : '';
+
+          const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
+            method: 'POST',
+            headers: {
+              'x-api-key': CLAUDE_KEY,
+              'anthropic-version': '2023-06-01',
+              'content-type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: 'claude-sonnet-4-6',
+              max_tokens: 2500,
+              system: 'You are an expert interview coach. Generate interview questions and STAR-framework answers. Return ONLY valid JSON, no markdown.',
+              messages: [{
+                role: 'user',
+                content: [
+                  `Generate 12 interview questions for a "${role}" position at "${company}".`,
+                  `Job description excerpt:\n${jdExcerpt}`,
+                  summaryText,
+                  `Categories: 3 Behavioural, 3 Technical, 3 Situational, 3 Culture-fit.`,
+                  `Return a JSON array of objects:`,
+                  `[`,
+                  `  {`,
+                  `    "question": "The interview question?",`,
+                  `    "type": "Behavioural|Technical|Situational|Culture-fit",`,
+                  `    "suggestedAnswer": "3-4 sentence STAR-framework answer personalised to the candidate's background"`,
+                  `  },`,
+                  `  ...`,
+                  `]`
+                ].join('\n')
+              }],
+            }),
+          });
+
+          if (!claudeRes.ok) {
+            console.error('Claude questions error:', claudeRes.status);
+            return [];
+          }
+
+          const json = await claudeRes.json();
+          let text = json.content[0].text.trim();
+
+          // Extract JSON robustly
+          let questions = [];
+          const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+          if (fenced) { text = fenced[1].trim(); }
+          const s = text.indexOf('[');
+          if (s !== -1) text = text.slice(s, text.lastIndexOf(']') + 1);
+
+          questions = JSON.parse(text);
+          return Array.isArray(questions) ? questions : [];
+        } catch (err) {
+          console.error('Interview questions error:', err.message);
+          return [];
+        }
+      })(),
+    ]);
+
+    const [brief, questions] = results;
+    res.json({ brief, questions });
+
+  } catch (err) {
+    console.error('Interview prep error:', err);
+    res.status(502).json({ error: 'Could not generate interview prep. Please try again.' });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
 //  CAREER DATA VAULT
 //  Persistent store for a user's complete career history.
 //  Stored as a JSONB blob on the users table (no separate tables
@@ -1544,6 +1745,119 @@ app.post('/api/jobs-search', requireAuth, async (req, res) => {
     errors.push('Remotive: ' + err.message);
     // All sources failed — return empty with full debug info
     return res.json({ jobs: [], source: 'none', hasMore: false, _errors: errors });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
+//  SALARY NEGOTIATION
+// ══════════════════════════════════════════════════════════════
+app.post('/api/salary-negotiate', requireAuth, async (req, res) => {
+  const { jobTitle, location, offeredSalary, currency, yearsExperience, jd } = req.body || {};
+
+  // Input validation
+  if (!jobTitle || !location || !offeredSalary || !currency) {
+    return res.status(400).json({ error: 'jobTitle, location, offeredSalary, and currency are required.' });
+  }
+
+  const serperKey = process.env.SERPER_API_KEY;
+  const year = new Date().getFullYear();
+  let marketSnippets = [];
+
+  // Step 1: Use Serper to search for market rates (optional — fail gracefully)
+  if (serperKey) {
+    try {
+      const searchQuery = `"${jobTitle}" average salary ${location} ${year}`;
+      const sresp = await fetch('https://google.serper.dev/search', {
+        method: 'POST',
+        headers: { 'X-API-KEY': serperKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ q: searchQuery, num: 5 }),
+        signal: AbortSignal.timeout(8000),
+      });
+
+      if (sresp.ok) {
+        const sdata = await sresp.json();
+        marketSnippets = (sdata.organic || []).slice(0, 5).map(r => r.snippet || '').filter(Boolean);
+      }
+    } catch (err) {
+      console.error('Serper search error in salary-negotiate:', err.message);
+      // Continue without market data
+    }
+  }
+
+  // Step 2: Call Claude with all inputs + snippets
+  if (!CLAUDE_KEY) {
+    return res.status(503).json({ error: 'AI service not configured. Please contact support.' });
+  }
+
+  try {
+    const marketContext = marketSnippets.length
+      ? `Market research data:\n${marketSnippets.join('\n')}`
+      : 'No live market data available; use your training knowledge.';
+
+    const userMsg = [
+      `Job Title: ${jobTitle}`,
+      `Location: ${location}`,
+      `Offered Salary: ${offeredSalary} ${currency}`,
+      `Years of Experience: ${yearsExperience || '(not specified)'}`,
+      `Currency: ${currency}`,
+      jd ? `Job Description:\n${jd}` : '(Job description not provided)',
+      '',
+      marketContext,
+      '',
+      `Analyze this salary offer and provide a comprehensive negotiation strategy. Return ONLY valid JSON, no markdown, with this exact structure:`,
+      `{`,
+      `  "marketRate": { "low": NUMBER, "mid": NUMBER, "high": NUMBER, "currency": "${currency}" },`,
+      `  "assessment": "Below Market" | "At Market" | "Above Market",`,
+      `  "assessmentDetail": "2-3 sentence explanation of the assessment",`,
+      `  "counterOffer": NUMBER,`,
+      `  "counterOfferRationale": "2-3 sentence justification for this counter-offer",`,
+      `  "negotiationScript": {`,
+      `    "opening": "Exact opening sentence to start negotiation",`,
+      `    "counterStatement": "Exact words to state counter-offer",`,
+      `    "valueStatement": "How to articulate unique value based on the JD",`,
+      `    "handlePushback": "Response if they say budget is fixed",`,
+      `    "acceptance": "Graceful acceptance if they meet halfway"`,
+      `  },`,
+      `  "additionalLeverage": ["option 1", "option 2", "option 3", "option 4"],`,
+      `  "redFlags": []`,
+      `}`
+    ].join('\n');
+
+    const claudeRes = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': CLAUDE_KEY,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 2000,
+        system: 'You are an expert salary negotiation coach with 20+ years of HR and career coaching experience. Provide data-driven, strategic negotiation advice.',
+        messages: [{ role: 'user', content: userMsg }],
+      }),
+    });
+
+    if (!claudeRes.ok) {
+      const err = await claudeRes.json().catch(() => ({}));
+      const msg = (err.error && err.error.message) ? err.error.message : `AI error ${claudeRes.status}`;
+      return res.status(502).json({ error: msg });
+    }
+
+    const json = await claudeRes.json();
+    let text = json.content[0].text.trim();
+
+    // Extract JSON robustly
+    const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+    if (fenced) { text = fenced[1].trim(); }
+    const s = text.indexOf('{');
+    if (s !== -1) text = text.slice(s, text.lastIndexOf('}') + 1);
+
+    const negotiationData = JSON.parse(text);
+    res.json(negotiationData);
+  } catch (err) {
+    console.error('Salary negotiation error:', err);
+    res.status(502).json({ error: 'Failed to generate negotiation strategy. Please try again.' });
   }
 });
 

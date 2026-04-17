@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TailorCV | Salary Negotiation</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --navy:#1a2744; --navy2:#243057; --indigo:#4f6ef7; --indigo2:#3a5ce4;
+      --gray50:#f8fafc; --gray100:#f1f5f9; --gray200:#e2e8f0;
+      --gray400:#94a3b8; --gray600:#475569; --gray800:#1e293b;
+      --green:#166534; --green-bg:#dcfce7; --green-bd:#86efac;
+      --red:#991b1b; --red-bg:#fef2f2; --amber:#92400e; --amber-bg:#fffbeb;
+      --radius:12px;
+    }
+    body { font-family:'Inter',system-ui,sans-serif; background:var(--gray50); color:var(--gray800); min-height:100vh; }
+
+    /* ── Nav ── */
+    nav { background:#fff; border-bottom:1px solid var(--gray200); padding:14px 28px; display:flex; align-items:center; gap:12px; position:sticky; top:0; z-index:10; }
+    .logo { font-size:1.3rem; font-weight:900; color:var(--navy); text-decoration:none; }
+    .logo span { color:var(--indigo); }
+    .nav-right { margin-left:auto; display:flex; align-items:center; gap:12px; }
+    .nav-link { font-size:.9rem; color:var(--gray600); text-decoration:none; font-weight:500; }
+    .nav-link.active { color:var(--navy); font-weight:700; }
+    .nav-link:hover { color:var(--navy); }
+    .btn-nav { padding:9px 20px; background:var(--indigo); color:#fff; border-radius:50px; font-size:.88rem; font-weight:700; text-decoration:none; }
+
+    /* ── Layout ── */
+    main { max-width:1100px; margin:0 auto; padding:32px 20px 80px; }
+    .page-hdr { margin-bottom:32px; }
+    .page-title { font-size:1.7rem; font-weight:900; color:var(--navy); margin-bottom:8px; }
+    .page-sub { font-size:.95rem; color:var(--gray600); }
+
+    /* ── Input Card ── */
+    .card { background:#fff; border:1px solid var(--gray200); border-radius:16px; padding:28px; margin-bottom:24px; }
+    .card-title { font-size:1.1rem; font-weight:700; color:var(--navy); margin-bottom:20px; }
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px; }
+    .form-group { display:flex; flex-direction:column; }
+    .form-group label { font-size:.78rem; font-weight:700; color:var(--gray600); text-transform:uppercase; letter-spacing:.04em; margin-bottom:6px; }
+    .form-group input, .form-group select, .form-group textarea {
+      padding:11px 14px; border:1.5px solid var(--gray200); border-radius:var(--radius); font-size:.9rem;
+      font-family:inherit; outline:none; transition:border-color .2s;
+    }
+    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color:var(--indigo); }
+    .form-group textarea { grid-column:1/-1; resize:vertical; min-height:100px; }
+    .form-group.full { grid-column:1/-1; }
+    .form-actions { display:flex; gap:12px; margin-top:20px; }
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:12px 24px; border:none; border-radius:var(--radius); font-size:.9rem; font-weight:700; font-family:inherit; cursor:pointer; transition:opacity .15s; }
+    .btn-primary { background:var(--indigo); color:#fff; flex:1; }
+    .btn-primary:hover { opacity:.88; }
+    .btn-primary:disabled { opacity:.5; cursor:not-allowed; }
+
+    /* ── Loading State ── */
+    #negLoading { display:none; text-align:center; padding:60px 32px; }
+    #negLoading.show { display:block; }
+    .spinner { display:inline-block; width:40px; height:40px; border:4px solid var(--gray200); border-top-color:var(--indigo); border-radius:50%; animation:spin .8s linear infinite; margin-bottom:16px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .spinner-text { font-size:1rem; color:var(--gray600); font-weight:500; }
+
+    /* ── Results Section ── */
+    #negResults { display:none; }
+    #negResults.show { display:block; }
+
+    /* ── Market Rate Card ── */
+    .market-rate-viz { margin-bottom:24px; }
+    .salary-range-bar {
+      background:var(--gray100); border-radius:100px; height:40px; position:relative; overflow:hidden; margin:12px 0;
+      border:1px solid var(--gray200);
+    }
+    .range-track { display:flex; height:100%; position:relative; }
+    .range-low { flex:0; background:rgba(79,110,247,.08); border-right:2px solid var(--indigo); position:relative; }
+    .range-mid { flex:1; background:rgba(79,110,247,.12); border-right:2px solid var(--indigo); }
+    .range-high { flex:0; background:rgba(79,110,247,.16); }
+    .range-marker {
+      position:absolute; top:50%; transform:translateY(-50%); width:24px; height:24px; border-radius:50%;
+      border:3px solid #fff; box-shadow:0 2px 8px rgba(0,0,0,.15); font-size:.65rem; display:flex; align-items:center;
+      justify-content:center; font-weight:700; color:#fff;
+    }
+    .marker-offered { background:#92400e; }
+    .marker-counter { background:#166534; }
+    .range-labels { display:flex; justify-content:space-between; font-size:.8rem; color:var(--gray600); font-weight:600; margin-top:8px; }
+
+    .assessment-badge {
+      display:inline-block; padding:8px 16px; border-radius:50px; font-size:.85rem; font-weight:700;
+      text-transform:uppercase; letter-spacing:.02em; margin:12px 0;
+    }
+    .badge-below { background:#fef2f2; color:#991b1b; }
+    .badge-at { background:#fffbeb; color:#92400e; }
+    .badge-above { background:#dcfce7; color:#166534; }
+    .assessment-detail { color:var(--gray600); font-size:.95rem; line-height:1.6; margin:12px 0; }
+
+    /* ── Counter Offer Card ── */
+    .counter-section { margin:24px 0; }
+    .counter-number { font-size:2.8rem; font-weight:900; color:var(--indigo); margin:16px 0; line-height:1; }
+    .offer-comparison {
+      display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:20px 0;
+      background:var(--gray50); padding:20px; border-radius:var(--radius);
+    }
+    .offer-item { text-align:center; }
+    .offer-label { font-size:.8rem; color:var(--gray600); text-transform:uppercase; font-weight:700; letter-spacing:.02em; margin-bottom:8px; }
+    .offer-value { font-size:1.5rem; font-weight:900; color:var(--navy); }
+    .offer-value.offered { color:#92400e; }
+    .offer-value.counter { color:#166534; }
+    .offer-diff { font-size:.9rem; color:var(--indigo); font-weight:700; margin-top:8px; }
+    .counter-rationale { color:var(--gray600); font-size:.95rem; line-height:1.6; margin:16px 0; }
+
+    /* ── Negotiation Script ── */
+    .script-sections { margin:24px 0; }
+    .script-item { margin-bottom:16px; background:var(--gray50); border:1px solid var(--gray200); border-radius:var(--radius); overflow:hidden; }
+    .script-header {
+      padding:16px 20px; cursor:pointer; display:flex; align-items:center; justify-content:space-between;
+      background:#fff; border-bottom:1px solid var(--gray200); transition:background .2s;
+    }
+    .script-header:hover { background:var(--gray50); }
+    .script-label { font-size:.95rem; font-weight:700; color:var(--navy); }
+    .script-body { padding:20px; display:block; }
+    .script-text { color:var(--gray600); font-size:.95rem; line-height:1.7; margin-bottom:12px; }
+    .script-text strong { color:var(--navy); font-weight:700; }
+    .copy-btn {
+      display:inline-flex; align-items:center; gap:6px; padding:8px 14px; background:var(--indigo); color:#fff;
+      border:none; border-radius:6px; font-size:.8rem; font-weight:700; cursor:pointer; transition:opacity .15s;
+    }
+    .copy-btn:hover { opacity:.88; }
+
+    /* ── Additional Leverage ── */
+    .leverage-subtitle { font-size:.9rem; color:var(--gray600); margin:12px 0 16px; }
+    .chips { display:flex; flex-wrap:wrap; gap:10px; }
+    .chip {
+      display:inline-flex; align-items:center; padding:10px 16px; background:var(--gray100);
+      border:1.5px solid var(--gray200); border-radius:50px; font-size:.85rem; font-weight:600; color:var(--gray800);
+      transition:all .2s;
+    }
+    .chip:hover { border-color:var(--indigo); background:var(--gray50); }
+
+    /* ── Red Flags ── */
+    .red-flags { background:#fef2f2; border:1px solid #fecaca; border-radius:var(--radius); padding:20px; margin:24px 0; }
+    .red-flags-title { font-size:.9rem; font-weight:700; color:#991b1b; text-transform:uppercase; letter-spacing:.02em; margin-bottom:12px; }
+    .red-flag-item { display:flex; gap:10px; margin-bottom:10px; }
+    .red-flag-item:last-child { margin-bottom:0; }
+    .red-flag-icon { color:#991b1b; font-size:1rem; min-width:20px; }
+    .red-flag-text { color:var(--gray800); font-size:.9rem; line-height:1.5; }
+
+    /* ── Responsive ── */
+    @media (max-width:640px) {
+      .form-grid { grid-template-columns:1fr; }
+      .offer-comparison { grid-template-columns:1fr; }
+      .counter-number { font-size:2rem; }
+      .card { padding:20px; }
+      main { padding:20px 16px 60px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="logo">Tailor<span>CV</span></a>
+  <div class="nav-right">
+    <a href="/app.html" class="nav-link">🏠 Home</a>
+    <a href="/tracker.html" class="nav-link">📋 Tracker</a>
+    <a href="/prep.html" class="nav-link">🎤 Interview Prep</a>
+    <a href="/negotiate.html" class="nav-link active">💰 Negotiate</a>
+    <a href="/account.html" class="nav-link">Account</a>
+  </div>
+</nav>
+
+<main>
+  <div class="page-hdr">
+    <div class="page-title">💰 Salary Negotiation Coach</div>
+    <div class="page-sub">Get market insights and a strategic negotiation plan powered by AI research.</div>
+  </div>
+
+  <!-- Input Card (Always Visible) -->
+  <div class="card" id="inputCard">
+    <div class="card-title">Your Offer Details</div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Job Title *</label>
+        <input type="text" id="negTitle" placeholder="e.g. Senior Product Manager" />
+      </div>
+      <div class="form-group">
+        <label>Location *</label>
+        <input type="text" id="negLocation" placeholder="e.g. Toronto, ON or New York, NY" />
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Offered Salary *</label>
+        <input type="number" id="negSalary" placeholder="e.g. 85000" />
+      </div>
+      <div class="form-group">
+        <label>Currency *</label>
+        <select id="negCurrency">
+          <option>CAD</option>
+          <option>USD</option>
+          <option>GBP</option>
+          <option>AUD</option>
+          <option>EUR</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Years of Experience</label>
+        <input type="number" id="negYears" placeholder="e.g. 8" />
+      </div>
+    </div>
+    <div class="form-group full">
+      <label>Job Description (Optional)</label>
+      <textarea id="negJd" placeholder="Paste the job description here to help us understand the role better..."></textarea>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" id="negBtn" onclick="analyzeOffer()">
+        💰 Analyse & Build Negotiation Strategy
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div id="negLoading">
+    <div class="spinner"></div>
+    <div class="spinner-text">Researching market rates and building your strategy...</div>
+  </div>
+
+  <!-- Results Section -->
+  <div id="negResults">
+
+    <!-- Card 1: Market Rate Analysis -->
+    <div class="card">
+      <div class="card-title">📊 Market Rate Analysis</div>
+      <div class="market-rate-viz">
+        <div class="salary-range-bar">
+          <div class="range-track" id="rangeTrack"></div>
+          <div class="range-marker marker-offered" id="markerOffered" style="left:50%">O</div>
+          <div class="range-marker marker-counter" id="markerCounter" style="left:70%">C</div>
+        </div>
+        <div class="range-labels">
+          <span id="lowLabel">Low</span>
+          <span id="midLabel">Mid</span>
+          <span id="highLabel">High</span>
+        </div>
+      </div>
+
+      <div id="assessmentBadge"></div>
+      <div id="assessmentDetail" class="assessment-detail"></div>
+    </div>
+
+    <!-- Card 2: Your Counter-Offer -->
+    <div class="card">
+      <div class="card-title">💬 Your Counter-Offer</div>
+      <div class="counter-section">
+        <div class="counter-number" id="counterOfferNumber">$97,000 CAD</div>
+        <div class="offer-comparison">
+          <div class="offer-item">
+            <div class="offer-label">They Offered</div>
+            <div class="offer-value offered" id="offeredDisplay">$85,000</div>
+          </div>
+          <div class="offer-item">
+            <div class="offer-label">Suggest Asking</div>
+            <div class="offer-value counter" id="counterDisplay">$97,000</div>
+            <div class="offer-diff" id="offerDiff">+$12,000 (+14%)</div>
+          </div>
+        </div>
+        <div class="counter-rationale" id="counterRationale"></div>
+      </div>
+    </div>
+
+    <!-- Card 3: Negotiation Script -->
+    <div class="card">
+      <div class="card-title">🗣️ Negotiation Script</div>
+      <p style="color:var(--gray600); margin-bottom:20px; font-size:.95rem;">Copy and adapt these exact phrases for each stage of your negotiation:</p>
+      <div class="script-sections" id="scriptSections"></div>
+    </div>
+
+    <!-- Card 4: Additional Leverage -->
+    <div class="card">
+      <div class="card-title">⭐ Additional Leverage</div>
+      <p class="leverage-subtitle">If base salary is truly fixed, negotiate these:</p>
+      <div class="chips" id="leverageChips"></div>
+    </div>
+
+    <!-- Card 5: Red Flags -->
+    <div id="redFlagsContainer"></div>
+
+  </div>
+
+</main>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+//  Salary Negotiation Coach
+// ══════════════════════════════════════════════════════════════
+
+const TOKEN_KEY = 'tc_token';
+
+// ── Auth Check ────────────────────────────────────────────────
+async function checkAuth() {
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) {
+    window.location.href = '/auth.html?redirect=' + encodeURIComponent(window.location.pathname);
+    return false;
+  }
+  return token;
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+  checkAuth();
+});
+
+// ── Format Salary ──────────────────────────────────────────────
+function formatSalary(num, currency = 'CAD') {
+  const formatted = num.toLocaleString('en-US');
+  return `$${formatted} ${currency}`;
+}
+
+// ── Validate Input ────────────────────────────────────────────
+function validateInput() {
+  const title = document.getElementById('negTitle').value.trim();
+  const location = document.getElementById('negLocation').value.trim();
+  const salary = document.getElementById('negSalary').value.trim();
+  const currency = document.getElementById('negCurrency').value;
+
+  if (!title || !location || !salary || !currency) {
+    alert('Please fill in all required fields (Job Title, Location, Offered Salary, Currency).');
+    return false;
+  }
+
+  if (isNaN(salary) || Number(salary) <= 0) {
+    alert('Please enter a valid salary amount.');
+    return false;
+  }
+
+  return { title, location, salary: Number(salary), currency };
+}
+
+// ── Analyze Offer ────────────────────────────────────────────
+async function analyzeOffer() {
+  const input = validateInput();
+  if (!input) return;
+
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (!token) { window.location.href = '/auth.html'; return; }
+
+  const years = document.getElementById('negYears').value.trim();
+  const jd = document.getElementById('negJd').value.trim();
+
+  // Show loading
+  document.getElementById('inputCard').style.display = 'none';
+  document.getElementById('negLoading').classList.add('show');
+  document.getElementById('negResults').classList.remove('show');
+
+  try {
+    const response = await fetch('/api/salary-negotiate', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        jobTitle: input.title,
+        location: input.location,
+        offeredSalary: input.salary,
+        currency: input.currency,
+        yearsExperience: years ? Number(years) : null,
+        jd: jd || null
+      })
+    });
+
+    if (!response.ok) {
+      const err = await response.json();
+      throw new Error(err.error || 'Failed to analyze offer');
+    }
+
+    const data = await response.json();
+    renderResults(data, input);
+
+  } catch (error) {
+    console.error('Error:', error);
+    alert('Error: ' + error.message);
+    document.getElementById('negLoading').classList.remove('show');
+    document.getElementById('inputCard').style.display = 'block';
+  }
+}
+
+// ── Render Results ────────────────────────────────────────────
+function renderResults(data, input) {
+  const {
+    marketRate,
+    assessment,
+    assessmentDetail,
+    counterOffer,
+    counterOfferRationale,
+    negotiationScript,
+    additionalLeverage,
+    redFlags
+  } = data;
+
+  // ── Market Rate Visualization ──
+  const low = marketRate.low;
+  const mid = marketRate.mid;
+  const high = marketRate.high;
+  const offered = input.salary;
+
+  // Calculate percentages for positioning markers
+  const range = high - low;
+  const offeredPct = ((offered - low) / range) * 100;
+  const counterPct = ((counterOffer - low) / range) * 100;
+
+  document.getElementById('markerOffered').style.left = Math.max(2, Math.min(98, offeredPct)) + '%';
+  document.getElementById('markerCounter').style.left = Math.max(2, Math.min(98, counterPct)) + '%';
+
+  document.getElementById('lowLabel').textContent = formatSalary(low, input.currency);
+  document.getElementById('midLabel').textContent = formatSalary(mid, input.currency);
+  document.getElementById('highLabel').textContent = formatSalary(high, input.currency);
+
+  // Assessment badge
+  const badgeMap = { 'Below Market': 'badge-below', 'At Market': 'badge-at', 'Above Market': 'badge-above' };
+  const badgeHtml = `<div class="assessment-badge ${badgeMap[assessment] || 'badge-at'}">${assessment}</div>`;
+  document.getElementById('assessmentBadge').innerHTML = badgeHtml;
+  document.getElementById('assessmentDetail').textContent = assessmentDetail;
+
+  // Counter-Offer Display
+  document.getElementById('counterOfferNumber').textContent = formatSalary(counterOffer, input.currency);
+  document.getElementById('offeredDisplay').textContent = formatSalary(offered, input.currency);
+  document.getElementById('counterDisplay').textContent = formatSalary(counterOffer, input.currency);
+
+  const diff = counterOffer - offered;
+  const diffPct = ((diff / offered) * 100).toFixed(0);
+  const diffSign = diff >= 0 ? '+' : '';
+  document.getElementById('offerDiff').textContent = `${diffSign}${formatSalary(diff, input.currency)} (${diffSign}${diffPct}%)`;
+  document.getElementById('counterRationale').textContent = counterOfferRationale;
+
+  // Negotiation Script
+  const scriptItems = [
+    { label: '🗣️ Opening the conversation', key: 'opening' },
+    { label: '💬 Stating your counter-offer', key: 'counterStatement' },
+    { label: '⭐ Articulating your value', key: 'valueStatement' },
+    { label: '🛡️ If they push back', key: 'handlePushback' },
+    { label: '🤝 Graceful acceptance', key: 'acceptance' }
+  ];
+
+  let scriptHtml = '';
+  scriptItems.forEach((item, idx) => {
+    const scriptText = negotiationScript[item.key] || '(Script not provided)';
+    scriptHtml += `
+      <div class="script-item">
+        <div class="script-header">
+          <span class="script-label">${item.label}</span>
+          <span>▼</span>
+        </div>
+        <div class="script-body">
+          <p class="script-text">${escapeHtml(scriptText)}</p>
+          <button class="copy-btn" onclick="copyScript('${escapeHtml(scriptText)}', this)">📋 Copy</button>
+        </div>
+      </div>
+    `;
+  });
+  document.getElementById('scriptSections').innerHTML = scriptHtml;
+
+  // Additional Leverage
+  let chipsHtml = '';
+  (additionalLeverage || []).forEach(item => {
+    chipsHtml += `<div class="chip">${escapeHtml(item)}</div>`;
+  });
+  document.getElementById('leverageChips').innerHTML = chipsHtml || '<div style="color:var(--gray600)">No additional leverage items.</div>';
+
+  // Red Flags (only if present)
+  if (redFlags && redFlags.length > 0) {
+    let flagsHtml = '<div class="red-flags"><div class="red-flags-title">⚠️ Things to Know</div>';
+    redFlags.forEach(flag => {
+      flagsHtml += `
+        <div class="red-flag-item">
+          <div class="red-flag-icon">⚠️</div>
+          <div class="red-flag-text">${escapeHtml(flag)}</div>
+        </div>
+      `;
+    });
+    flagsHtml += '</div>';
+    document.getElementById('redFlagsContainer').innerHTML = flagsHtml;
+  } else {
+    document.getElementById('redFlagsContainer').innerHTML = '';
+  }
+
+  // Show results, hide loading
+  document.getElementById('negLoading').classList.remove('show');
+  document.getElementById('negResults').classList.add('show');
+}
+
+// ── Copy Script Function ───────────────────────────────────────
+function copyScript(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    const originalText = btn.textContent;
+    btn.textContent = '✓ Copied!';
+    setTimeout(() => {
+      btn.textContent = originalText;
+    }, 2000);
+  }).catch(err => {
+    console.error('Copy failed:', err);
+    alert('Failed to copy. Please try again.');
+  });
+}
+
+// ── Escape HTML ────────────────────────────────────────────────
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
+// ── Edit Button (show input again) ────────────────────────────
+function editOffer() {
+  document.getElementById('inputCard').style.display = 'block';
+  document.getElementById('negResults').classList.remove('show');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+</script>
+
+</body>
+</html>
