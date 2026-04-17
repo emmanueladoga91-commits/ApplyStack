@@ -4218,24 +4218,163 @@ function buildJobCards(jobs, locPref) {
       html += '</div>';
     }
 
-    // Apply options (Google Jobs may return multiple apply sources)
+    // ── Apply button → inline action panel ────────────────────
+    var cardId = 'jmCard' + Math.random().toString(36).slice(2, 8);
+    var primaryUrl = (job.applyOptions && job.applyOptions.length > 0)
+      ? job.applyOptions[0].link
+      : (job.applyUrl || '');
+    var applyLabel = (job.applyOptions && job.applyOptions.length > 1)
+      ? 'Apply (' + job.applyOptions.length + ' sources)'
+      : 'Apply Now';
+
     html += '<div class="jm-actions">';
-    if (job.applyOptions && job.applyOptions.length > 1) {
-      job.applyOptions.slice(0, 3).forEach(function(opt) {
-        html += '<a class="jm-action-btn primary" href="' + escJm(opt.link) + '" target="_blank" rel="noopener">🚀 Apply on ' + escJm(opt.title) + '</a>';
-      });
-    } else if (job.applyUrl) {
-      html += '<a class="jm-action-btn primary" href="' + escJm(job.applyUrl) + '" target="_blank" rel="noopener">🚀 Apply Now</a>';
+    if (primaryUrl) {
+      html += '<button class="jm-action-btn primary jm-apply-trigger" onclick="jmToggleApplyPanel(\'' + cardId + '\')">'
+            + '🚀 ' + escJm(applyLabel) + ' ▾</button>';
     }
     html += '<button class="jm-action-btn" onclick="jmUseRole(\'' + escJmAttr(job.title) + '\',\'' + escJmAttr(job.title) + '\')">🎯 Tailor resume</button>';
     html += '<a class="jm-action-btn" href="' + liUrl + '" target="_blank" rel="noopener">🔗 LinkedIn</a>';
     html += '<a class="jm-action-btn" href="' + indUrl + '" target="_blank" rel="noopener">🔍 Indeed</a>';
     html += '<a class="jm-action-btn" href="' + gdUrl + '" target="_blank" rel="noopener">📊 Glassdoor</a>';
     html += '<a class="jm-action-btn" href="' + hcUrl + '" target="_blank" rel="noopener">☕ Hiring.cafe</a>';
-    html += '</div>';
+    html += '</div>'; // .jm-actions
+
+    // ── Inline apply panel (hidden until triggered) ───────────
+    if (primaryUrl) {
+      html += '<div class="jm-apply-panel" id="' + cardId + '">';
+      html += '<div class="jm-apply-panel-title">How would you like to apply?</div>';
+
+      // Option 1 — Visit source site(s)
+      if (job.applyOptions && job.applyOptions.length > 1) {
+        job.applyOptions.slice(0, 3).forEach(function(opt) {
+          html += '<a class="jm-apply-opt" href="' + escJm(opt.link) + '" target="_blank" rel="noopener">'
+                + '<span class="jm-apply-opt-icon">🌐</span>'
+                + '<span class="jm-apply-opt-text">'
+                + '<span class="jm-apply-opt-label">Visit ' + escJm(opt.title) + '</span>'
+                + '<span class="jm-apply-opt-desc">Open the original job posting on ' + escJm(opt.title) + ' and apply directly.</span>'
+                + '</span></a>';
+        });
+      } else {
+        html += '<a class="jm-apply-opt" href="' + escJm(primaryUrl) + '" target="_blank" rel="noopener">'
+              + '<span class="jm-apply-opt-icon">🌐</span>'
+              + '<span class="jm-apply-opt-text">'
+              + '<span class="jm-apply-opt-label">Visit job site</span>'
+              + '<span class="jm-apply-opt-desc">Open the original posting and apply directly on the employer\'s site.</span>'
+              + '</span></a>';
+      }
+
+      // Option 2 — Auto-fill & build tailored resume
+      html += '<button class="jm-apply-opt accent" id="' + cardId + 'Fill"'
+            + ' onclick="jmAutoFill(\'' + escJmAttr(job.title) + '\',\'' + escJmAttr(primaryUrl) + '\',\'' + cardId + '\')">'
+            + '<span class="jm-apply-opt-icon">⚡</span>'
+            + '<span class="jm-apply-opt-text">'
+            + '<span class="jm-apply-opt-label">Auto-fill &amp; build tailored resume</span>'
+            + '<span class="jm-apply-opt-desc">Fetch the job description automatically and jump to the resume builder — pre-loaded with this role.</span>'
+            + '</span></button>';
+
+      html += '</div>'; // .jm-apply-panel
+    }
+
     html += '</div>'; // .jm-card
   });
   return html;
+}
+
+// Toggle the inline apply-options panel on a job card
+function jmToggleApplyPanel(cardId) {
+  var panel = document.getElementById(cardId);
+  if (!panel) return;
+  var isOpen = panel.classList.contains('open');
+  // Close all other open panels first
+  document.querySelectorAll('.jm-apply-panel.open').forEach(function(p) { p.classList.remove('open'); });
+  if (!isOpen) {
+    panel.classList.add('open');
+    panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+}
+
+// Fetch job description from URL, pre-fill resume builder, close modal
+async function jmAutoFill(jobTitle, applyUrl, cardId) {
+  var btn = document.getElementById(cardId + 'Fill');
+  if (btn) {
+    btn.classList.add('loading');
+    btn.querySelector('.jm-apply-opt-label').textContent = 'Fetching job description';
+    btn.querySelector('.jm-apply-opt-desc').textContent  = 'Pulling details from the job posting…';
+    btn.disabled = true;
+  }
+
+  var tok = getToken();
+  var fetchedJd = '';
+
+  try {
+    var r = await fetch('/api/fetch-jd', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
+      body:    JSON.stringify({ url: applyUrl }),
+    });
+    var d = await r.json();
+    if (r.ok && d.text && d.text.length > 50) {
+      fetchedJd = d.text;
+    } else {
+      // Couldn't auto-fetch — still navigate but leave JD empty with hint
+      fetchedJd = '';
+    }
+  } catch(e) {
+    fetchedJd = '';
+  }
+
+  // ── Pre-fill the resume builder ───────────────────────────────
+  var roleEl = document.getElementById('role');
+  var jdEl   = document.getElementById('jd');
+
+  if (roleEl) roleEl.value = jobTitle;
+
+  if (jdEl) {
+    if (fetchedJd) {
+      jdEl.value = fetchedJd;
+      jdEl.dispatchEvent(new Event('input')); // trigger any listeners
+    } else {
+      jdEl.value = '';
+      jdEl.placeholder = 'Could not auto-fetch the job description. Open the job site, copy the full description and paste it here.';
+    }
+  }
+
+  // ── Close modal & scroll to builder ──────────────────────────
+  closeJobMatch();
+
+  setTimeout(function() {
+    if (jdEl) {
+      jdEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (fetchedJd) {
+        // Highlight the JD textarea briefly to signal it was filled
+        jdEl.style.transition = 'box-shadow .3s';
+        jdEl.style.boxShadow  = '0 0 0 3px rgba(124,58,237,.6)';
+        setTimeout(function(){ jdEl.style.boxShadow = ''; }, 1800);
+      } else {
+        jdEl.focus();
+      }
+    }
+    // Also show a toast-style notice
+    var notice = fetchedJd
+      ? '✅ Job description loaded! Review it below and click Build Resume.'
+      : '⚠️ Could not auto-fetch. Please paste the job description manually.';
+    jmShowToast(notice, fetchedJd ? 'success' : 'warn');
+  }, 350);
+}
+
+function jmShowToast(msg, type) {
+  var existing = document.getElementById('jmToast');
+  if (existing) existing.remove();
+  var toast = document.createElement('div');
+  toast.id = 'jmToast';
+  var bg = type === 'success' ? 'rgba(16,185,129,.92)' : 'rgba(234,179,8,.92)';
+  toast.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);'
+    + 'background:' + bg + ';color:#fff;font-weight:700;font-size:.85rem;'
+    + 'padding:12px 22px;border-radius:99px;z-index:9999;box-shadow:0 6px 24px rgba(0,0,0,.35);'
+    + 'pointer-events:none;white-space:nowrap;transition:opacity .4s';
+  toast.textContent = msg;
+  document.body.appendChild(toast);
+  setTimeout(function(){ toast.style.opacity = '0'; setTimeout(function(){ toast.remove(); }, 400); }, 3500);
 }
 
 function jmUseRole(title, searchQuery) {
