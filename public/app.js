@@ -1330,29 +1330,42 @@ async function build(){
     tailoredRef=tailored; jdRef=jd;
     step(2,'done');
 
-    // 3. Build resume DOCX
-    step(3,'active');
-    var resumeBlob = await Packer.toBlob(buildResumeDoc(tailored,selectedTemplate));
-    var rName = (tailored.name||'Resume').replace(/\s+/g,'_')+'_Resume_'+company.replace(/\s+/g,'_')+'.docx';
-    resumeBlobRef=resumeBlob; resumeNameRef=rName;
-    step(3,'done');
+    // Read build mode set by job match panel (default: both)
+    var jmMode = (window._jmBuildMode) || 'both';
+    window._jmBuildMode = null; // consume it
 
-    // 4. Build cover letter
-    step(4,'active');
-    var today = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
-    // Always override AI-generated date with today's actual date
-    if(tailored.coverLetter) tailored.coverLetter.date = today;
-    var clData = Object.assign({},tailored,tailored.coverLetter||{},{date:today});
-    var clBlob = await Packer.toBlob(buildCoverDoc(clData, clTemplate));
-    _clBlobRef = clBlob;
-    _clNameRef = (tailored.name||'Resume').replace(/\s+/g,'_')+'_Cover_Letter_'+company.replace(/\s+/g,'_')+'.docx';
-    var cName = _clNameRef;
-    step(4,'done');
+    // 3. Build resume DOCX (skip if cover-letter-only)
+    var resumeBlob, rName;
+    if (jmMode !== 'cover') {
+      step(3,'active');
+      resumeBlob = await Packer.toBlob(buildResumeDoc(tailored,selectedTemplate));
+      rName = (tailored.name||'Resume').replace(/\s+/g,'_')+'_Resume_'+company.replace(/\s+/g,'_')+'.docx';
+      resumeBlobRef=resumeBlob; resumeNameRef=rName;
+      step(3,'done');
+    } else {
+      step(3,'done'); // mark done but skip
+    }
 
-    // Show downloads
+    // 4. Build cover letter (skip if resume-only)
+    var clBlob, cName;
+    if (jmMode !== 'resume') {
+      step(4,'active');
+      var today = new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+      if(tailored.coverLetter) tailored.coverLetter.date = today;
+      var clData = Object.assign({},tailored,tailored.coverLetter||{},{date:today});
+      clBlob = await Packer.toBlob(buildCoverDoc(clData, clTemplate));
+      _clBlobRef = clBlob;
+      _clNameRef = (tailored.name||'Resume').replace(/\s+/g,'_')+'_Cover_Letter_'+company.replace(/\s+/g,'_')+'.docx';
+      cName = _clNameRef;
+      step(4,'done');
+    } else {
+      step(4,'done'); // mark done but skip
+    }
+
+    // Show downloads — only the files that were built
     document.getElementById('pvPage').innerHTML = buildResumeHtml(tailored,selectedTemplate);
-    addDownload(resumeBlob,rName,'📄','Resume (.docx)');
-    addDownload(clBlob,cName,'✉️','Cover Letter (.docx)');
+    if (resumeBlob) addDownload(resumeBlob, rName, '📄', 'Resume (.docx)');
+    if (clBlob)     addDownload(clBlob,     cName, '✉️', 'Cover Letter (.docx)');
     document.getElementById('dlCard').style.display='block';
 
     // 5. ATS Score
@@ -1397,6 +1410,7 @@ async function build(){
     busy=false;
     document.getElementById('buildBtn').disabled=false;
     document.getElementById('buildBtn').innerHTML='\u26A1 Build Resume, Cover Letter &amp; Full Analysis';
+    document.getElementById('buildBtn').removeAttribute('data-jm-mode');
   }
 }
 
@@ -4242,23 +4256,38 @@ function buildJobCards(jobs, locPref) {
 
     // ── Inline panels ──────────────────────────────────────────
     if (primaryUrl) {
-      // Auto-fill panel
+      // Build options panel
       html += '<div class="jm-apply-panel" id="' + cardId + '">';
-      html += '<div class="jm-apply-panel-title">Build a resume for this role</div>';
+      html += '<div class="jm-apply-panel-title">What would you like to build?</div>';
+
+      // Option 1 — Resume + Cover Letter
       html += '<button class="jm-apply-opt accent" id="' + cardId + 'Fill"'
-            + ' onclick="jmAutoFill(\'' + escJmAttr(job.title) + '\',\'' + escJmAttr(primaryUrl) + '\',\'' + cardId + '\')">'
-            + '<span class="jm-apply-opt-icon">⚡</span>'
+            + ' onclick="jmAutoFill(\'' + escJmAttr(job.title) + '\',\'' + escJmAttr(primaryUrl) + '\',\'' + cardId + '\',\'both\')">'
+            + '<span class="jm-apply-opt-icon">📄</span>'
             + '<span class="jm-apply-opt-text">'
-            + '<span class="jm-apply-opt-label">Auto-fetch job description &amp; build tailored resume</span>'
-            + '<span class="jm-apply-opt-desc">We\'ll pull the job description from the source, pre-fill the resume builder, and take you straight to tailoring.</span>'
+            + '<span class="jm-apply-opt-label">Resume &amp; Cover Letter</span>'
+            + '<span class="jm-apply-opt-desc">Auto-fetch the job description and build both a tailored resume and a matching cover letter.</span>'
             + '</span></button>';
-      html += '<a class="jm-apply-opt" href="' + escJm(primaryUrl) + '" target="_blank" rel="noopener">'
-            + '<span class="jm-apply-opt-icon">🌐</span>'
+
+      // Option 2 — Resume only
+      html += '<button class="jm-apply-opt" id="' + cardId + 'FillR"'
+            + ' onclick="jmAutoFill(\'' + escJmAttr(job.title) + '\',\'' + escJmAttr(primaryUrl) + '\',\'' + cardId + '\',\'resume\')">'
+            + '<span class="jm-apply-opt-icon">📋</span>'
             + '<span class="jm-apply-opt-text">'
-            + '<span class="jm-apply-opt-label">Open job posting &amp; copy description manually</span>'
-            + '<span class="jm-apply-opt-desc">Visit the original posting, copy the job description, then paste it into the resume builder.</span>'
-            + '</span></a>';
-      html += '</div>'; // auto-fill panel
+            + '<span class="jm-apply-opt-label">Resume only</span>'
+            + '<span class="jm-apply-opt-desc">Build a tailored resume for this role — skip the cover letter.</span>'
+            + '</span></button>';
+
+      // Option 3 — Cover letter only
+      html += '<button class="jm-apply-opt" id="' + cardId + 'FillC"'
+            + ' onclick="jmAutoFill(\'' + escJmAttr(job.title) + '\',\'' + escJmAttr(primaryUrl) + '\',\'' + cardId + '\',\'cover\')">'
+            + '<span class="jm-apply-opt-icon">✉️</span>'
+            + '<span class="jm-apply-opt-text">'
+            + '<span class="jm-apply-opt-label">Cover Letter only</span>'
+            + '<span class="jm-apply-opt-desc">Already have a resume? Just build a tailored cover letter for this job.</span>'
+            + '</span></button>';
+
+      html += '</div>'; // build options panel
     }
 
     // Sources panel (only if multiple apply links)
@@ -4322,12 +4351,17 @@ function cleanJobDescriptionText(text) {
     .trim();
 }
 
-async function jmAutoFill(jobTitle, applyUrl, cardId) {
-  var btn = document.getElementById(cardId + 'Fill');
+// mode: 'both' | 'resume' | 'cover'
+async function jmAutoFill(jobTitle, applyUrl, cardId, mode) {
+  mode = mode || 'both';
+
+  // Map mode to button suffix so we show loading on the right button
+  var btnSuffix = mode === 'resume' ? 'FillR' : mode === 'cover' ? 'FillC' : 'Fill';
+  var btn = document.getElementById(cardId + btnSuffix);
   if (btn) {
     btn.classList.add('loading');
-    btn.querySelector('.jm-apply-opt-label').textContent = 'Fetching job description';
-    btn.querySelector('.jm-apply-opt-desc').textContent  = 'Pulling details from the job posting…';
+    btn.querySelector('.jm-apply-opt-label').textContent = 'Fetching job description…';
+    btn.querySelector('.jm-apply-opt-desc').textContent  = 'Pulling details from the job posting.';
     btn.disabled = true;
   }
 
@@ -4342,14 +4376,9 @@ async function jmAutoFill(jobTitle, applyUrl, cardId) {
     });
     var d = await r.json();
     if (r.ok && d.text && d.text.length > 50) {
-      // Always run through client-side cleaner in case server left any HTML
       fetchedJd = cleanJobDescriptionText(d.text);
-    } else {
-      fetchedJd = '';
     }
-  } catch(e) {
-    fetchedJd = '';
-  }
+  } catch(e) { /* fetchedJd stays '' */ }
 
   // ── Pre-fill the resume builder ───────────────────────────────
   var roleEl = document.getElementById('role');
@@ -4360,32 +4389,48 @@ async function jmAutoFill(jobTitle, applyUrl, cardId) {
   if (jdEl) {
     if (fetchedJd) {
       jdEl.value = fetchedJd;
-      jdEl.dispatchEvent(new Event('input')); // trigger any listeners
+      jdEl.dispatchEvent(new Event('input'));
     } else {
       jdEl.value = '';
-      jdEl.placeholder = 'Could not auto-fetch the job description. Open the job site, copy the full description and paste it here.';
+      jdEl.placeholder = 'Could not auto-fetch. Open the job site, copy the description and paste it here.';
     }
+  }
+
+  // ── Store the desired build mode so the main Build button knows ──
+  // We set a data attribute on the build button and a global flag
+  window._jmBuildMode = mode; // 'both' | 'resume' | 'cover'
+  var buildBtn = document.getElementById('buildBtn');
+  if (buildBtn) {
+    var modeLabels = {
+      both:   '⚡ Build Resume, Cover Letter & Full Analysis',
+      resume: '⚡ Build Resume only',
+      cover:  '⚡ Build Cover Letter only',
+    };
+    buildBtn.textContent = modeLabels[mode] || modeLabels.both;
+    buildBtn.dataset.jmMode = mode;
   }
 
   // ── Close modal & scroll to builder ──────────────────────────
   closeJobMatch();
 
   setTimeout(function() {
-    if (jdEl) {
-      jdEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      if (fetchedJd) {
-        // Highlight the JD textarea briefly to signal it was filled
+    // Scroll to the JD area so user can review before clicking build
+    var scrollTarget = jdEl || document.getElementById('buildBtn');
+    if (scrollTarget) {
+      scrollTarget.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      if (fetchedJd && jdEl) {
         jdEl.style.transition = 'box-shadow .3s';
         jdEl.style.boxShadow  = '0 0 0 3px rgba(124,58,237,.6)';
         setTimeout(function(){ jdEl.style.boxShadow = ''; }, 1800);
-      } else {
+      } else if (jdEl) {
         jdEl.focus();
       }
     }
-    // Also show a toast-style notice
+
+    var modeDesc = { both: 'Resume & Cover Letter', resume: 'Resume', cover: 'Cover Letter' }[mode] || 'Resume & Cover Letter';
     var notice = fetchedJd
-      ? '✅ Job description loaded! Review it below and click Build Resume.'
-      : '⚠️ Could not auto-fetch. Please paste the job description manually.';
+      ? '✅ Job description loaded! Click Build to generate your ' + modeDesc + '.'
+      : '⚠️ Could not auto-fetch. Paste the job description, then click Build.';
     jmShowToast(notice, fetchedJd ? 'success' : 'warn');
   }, 350);
 }
