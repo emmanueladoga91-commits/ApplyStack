@@ -375,9 +375,7 @@
       margin-bottom: 16px;
     }
     .section-label::before {
-      content: '';
-      width: 20px; height: 2px; border-radius: 1px;
-      background: var(--indigo);
+      display: none;
     }
     .section-title {
       font-size: clamp(2rem, 3.5vw, 2.85rem);
@@ -405,7 +403,7 @@
     }
     .templates-header { text-align: center; margin-bottom: 56px; }
     .templates-header .section-label { justify-content: center; }
-    .templates-header .section-label::before { display: none; }
+    /* .section-label::before removed globally */
     .templates-header .section-sub { margin: 0 auto; text-align: center; }
 
     .tmpl-gallery {
@@ -627,7 +625,7 @@
       position: relative; z-index: 1;
     }
     .features-section .section-label { color: #a5b4fc; }
-    .features-section .section-label::before { background: #818cf8; }
+    /* .section-label::before removed globally */
     .features-section .section-title { color: var(--white); }
     .features-section .section-sub { color: rgba(255,255,255,.55); }
     .features-grid {
