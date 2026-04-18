@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TailorCV | Interview Prep</title>
+  <title>ApplyStack | Interview Prep</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -161,7 +161,7 @@
 <body>
 
 <header>
-  <a href="/" class="logo">Tailor<span>CV</span></a>
+  <a href="/" class="logo">Apply<span>Stack</span></a>
   <nav>
     <a href="/app.html" class="nav-link">🏠 Home</a>
     <a href="/tracker.html" class="nav-link">📋 Tracker</a>
@@ -212,7 +212,7 @@
   <div id="briefCard" class="result-card">
     <div class="card-title">
       <span class="card-title-icon">🏢</span>
-      <span>Company Brief — <span id="briefCompanyName"></span></span>
+      <span>Company Brief: <span id="briefCompanyName"></span></span>
     </div>
 
     <div class="brief-section">
@@ -329,7 +329,7 @@ document.getElementById('prepBtn').addEventListener('click', async function() {
     if (!res.ok) {
       const err = await res.json();
       if (err.error === 'upgrade_required') {
-        alert('Interview Prep requires TailorCV Pro. Upgrade to unlock this feature.');
+        alert('Interview Prep requires ApplyStack Pro. Upgrade to unlock this feature.');
         window.location.href = '/account.html';
         return;
       }

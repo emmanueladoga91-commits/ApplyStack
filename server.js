@@ -1,6 +1,6 @@
 'use strict';
 // ═══════════════════════════════════════════════════════════════
-//  TailorCV — Express Backend
+//  ApplyStack Express Backend
 //  Auth · Claude AI Proxy · Stripe Subscriptions · PostgreSQL
 // ═══════════════════════════════════════════════════════════════
 const express    = require('express');
@@ -104,7 +104,7 @@ async function sendEmail(to, subject, html) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from:    'TailorCV <hello@tailorcv.com>',
+        from:    'ApplyStack <hello@applystack.ai>',
         to:      [to],
         subject,
         html,
@@ -137,18 +137,18 @@ function emailBase(content) {
   .footer{margin-top:24px;font-size:.78rem;color:#94a3b8;text-align:center;line-height:1.7;}
   .footer a{color:#94a3b8;}
 </style></head><body><div class="wrap"><div class="card">
-<div class="logo">Tailor<span>CV</span></div>
+<div class="logo">Apply<span>Stack</span></div>
 ${content}
 </div>
-<div class="footer">TailorCV · <a href="${APP_URL}">tailorcv.com</a><br>
-You're receiving this because you signed up at TailorCV.<br>
+<div class="footer">ApplyStack · <a href="${APP_URL}">applystack.ai</a><br>
+You are receiving this because you signed up at ApplyStack.<br>
 <a href="${APP_URL}/account.html">Manage preferences</a></div>
 </div></body></html>`;
 }
 
 function emailWelcome() {
   return emailBase(`
-<h2>Welcome to TailorCV 👋</h2>
+<h2>Welcome to ApplyStack 👋</h2>
 <p>You're all set. Here's how to get the best result from your first resume build:</p>
 <ul>
   <li><strong>Upload your current resume</strong> — .docx or PDF both work. The more complete it is, the better the output.</li>
@@ -159,7 +159,7 @@ function emailWelcome() {
 <div class="tip"><p>💡 <strong>Pro tip:</strong> Use the Interview Coach after building your resume — it generates role-specific questions based on the same job description.</p></div>
 <a href="${APP_URL}/app.html" class="btn">Build my first resume →</a>
 <p>Most users finish their first tailored resume in under 4 minutes. You've got this.</p>
-<p style="color:#94a3b8;font-size:.85rem">— The TailorCV team</p>`);
+<p style="color:#94a3b8;font-size:.85rem">The ApplyStack team</p>`);
 }
 
 function emailDay2() {
@@ -170,18 +170,18 @@ function emailDay2() {
   <li>Find a job posting you want to apply for</li>
   <li>Copy the full job description text</li>
   <li>Upload your current resume (any .pdf or .docx works)</li>
-  <li>Hit <strong>Build Resume</strong> — TailorCV does the rest</li>
+  <li>Hit <strong>Build Resume</strong> and ApplyStack does the rest</li>
 </ul>
-<a href="${APP_URL}/app.html" class="btn">Start my first resume →</a>
-<div class="tip"><p>💡 Don't have a polished resume yet? Upload whatever you have — even a rough draft. TailorCV will restructure and rewrite it to match the role.</p></div>
-<p>Your first resume is completely free — no credit card, no strings.</p>
-<p style="color:#94a3b8;font-size:.85rem">— The TailorCV team</p>`);
+<a href="${APP_URL}/app.html" class="btn">Start my first resume</a>
+<div class="tip"><p>💡 Don't have a polished resume yet? Upload whatever you have, even a rough draft. ApplyStack will restructure and rewrite it to match the role.</p></div>
+<p>Your first resume is completely free, no credit card, no strings.</p>
+<p style="color:#94a3b8;font-size:.85rem">The ApplyStack team</p>`);
 }
 
 function emailDay7() {
   return emailBase(`
 <h2>You have 1 free tailoring left 🎯</h2>
-<p>You've tried TailorCV — now make it count. Here's what Pro users do differently:</p>
+<p>You have tried ApplyStack. Here is what Pro users do differently:</p>
 <ul>
   <li>They tailor a <strong>different resume for every role</strong> they apply to (not one generic version)</li>
   <li>They use the <strong>ATS score to hit 80+</strong> before submitting — recruiters use filters that cut off below 70</li>
@@ -191,7 +191,7 @@ function emailDay7() {
 <a href="${APP_URL}/account.html" class="btn">Upgrade to Pro — $9/month →</a>
 <p>Pro is $9/month or $79/year. Cancel anytime. 30-day money-back guarantee.</p>
 <div class="tip"><p>💡 <strong>Referral deal:</strong> Invite a friend — you both get a free bonus tailoring when they complete their first resume. Find your link in <a href="${APP_URL}/account.html">your account</a>.</p></div>
-<p style="color:#94a3b8;font-size:.85rem">— The TailorCV team</p>`);
+<p style="color:#94a3b8;font-size:.85rem">The ApplyStack team</p>`);
 }
 
 // ── JWT helpers ────────────────────────────────────────────────
@@ -305,7 +305,7 @@ app.post('/api/auth/register', authLimiter, async (req, res) => {
     const token = signToken(user.id);
     res.json({ token, user: safeUser(user) });
     // Send welcome email (async — don't block response)
-    sendEmail(normalEmail, 'Welcome to TailorCV 👋', emailWelcome()).then(async () => {
+    sendEmail(normalEmail, 'Welcome to ApplyStack 👋', emailWelcome()).then(async () => {
       await pool.query('UPDATE users SET onboarding_stage = 1 WHERE id = $1', [user.id]);
     }).catch(() => {});
   } catch (err) {
@@ -458,7 +458,7 @@ app.post('/api/claude', requireAuth, aiLimiter, async (req, res) => {
     if (!isPro) {
       return res.status(402).json({
         error: 'upgrade_required',
-        message: 'This feature requires a TailorCV Pro subscription.',
+        message: 'This feature requires a ApplyStack Pro subscription.',
       });
     }
   }
@@ -1165,7 +1165,7 @@ app.post('/api/interview-prep', requireAuth, aiLimiter, async (req, res) => {
   if (!isPro) {
     return res.status(402).json({
       error: 'upgrade_required',
-      message: 'Interview Prep requires a TailorCV Pro subscription.',
+      message: 'Interview Prep requires a ApplyStack Pro subscription.',
     });
   }
 
@@ -1881,4 +1881,4 @@ function safeUser(u) {
   };
 }
 
-app.listen(PORT, () => console.log(`TailorCV running on port ${PORT}`));
+app.listen(PORT, () => console.log(`ApplyStack running on port ${PORT}`));

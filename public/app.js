@@ -806,7 +806,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // ── Onboarding guide — hide permanently on dismiss ──
   var guideCard = document.getElementById('guideCard');
-  if (localStorage.getItem('tailorcv_guide_dismissed') === '1') {
+  if (localStorage.getItem('applystack_guide_dismissed') === '1') {
     guideCard.style.display = 'none';
   }
   document.getElementById('guideDismiss').addEventListener('click', function() {
@@ -819,7 +819,7 @@ document.addEventListener('DOMContentLoaded', function() {
       guideCard.style.marginBottom = '0';
     });
     setTimeout(function() { guideCard.style.display = 'none'; }, 420);
-    localStorage.setItem('tailorcv_guide_dismissed', '1');
+    localStorage.setItem('applystack_guide_dismissed', '1');
   });
 
   // ── Custom template builder ──
@@ -2835,7 +2835,7 @@ function renderMatchScore(r) {
   if (r.verdict) {
     h += '<div style="margin-top:14px;background:'+bgColor+';border-radius:8px;padding:11px 14px;font-size:13px;color:'+color+';font-weight:600">💡 '+esc(r.verdict)+'</div>';
   }
-  h += '<div style="margin-top:12px;font-size:12px;color:var(--muted);text-align:center">Hit <strong>⚡ Build Resume</strong> below — TailorCV AI will close this gap for you automatically.</div>';
+  h += '<div style="margin-top:12px;font-size:12px;color:var(--muted);text-align:center">Hit <strong>⚡ Build Resume</strong> below and ApplyStack AI will close this gap for you automatically.</div>';
   document.getElementById('matchContent').innerHTML = h;
   document.getElementById('matchPanel').classList.add('on');
   document.getElementById('matchPanel').scrollIntoView({behavior:'smooth', block:'nearest'});
@@ -3979,7 +3979,7 @@ async function runJobMatch() {
     });
 
     if (claudeRes.status === 402) {
-      body.innerHTML = '<div class="jm-error" style="text-align:center;padding:32px 20px"><div style="font-size:2rem;margin-bottom:12px">🔒</div><div style="font-size:.95rem;font-weight:700;color:#fff;margin-bottom:8px">Pro Feature</div><p style="color:rgba(255,255,255,.5);font-size:.85rem;line-height:1.6">Job Match Engine is available on TailorCV Pro.</p><a href="/app.html#upgrade" style="display:inline-block;margin-top:16px;background:linear-gradient(135deg,#7c3aed,#5b63f0);color:#fff;padding:10px 24px;border-radius:99px;font-weight:700;font-size:.85rem;text-decoration:none">Upgrade to Pro →</a></div>';
+      body.innerHTML = '<div class="jm-error" style="text-align:center;padding:32px 20px"><div style="font-size:2rem;margin-bottom:12px">🔒</div><div style="font-size:.95rem;font-weight:700;color:#fff;margin-bottom:8px">Pro Feature</div><p style="color:rgba(255,255,255,.5);font-size:.85rem;line-height:1.6">Job Match Engine is available on ApplyStack Pro.</p><a href="/app.html#upgrade" style="display:inline-block;margin-top:16px;background:linear-gradient(135deg,#7c3aed,#5b63f0);color:#fff;padding:10px 24px;border-radius:99px;font-weight:700;font-size:.85rem;text-decoration:none">Upgrade to Pro →</a></div>';
       return;
     }
     if (!claudeRes.ok) throw new Error('Analysis error ' + claudeRes.status);
