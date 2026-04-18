@@ -1,4 +1,4 @@
-# TailorCV Web App
+# ApplyStack Web App
 
 AI-powered resume tailoring. Free to start, $9/month Pro.
 
