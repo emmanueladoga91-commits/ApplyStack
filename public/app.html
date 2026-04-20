@@ -722,14 +722,15 @@
       main { padding:0 14px 80px; }
       .card { padding:18px 18px; }
       header { padding:11px 16px; gap:10px; }
-      /* Hide desktop nav items, show hamburger */
+      /* Hide desktop nav items on mobile */
       .header-sub { display:none; }
       .user-email { display:none; }
       .user-link  { display:none; }
-      .app-hamburger { display:flex; }
-      /* Keep plan badge visible in header */
+      /* Keep plan badge visible */
       .user-menu { gap:0; }
     }
+    /* NOTE: .app-hamburger mobile show rule is declared AFTER the
+       base display:none rule below, so it correctly overrides it. */
     @media (max-width:400px) {
       .profile-grid { grid-template-columns:repeat(2,1fr); }
       .stepper { padding:12px 10px; }
@@ -827,6 +828,10 @@
     .app-hamburger.open span:nth-child(1) { transform:translateY(7px) rotate(45deg); }
     .app-hamburger.open span:nth-child(2) { opacity:0; width:0; }
     .app-hamburger.open span:nth-child(3) { transform:translateY(-7px) rotate(-45deg); }
+    /* Show hamburger on mobile — declared HERE (after display:none above) so it wins */
+    @media (max-width:640px) {
+      .app-hamburger { display:flex; }
+    }
 
     /* ── App mobile drawer ── */
     .app-overlay {
