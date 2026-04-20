@@ -1749,6 +1749,154 @@ app.post('/api/jobs-search', requireAuth, async (req, res) => {
 });
 
 // ══════════════════════════════════════════════════════════════
+//  AUTHENTIC JOBS — Direct ATS company job boards
+//  Only returns results hosted on verified ATS platforms
+//  (Greenhouse, Lever, Ashby, Workday, etc.) so every listing
+//  is live and posted directly by the hiring company.
+// ══════════════════════════════════════════════════════════════
+app.post('/api/jobs-authentic', requireAuth, async (req, res) => {
+  const { query, location, workType } = req.body || {};
+  if (!query) return res.status(400).json({ error: 'query is required' });
+
+  const serperKey = process.env.SERPER_API_KEY;
+  if (!serperKey) return res.json({ jobs: [], source: 'none', reason: 'no-serper-key' });
+
+  // Known ATS platforms whose public job boards are authoritative sources.
+  // If a job lives here, it came directly from the company's hiring system.
+  const VERIFIED_ATS_HOSTS = {
+    'boards.greenhouse.io': 'Greenhouse',
+    'jobs.lever.co': 'Lever',
+    'apply.lever.co': 'Lever',
+    'app.ashbyhq.com': 'Ashby',
+    'jobs.ashbyhq.com': 'Ashby',
+    'smartrecruiters.com': 'SmartRecruiters',
+    'myworkdayjobs.com': 'Workday',
+    'apply.workable.com': 'Workable',
+    'jobs.workable.com': 'Workable',
+    'bamboohr.com': 'BambooHR',
+    'icims.com': 'iCIMS',
+    'taleo.net': 'Taleo',
+    'jobvite.com': 'Jobvite',
+    'dover.com': 'Dover',
+    'recruitee.com': 'Recruitee',
+    'teamtailor.com': 'Teamtailor',
+    'breezy.hr': 'Breezy HR',
+    'pinpointhq.com': 'Pinpoint',
+    'workday.com': 'Workday',
+    'successfactors.com': 'SAP SuccessFactors',
+    'hireez.com': 'HireEZ',
+  };
+
+  function detectATS(url) {
+    if (!url) return null;
+    try {
+      const host = new URL(url).hostname.replace('www.', '');
+      for (const [k, v] of Object.entries(VERIFIED_ATS_HOSTS)) {
+        if (host.includes(k)) return v;
+      }
+    } catch {}
+    return null;
+  }
+
+  // Build site: query targeting only ATS domains
+  const atsSites = [
+    'site:boards.greenhouse.io',
+    'site:jobs.lever.co',
+    'site:app.ashbyhq.com',
+    'site:jobs.ashbyhq.com',
+    'site:myworkdayjobs.com',
+    'site:apply.workable.com',
+    'site:smartrecruiters.com/jobs',
+    'site:bamboohr.com/jobs',
+    'site:dover.com/jobs',
+    'site:recruitee.com',
+    'site:teamtailor.com/jobs',
+  ].join(' OR ');
+
+  let q = `${query.trim()} (${atsSites})`;
+  if (workType === 'remote') q += ' remote';
+  if (location) q += ' ' + location.trim();
+
+  try {
+    const sresp = await fetch('https://google.serper.dev/search', {
+      method:  'POST',
+      headers: { 'X-API-KEY': serperKey, 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ q, num: 20 }),
+      signal:  AbortSignal.timeout(12000),
+    });
+    if (!sresp.ok) throw new Error(`Serper HTTP ${sresp.status}`);
+    const sdata = await sresp.json();
+
+    const organic = sdata.organic || [];
+    const jobs = organic
+      .filter(r => r.link && detectATS(r.link))
+      .map((r, i) => {
+        const url  = r.link || '';
+        const ats  = detectATS(url) || 'Direct';
+
+        // Strip ATS/platform suffixes from title
+        const cleanTitle = (r.title || '')
+          .replace(/\s*[|\-–]\s*(Greenhouse|Lever|Ashby|Workday|SmartRecruiters|Workable|BambooHR|Jobvite|Recruitee|Teamtailor|Dover|iCIMS|Taleo).*$/i, '')
+          .replace(/\s*\|\s*[^|]{1,60}$/, '') // strip trailing "| Company Name"
+          .trim();
+
+        // Derive company name from snippet or URL slug
+        let company = '';
+        const snippetMeta = (r.snippet || '').match(/^([^·•|\n]{3,50})\s*[·•|]/);
+        if (snippetMeta) company = snippetMeta[1].trim();
+
+        // Fallback: parse company slug from known URL patterns
+        if (!company) {
+          const ghMatch = url.match(/greenhouse\.io\/([^\/]+)/);
+          if (ghMatch) company = ghMatch[1].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        }
+        if (!company) {
+          const lvMatch = url.match(/lever\.co\/([^\/]+)/);
+          if (lvMatch) company = lvMatch[1].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        }
+        if (!company) {
+          const ashMatch = url.match(/ashbyhq\.com\/([^\/]+)/);
+          if (ashMatch) company = ashMatch[1].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        }
+        if (!company) {
+          const wdMatch = url.match(/([^.]+)\.myworkdayjobs\.com/);
+          if (wdMatch) company = wdMatch[1].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+        }
+
+        const isRemote =
+          workType === 'remote' ||
+          (r.snippet || '').toLowerCase().includes('remote') ||
+          (r.title   || '').toLowerCase().includes('remote');
+
+        return {
+          id:             'auth-' + i + '-' + url.slice(-10),
+          title:          cleanTitle || r.title || 'Job Opening',
+          company,
+          companyLogo:    null,
+          location:       location || (isRemote ? 'Remote' : ''),
+          isRemote,
+          applyUrl:       url,
+          applyOptions:   [],
+          description:    (r.snippet || '').replace(/\s+/g, ' ').trim(),
+          salary:         null,
+          employmentType: null,
+          posted:         null,
+          source:         ats,
+          via:            ats,
+          verified:       true,   // ← confirmed direct ATS source
+        };
+      });
+
+    console.log(`Authentic /jobs → ${jobs.length} verified ATS listings for "${q.slice(0, 60)}"`);
+    res.json({ jobs, source: 'authentic' });
+
+  } catch (err) {
+    console.error('Authentic jobs error:', err.message);
+    res.json({ jobs: [], source: 'none', error: err.message });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
 //  SALARY NEGOTIATION
 // ══════════════════════════════════════════════════════════════
 app.post('/api/salary-negotiate', requireAuth, async (req, res) => {

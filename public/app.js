@@ -3993,14 +3993,16 @@ async function runJobMatch() {
 
     if (!searches.length) throw new Error('No search queries returned');
 
-    // ── Step 2: Fetch real listings for top 5 search queries ──
-    body.innerHTML = '<div class="jm-loading"><div class="jm-spinner"></div><span>Fetching live job listings from Google Jobs…</span></div>';
+    // ── Step 2: Fetch real listings + authentic ATS jobs in parallel ──
+    body.innerHTML = '<div class="jm-loading"><div class="jm-spinner"></div><span>Fetching live job listings…</span></div>';
 
     var allJobs = [];
+    var authJobs = [];
     var seenIds = {};
     var apiErrors = [];
 
-    await Promise.all(searches.slice(0, 5).map(async function(s) {
+    // Regular job board search (Google Jobs / JSearch / Remotive)
+    var regularPromise = Promise.all(searches.slice(0, 5).map(async function(s) {
       try {
         var r = await fetch('/api/jobs-search', {
           method: 'POST',
@@ -4020,6 +4022,34 @@ async function runJobMatch() {
         });
       } catch(e) { apiErrors.push(e.message); }
     }));
+
+    // Authentic ATS jobs — direct from company hiring systems (Greenhouse, Lever, etc.)
+    // Use top 3 searches to avoid over-fetching; results go to the front of the list
+    var authPromise = Promise.all(searches.slice(0, 3).map(async function(s) {
+      try {
+        var r = await fetch('/api/jobs-authentic', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
+          body: JSON.stringify({ query: s.query, location: locPref, workType: _jmWorkType })
+        });
+        if (!r.ok) return;
+        var d = await r.json();
+        (d.jobs || []).forEach(function(job) {
+          var dedupKey = (job.company + '|' + job.title).toLowerCase();
+          if (!seenIds[dedupKey]) {
+            seenIds[dedupKey] = true;
+            job._searchMeta = s;
+            authJobs.push(job);
+          }
+        });
+      } catch(e) { /* fail silently — auth jobs are a bonus */ }
+    }));
+
+    // Wait for both to finish
+    await Promise.all([regularPromise, authPromise]);
+
+    // Verified ATS jobs go first so users see direct-source listings at the top
+    allJobs = authJobs.concat(allJobs);
 
     // Store state for load-more
     _jmSearchState = { searches: searches, locPref: locPref, workType: _jmWorkType, datePosted: _jmDatePosted, exp: _jmExp, page: 1, allJobs: allJobs, seenIds: seenIds, topKeywords: topKeywords };
@@ -4217,6 +4247,7 @@ function buildJobCards(jobs, locPref) {
     if (job.employmentType) html += '<span class="jm-tag">' + escJm(job.employmentType.replace(/_/g,' ')) + '</span>';
     if (job.salary) html += '<span class="jm-tag salary">💰 ' + escJm(job.salary) + '</span>';
     if (postedStr) html += '<span class="jm-tag" style="background:rgba(255,255,255,.04);color:rgba(255,255,255,.3)">🕒 ' + escJm(postedStr) + '</span>';
+    if (job.verified) html += '<span class="jm-tag verified">✓ Direct Source</span>';
     html += '<span class="jm-tag" style="color:' + srcColor + ';background:rgba(96,165,250,.08);border-color:rgba(96,165,250,.2)">' + escJm(job.source || '') + '</span>';
     html += '</div></div>';
     html += '</div>'; // .jm-card-top
