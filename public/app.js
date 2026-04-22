@@ -339,7 +339,11 @@ function getSystemPrompt(profileKey, pages) {
     '6. KEY SKILLS / CORE COMPETENCE: Exactly 12 items. Front-load the most JD-relevant ones.',
     projectRule,
     '8. Keep all real metrics from the original resume. Do not water down quantified achievements.',
-    '9. COVER LETTER: Conversational tone. 4 body paragraphs. Closing starts "Thank you for your time and consideration." Sign-off: "Warm regards,".',
+    '9. COVER LETTER — THREE-PILLAR FRAMEWORK (read carefully):',
+    '   openingParagraph: One strong hook sentence naming the candidate\'s best match signal for this role. Then ONE sentence that shows genuine company knowledge by mirroring specific language from the JD — their mission statement, named programs, values phrases, or strategic initiatives. Do NOT write "I am writing to apply for…". Start with a confident value statement.',
+    '   bodyParagraph1, bodyParagraph2, bodyParagraph3: Each paragraph is a named PILLAR. Begin every body paragraph with a SHORT BOLD LABEL in title case (2–5 words), a colon, then a space, then the evidence paragraph. Format exactly: "Label Title: [rest of paragraph]". Example: "Data Integrity & Reporting: In my current role I manage…". Each pillar must (a) name a specific credential, tool, or achievement from the resume and (b) map it directly to a named requirement in the JD. No generic claims.',
+    '   closingParagraph: Starts "Thank you for your time and consideration." Follow with one sentence connecting the candidate\'s specific value to the company\'s stated mission or transformation goal.',
+    '   Sign-off: "Warm regards,"',
     '10. ' + (PAGE_INSTR[pages] || PAGE_INSTR[2]),
     '11. Return ONLY valid JSON — no markdown fences, no explanation, no text before or after the JSON object.',
     '',
@@ -1222,6 +1226,18 @@ function buildCoverDoc(d, tmplName){
   function r(t,o){ return new TextRun(Object.assign({text:String(t||''),size:tc.sz,font:tc.font},o||{})); }
   function lp(c,a,align){ return new Paragraph({children:c,alignment:align||AlignmentType.LEFT,spacing:{after:a||80}}); }
   function bp(t,a){ return new Paragraph({children:[r(t)],alignment:tc.bodyAlign,spacing:{after:a||tc.bodyAfter}}); }
+  // Pillar paragraph: detects "Label: body text" and renders label as bold
+  function bpp(t,a){
+    if(!t) return new Paragraph({children:[],spacing:{after:a||tc.bodyAfter}});
+    var ci = t.indexOf(': ');
+    if(ci > 0 && ci < 60){
+      return new Paragraph({
+        children:[r(t.slice(0,ci)+':',{bold:true}), r(' '+t.slice(ci+2))],
+        alignment:tc.bodyAlign, spacing:{after:a||tc.bodyAfter}
+      });
+    }
+    return bp(t,a);
+  }
   function lbl(text){ return r(tc.prefix+text,{bold:tc.bold,color:tc.accent}); }
   function hr(){
     return new Paragraph({border:{bottom:{style:BorderStyle.SINGLE,size:8,color:tc.accent,space:4}},spacing:{after:180}});
@@ -1254,9 +1270,9 @@ function buildCoverDoc(d, tmplName){
   if(tc.divider)             ch.push(hr());
   ch.push(lp([r('Dear Hiring Manager,')],160));
   if(cl.openingParagraph) ch.push(bp(cl.openingParagraph));
-  if(cl.bodyParagraph1)   ch.push(bp(cl.bodyParagraph1));
-  if(cl.bodyParagraph2)   ch.push(bp(cl.bodyParagraph2));
-  if(cl.bodyParagraph3)   ch.push(bp(cl.bodyParagraph3));
+  if(cl.bodyParagraph1)   ch.push(bpp(cl.bodyParagraph1));
+  if(cl.bodyParagraph2)   ch.push(bpp(cl.bodyParagraph2));
+  if(cl.bodyParagraph3)   ch.push(bpp(cl.bodyParagraph3));
   if(cl.closingParagraph) ch.push(bp(cl.closingParagraph,200));
   ch.push(lp([r('Warm regards,')],200));
   ch.push(lp([r(d.name||'',{bold:true})],40));
@@ -1316,10 +1332,10 @@ async function build(){
       '',
       (function(){
         var lInstr = {
-          short:  'COVER LETTER: Short (~150-200 words total). Write openingParagraph and bodyParagraph1 only. Leave bodyParagraph2 and bodyParagraph3 as empty strings "". closingParagraph is 1-2 sentences.',
-          medium: 'COVER LETTER: Medium (~300-350 words total). Write openingParagraph, bodyParagraph1, and bodyParagraph2. Leave bodyParagraph3 as empty string "".',
-          long:   'COVER LETTER: Long (~500-600 words total). Write all four body paragraphs (openingParagraph, bodyParagraph1, bodyParagraph2, bodyParagraph3), each 100-150 words.'
-        }[clLength] || 'COVER LETTER: Medium (~300-350 words). Fill openingParagraph, bodyParagraph1, bodyParagraph2. Leave bodyParagraph3 as empty string.';
+          short:  'COVER LETTER LENGTH: Short (~180-220 words total). Write openingParagraph (2 sentences: hook + company-specific reason) and ONE pillar in bodyParagraph1 ("Label: evidence paragraph"). Leave bodyParagraph2 and bodyParagraph3 as empty strings "". closingParagraph is 1-2 sentences starting "Thank you for your time and consideration."',
+          medium: 'COVER LETTER LENGTH: Medium (~320-380 words total). Write openingParagraph (2-3 sentences: hook + company-specific reason), TWO pillars in bodyParagraph1 and bodyParagraph2 (each formatted "Label: evidence paragraph", 60-80 words each). Leave bodyParagraph3 as empty string "". closingParagraph starts "Thank you for your time and consideration."',
+          long:   'COVER LETTER LENGTH: Long (~480-560 words total). Write openingParagraph (3 sentences: hook + company-specific reason + bridge to pillars), THREE pillars in bodyParagraph1, bodyParagraph2, bodyParagraph3 (each formatted "Label: evidence paragraph", 80-100 words each). closingParagraph starts "Thank you for your time and consideration."'
+        }[clLength] || 'COVER LETTER LENGTH: Medium (~320-380 words total). Write openingParagraph (2-3 sentences: hook + company-specific reason), TWO pillars in bodyParagraph1 and bodyParagraph2 (each "Label: evidence paragraph"). Leave bodyParagraph3 as empty string "".';
         return lInstr;
       })(),
       '',
@@ -1336,7 +1352,7 @@ async function build(){
       '  "technicalSkills": [{"category":"","items":""}],',
       '  "certifications": [""],',
       '  "education": [{"degree":"","institution":"","location":""}],',
-      '  "coverLetter": {"date":"","recipientTitle":"Hiring Manager","recipientDepartment":"","recipientOrg":"","recipientLocation":"City, State","reLine":"[Job Title] - [Req ID if in JD]","openingParagraph":"","bodyParagraph1":"","bodyParagraph2":"","bodyParagraph3":"","closingParagraph":"Start with: Thank you for your time and consideration."}',
+      '  "coverLetter": {"date":"","recipientTitle":"Hiring Manager","recipientDepartment":"","recipientOrg":"","recipientLocation":"City, State","reLine":"[Job Title] - [Req ID if in JD]","openingParagraph":"[Hook sentence + company-specific sentence mirroring JD language — do NOT start with \'I am writing to apply\']","bodyParagraph1":"[Pillar Label: evidence paragraph mapping resume credential to JD requirement]","bodyParagraph2":"[Pillar Label: evidence paragraph mapping resume credential to JD requirement]","bodyParagraph3":"","closingParagraph":"Thank you for your time and consideration. [one sentence connecting candidate value to company mission]"}',
       '}'
     ].join('\n');
 
@@ -3008,6 +3024,15 @@ function buildCoverLetterHtml(tailored, tmpl) {
     if (!text) return '';
     return '<p style="margin:0 0 14px;' + (style||'') + '">' + es(text) + '</p>';
   }
+  // Pillar paragraph for HTML: bolds "Label:" prefix when present
+  function pp(text, style) {
+    if (!text) return '';
+    var ci = text.indexOf(': ');
+    if (ci > 0 && ci < 60) {
+      return '<p style="margin:0 0 14px;' + (style||'') + '"><strong style="font-weight:700">' + es(text.slice(0,ci)) + ':</strong> ' + es(text.slice(ci+2)) + '</p>';
+    }
+    return p(text, style);
+  }
   function lbl(labelText, restText, style) {
     if (!restText && restText !== '') return '';
     var bw = hc.bold ? '700' : '400';
@@ -3055,9 +3080,9 @@ function buildCoverLetterHtml(tailored, tmpl) {
 
   out += p('Dear Hiring Manager,');
   out += p(cl.openingParagraph);
-  out += p(cl.bodyParagraph1);
-  out += p(cl.bodyParagraph2);
-  out += p(cl.bodyParagraph3);
+  out += pp(cl.bodyParagraph1);
+  out += pp(cl.bodyParagraph2);
+  out += pp(cl.bodyParagraph3);
   out += p(cl.closingParagraph);
   out += '<p style="margin:20px 0 4px">Warm regards,</p>';
   out += '<p style="margin:0;font-weight:700">' + es(name) + '</p>';
