@@ -3879,7 +3879,8 @@ var _jmSource      = 'vault'; // 'vault' | 'resume'
 var _jmWorkType    = 'any';   // 'any' | 'remote' | 'hybrid' | 'onsite'
 var _jmDatePosted  = 'any';   // 'any' | 'today' | 'week' | 'month'
 var _jmExp         = 'any';   // 'any' | 'entry' | 'mid' | 'senior'
-var _jmSearchState = null;    // { searches, locPref, workType, page, allJobs, seenIds, hasMore }
+var _jmSearchState = null;    // { searches, locPref, workType, page, allJobs, seenIds, hasMore, resumeText }
+var _jmDashScores  = null;    // cached per-job scores from dashboard view
 
 function openJobMatch() {
   document.getElementById('jmOverlay').classList.add('on');
@@ -3955,6 +3956,7 @@ async function runJobMatch() {
   var wtLabel = { any: 'any work type', remote: 'Remote only', hybrid: 'Hybrid', onsite: 'On-site only' }[_jmWorkType] || 'any work type';
 
   // ── Show loading ──────────────────────────────────────────
+  _jmDashScores = null; // reset cached dashboard scores from any prior search
   runBtn.disabled = true;
   runBtn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:jmSpin .7s linear infinite"></span> Analysing…';
   body.innerHTML = '<div class="jm-loading"><div class="jm-spinner"></div><span>Analysing your profile…</span></div>';
@@ -4052,7 +4054,7 @@ async function runJobMatch() {
     allJobs = authJobs.concat(allJobs);
 
     // Store state for load-more
-    _jmSearchState = { searches: searches, locPref: locPref, workType: _jmWorkType, datePosted: _jmDatePosted, exp: _jmExp, page: 1, allJobs: allJobs, seenIds: seenIds, topKeywords: topKeywords };
+    _jmSearchState = { searches: searches, locPref: locPref, workType: _jmWorkType, datePosted: _jmDatePosted, exp: _jmExp, page: 1, allJobs: allJobs, seenIds: seenIds, topKeywords: topKeywords, resumeText: resumeText };
 
     // Show API error/diagnostic banner if no jobs returned
     if (!allJobs.length) {
@@ -4179,8 +4181,12 @@ function renderRealJobs(jobs, keywords, locPref, searches, showLoadMore) {
   // ── Meta header ──────────────────────────────────────────────
   var wtLabels = { any: '', remote: '🌐 Remote', hybrid: '🏠 Hybrid', onsite: '🏢 On-site' };
   var metaLine = [locPref ? '📍 ' + locPref : '', wtLabels[_jmWorkType] || ''].filter(Boolean).join('  ·  ');
-  var html = '<div id="jmMetaBar" style="font-size:.75rem;color:rgba(255,255,255,.35);margin-bottom:14px;font-weight:600">';
-  html += escJm(metaLine || 'All locations') + ' · <span id="jmResultCount">' + jobs.length + '</span> live listings · via Google Jobs</div>';
+  var html = '<div id="jmMetaBar" style="font-size:.75rem;color:rgba(255,255,255,.35);margin-bottom:14px;font-weight:600;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap">';
+  html += '<span>' + escJm(metaLine || 'All locations') + ' · <span id="jmResultCount">' + jobs.length + '</span> live listings</span>';
+  html += '<div class="jm-view-toggle">';
+  html += '<button class="jm-view-btn active" data-view="cards" onclick="switchToCards()">🃏 Cards</button>';
+  html += '<button class="jm-view-btn" data-view="dashboard" onclick="switchToDashboard()">📊 Dashboard</button>';
+  html += '</div></div>';
 
   html += '<div class="jm-cards" id="jmCardsContainer">';
   html += buildJobCards(jobs, locPref);
@@ -4204,6 +4210,150 @@ function renderRealJobs(jobs, keywords, locPref, searches, showLoadMore) {
 
   body.innerHTML = html;
 }
+
+// ── Dashboard view ──────────────────────────────────────────────
+
+async function switchToDashboard() {
+  var st = _jmSearchState;
+  if (!st || !st.allJobs.length) return;
+
+  // Flip toggle state
+  document.querySelectorAll('.jm-view-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.view === 'dashboard');
+  });
+
+  // If scores already cached from this search, just re-render
+  if (_jmDashScores) {
+    renderDashboard(st.allJobs, _jmDashScores);
+    return;
+  }
+
+  var body = document.getElementById('jmBody');
+  body.innerHTML = '<div class="jm-dash-loading"><div class="jm-spinner"></div><span>Scoring jobs against your profile…</span></div>';
+
+  var tok = getToken();
+  var jobs = st.allJobs.slice(0, 20);
+
+  var jobsText = jobs.map(function(j, i) {
+    return i + '. ' + (j.title || 'Role') + ' at ' + (j.company || 'Unknown') + '\n' + (j.description || '').slice(0, 220);
+  }).join('\n\n');
+
+  var systemPrompt = 'You are a career match analyzer. Score each numbered job listing against the resume from 0 to 100. Also extract the top 3–5 required skills for each role. Assign a tier: 1 if score ≥ 75, 2 if score 50–74, 3 if score < 50. Return ONLY valid JSON with no markdown, in this exact format:\n{"scores":[{"idx":0,"score":85,"skills":["React","TypeScript","Node.js"],"tier":1},...]}';
+
+  var userMsg = 'Resume:\n' + (st.resumeText || '').slice(0, 3000) + '\n\nJobs to score:\n' + jobsText;
+
+  try {
+    var r = await fetch('/api/claude', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
+      body: JSON.stringify({ type: 'dashboard', system: systemPrompt, userMsg: userMsg, maxTokens: 2000 })
+    });
+    if (!r.ok) throw new Error('Score API ' + r.status);
+    var d = await r.json();
+    var raw = (d.text || '').trim()
+      .replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/```\s*$/, '').trim();
+    var parsed = JSON.parse(raw);
+    _jmDashScores = parsed.scores || [];
+    renderDashboard(jobs, _jmDashScores);
+  } catch(err) {
+    body.innerHTML = '<div class="jm-error" style="margin:24px 0">⚠️ Could not score jobs: ' + escJm(err.message) + '. <button class="jm-view-btn" style="margin-left:8px" onclick="switchToCards()">Back to Cards</button></div>';
+  }
+}
+
+function switchToCards() {
+  var st = _jmSearchState;
+  if (!st) return;
+  document.querySelectorAll('.jm-view-btn').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.view === 'cards');
+  });
+  renderRealJobs(st.allJobs, st.topKeywords, st.locPref, st.searches, true);
+}
+
+function renderDashboard(jobs, scores) {
+  var body = document.getElementById('jmBody');
+
+  // Merge scores into job objects
+  var scored = jobs.map(function(j, i) {
+    var s = (scores || []).find(function(x) { return x.idx === i; }) || {};
+    return Object.assign({}, j, { _score: s.score || 0, _skills: s.skills || [], _tier: s.tier || 3 });
+  });
+
+  // Sort highest score first
+  scored.sort(function(a, b) { return b._score - a._score; });
+
+  var tiers = [
+    { key: 1, label: '🏆 Excellent Match', range: '75–100', cls: 't1', badgeCls: 's-high' },
+    { key: 2, label: '⭐ Good Match',       range: '50–74',  cls: 't2', badgeCls: 's-mid'  },
+    { key: 3, label: '🎯 Decent Match',     range: '< 50',   cls: 't3', badgeCls: 's-low'  },
+  ];
+
+  var html = '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">';
+  html += '<span style="font-size:.75rem;color:rgba(255,255,255,.32);font-weight:600">📊 ' + scored.length + ' jobs · AI-scored against your profile</span>';
+  html += '<div class="jm-view-toggle">';
+  html += '<button class="jm-view-btn" data-view="cards" onclick="switchToCards()">🃏 Cards</button>';
+  html += '<button class="jm-view-btn active" data-view="dashboard" onclick="switchToDashboard()">📊 Dashboard</button>';
+  html += '</div></div>';
+
+  tiers.forEach(function(tier) {
+    var tierJobs = scored.filter(function(j) { return j._tier === tier.key; });
+    if (!tierJobs.length) return;
+
+    html += '<div class="jm-tier-section">';
+    html += '<div class="jm-tier-hdr ' + tier.cls + '">' + tier.label;
+    html += ' <span style="opacity:.45;font-weight:400;font-size:.68rem;margin-left:4px">(' + tier.range + ')</span>';
+    html += ' <span style="margin-left:auto;opacity:.55;font-size:.7rem">' + tierJobs.length + ' role' + (tierJobs.length > 1 ? 's' : '') + '</span>';
+    html += '</div>';
+
+    html += '<table class="jm-dash-table"><thead><tr>';
+    html += '<th style="width:26%">Role</th><th>Location</th><th>Salary</th><th style="width:28%">Required Skills</th><th style="width:40px">Score</th><th>Apply</th>';
+    html += '</tr></thead><tbody>';
+
+    tierJobs.forEach(function(job) {
+      var applyUrl = job.applyUrl || (job.applyOptions && job.applyOptions.length && job.applyOptions[0].link) || '';
+
+      html += '<tr>';
+
+      // Role + Company
+      html += '<td><div class="jm-dash-title">' + escJm(job.title) + '</div>';
+      html += '<div class="jm-dash-company">' + escJm(job.company) + '</div>';
+      if (job.verified) html += '<div style="font-size:.62rem;color:#34d399;margin-top:2px;font-weight:700">✓ Direct Source</div>';
+      html += '</td>';
+
+      // Location
+      var locDisplay = job.location || (job.isRemote ? '🌐 Remote' : '—');
+      html += '<td style="font-size:.74rem;color:rgba(255,255,255,.45)">' + escJm(locDisplay) + '</td>';
+
+      // Salary
+      html += '<td style="font-size:.74rem;color:#fcd34d;white-space:nowrap">' + escJm(job.salary || '—') + '</td>';
+
+      // Required Skills
+      html += '<td><div class="jm-dash-skills">';
+      (job._skills || []).slice(0, 5).forEach(function(sk) {
+        html += '<span class="jm-dash-skill">' + escJm(sk) + '</span>';
+      });
+      if (!(job._skills || []).length) html += '<span style="color:rgba(255,255,255,.2);font-size:.7rem">—</span>';
+      html += '</div></td>';
+
+      // Match Score badge
+      html += '<td><span class="jm-score-badge ' + tier.badgeCls + '">' + job._score + '</span></td>';
+
+      // Apply button
+      if (applyUrl) {
+        html += '<td><a class="jm-dash-apply" href="' + escJm(applyUrl) + '" target="_blank" rel="noopener">Apply →</a></td>';
+      } else {
+        html += '<td><span style="font-size:.7rem;color:rgba(255,255,255,.2)">—</span></td>';
+      }
+
+      html += '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+  });
+
+  body.innerHTML = html;
+}
+
+// ── End dashboard view ──────────────────────────────────────────
 
 function buildJobCards(jobs, locPref) {
   var locStr = locPref || (_jmSearchState ? _jmSearchState.locPref : '') || '';
