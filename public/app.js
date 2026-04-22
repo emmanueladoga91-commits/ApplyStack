@@ -340,7 +340,7 @@ function getSystemPrompt(profileKey, pages) {
     projectRule,
     '8. Keep all real metrics from the original resume. Do not water down quantified achievements.',
     '9. COVER LETTER — FIVE-PART STRUCTURE (follow this exactly, in this order):',
-    '   PART 1 — openingParagraph (3–4 sentences, warm and enthusiastic): Open with "It is with great enthusiasm that I submit my application for [exact role] at [company]." Second sentence: show specific company knowledge — mirror a named program, mission phrase, strategic initiative, or value from the JD (quote it if possible). Third sentence: state personal inspiration — why THIS mission moves the candidate, connected to their own professional values.',
+    '   PART 1 — openingParagraph (3–4 sentences, warm and confident): Write a varied, role-specific opening sentence that is NOT "I am writing to apply..." and NOT "It is with great enthusiasm..." — both are clichéd. Instead open with a sentence that signals the candidate\'s strongest match (e.g. their credential, their years of relevant experience, or a specific value they bring) and connects it immediately to this role. Second sentence: show specific company knowledge — mirror a named program, mission phrase, strategic initiative, or value from the JD (quote it if possible). Third/fourth sentence: state personal motivation — why THIS company and mission resonates, tied to the candidate\'s professional values.',
     '   PART 2 — whyTeamParagraph (3–4 sentences, emotional and values-driven): Answer "Why I Want to Be Part of Your Team." Explain what specifically draws the candidate to this organisation — not the role, but the company\'s mission, culture, or transformation. Connect the candidate\'s personal values to the company\'s stated goals. End with why this environment excites them (e.g., a digital transformation, a mission-driven community, a specific initiative from the JD).',
     '   PART 3 — idealCandidateIntro (2 sentences): Answer the opening of "What Makes Me Your Ideal Candidate." First sentence: a confident positioning statement (e.g., "I am a [descriptor] who views [X] as [Y]."). Second sentence: "My candidacy is built on three pillars that align with [specific JD project, transformation, or requirement]:"',
     '   PART 4 — pillar1, pillar2, pillar3 (bullet points, each 50–70 words): Each pillar is a named bullet. Format exactly: "Label Title: [evidence paragraph]". Label is 2–5 words in title case. Evidence must (a) name a specific credential, tool, or achievement from the resume, (b) quantify impact where possible, and (c) directly map to a named JD requirement. Each pillar covers a DIFFERENT dimension of the candidate\'s fit.',
@@ -1392,7 +1392,7 @@ async function build(){
       '  "technicalSkills": [{"category":"","items":""}],',
       '  "certifications": [""],',
       '  "education": [{"degree":"","institution":"","location":""}],',
-      '  "coverLetter": {"date":"","recipientTitle":"Hiring Manager","recipientDepartment":"","recipientOrg":"","recipientLocation":"City, State","reLine":"[Job Title] - [Req ID if in JD]","openingParagraph":"It is with great enthusiasm that I submit my application for [role] at [company]. [Company-specific sentence mirroring JD language.] [Personal inspiration tied to company mission.]","whyTeamParagraph":"[Why this organisation specifically — values alignment, emotional connection, what excites the candidate about this environment or mission.]","idealCandidateIntro":"[Positioning statement.] My candidacy is built on three pillars that align with [specific JD project or transformation]:","pillar1":"[Label Title]: [evidence paragraph — specific credential + business impact + JD requirement mapping]","pillar2":"[Label Title]: [evidence paragraph — specific credential + business impact + JD requirement mapping]","pillar3":"[Label Title]: [evidence paragraph — specific credential + business impact + JD requirement mapping]","closingParagraph":"I am eager to apply [X] to help [company] [their stated mission/goal]. Thank you for your time and [company-specific acknowledgment]. I look forward to [forward-looking statement]."}',
+      '  "coverLetter": {"date":"","recipientTitle":"Hiring Manager","recipientDepartment":"","recipientOrg":"","recipientLocation":"City, State","reLine":"[Job Title] - [Req ID if in JD]","openingParagraph":"[Varied confident opener naming the candidate\'s strongest credential or value — NOT \'I am writing to apply\' or \'It is with great enthusiasm\'.] [Company-specific sentence mirroring JD language — named program, mission, or strategic initiative.] [Personal motivation sentence tied to company mission and candidate values.]","whyTeamParagraph":"[Why this organisation specifically — values alignment, emotional connection, what excites the candidate about this environment or mission.]","idealCandidateIntro":"[Positioning statement.] My candidacy is built on three pillars that align with [specific JD project or transformation]:","pillar1":"[Label Title]: [evidence paragraph — specific credential + business impact + JD requirement mapping]","pillar2":"[Label Title]: [evidence paragraph — specific credential + business impact + JD requirement mapping]","pillar3":"[Label Title]: [evidence paragraph — specific credential + business impact + JD requirement mapping]","closingParagraph":"I am eager to apply [X] to help [company] [their stated mission/goal]. Thank you for your time and [company-specific acknowledgment]. I look forward to [forward-looking statement]."}',
       '}'
     ].join('\n');
 
@@ -3163,7 +3163,16 @@ function openCoverPreview() {
   var page  = document.getElementById('clPvPage');
   if (!modal || !page) return;
 
-  page.innerHTML = tailoredRef ? buildCoverLetterHtml(tailoredRef, clTemplate) : '<p style="color:#888">Cover letter not available.</p>';
+  // Show personalisation nudge when the 5-part structure was used
+  var cl = tailoredRef && tailoredRef.coverLetter;
+  var nudge = (cl && cl.whyTeamParagraph)
+    ? '<div style="background:#fef9ec;border:1px solid #f59e0b;border-radius:8px;padding:11px 15px;margin-bottom:14px;font-size:12.5px;color:#78350f;line-height:1.55">'
+      + '<strong>✏️ Personalise before sending</strong> — The <em>"Why I Want to Be Part of Your Team"</em> section is most powerful when it sounds like you, not AI. '
+      + 'Review that paragraph and add one specific detail only you would know: a personal connection to the mission, a story, or a reason this company matters to you.'
+      + '</div>'
+    : '';
+
+  page.innerHTML = nudge + (tailoredRef ? buildCoverLetterHtml(tailoredRef, clTemplate) : '<p style="color:#888">Cover letter not available.</p>');
 
   // Wire download buttons
   var dlBtn  = document.getElementById('clDlBtn');
