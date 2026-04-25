@@ -1903,6 +1903,172 @@ app.post('/api/jobs-authentic', requireAuth, async (req, res) => {
 });
 
 // ══════════════════════════════════════════════════════════════
+//  CANADIAN GOVERNMENT & PROVINCIAL JOB BOARDS
+//  Two focused Serper calls (federal + province-specific) so
+//  Google doesn't choke on too many site: operators at once.
+//  Results are tagged gov:true and surfaced first in the UI.
+// ══════════════════════════════════════════════════════════════
+app.post('/api/jobs-gov-canada', requireAuth, async (req, res) => {
+  const { query, location, workType } = req.body || {};
+  if (!query) return res.status(400).json({ error: 'query is required' });
+
+  const serperKey = process.env.SERPER_API_KEY;
+  if (!serperKey) return res.json({ jobs: [], source: 'none', reason: 'no-serper-key' });
+
+  // Board labels — domain-only keys so matching is reliable
+  const BOARD_LABELS = {
+    'jobbank.gc.ca':          'Job Bank Canada',
+    'jobs.gc.ca':             'Government of Canada',
+    'emploisfp-psjobs.cfp-psc.gc.ca': 'Public Service Canada',
+    'gojobs.gov.on.ca':       'Ontario Public Service',
+    'jobs.alberta.ca':        'Government of Alberta',
+    'bcpublicservice.ca':     'BC Public Service',
+    'careers.gov.bc.ca':      'BC Public Service',
+    'carrieres.gouv.qc.ca':   'Québec Public Service',
+    'emploiquebec.gouv.qc.ca':'Emploi-Québec',
+    'manitobapublicservice.ca':'Manitoba Public Service',
+    'saskjobs.ca':            'Saskatchewan Jobs',
+    'novascotia.ca':          'Nova Scotia Government',
+    'ere.gnb.ca':             'Government of New Brunswick',
+    'careers.gov.nl.ca':      'Government of Newfoundland',
+    'jobs.yukon.ca':          'Yukon Government',
+    'nwtjobs.ca':             'NWT Government',
+    'recruitmentnu.ca':       'Government of Nunavut',
+    'jobs.princeedwardisland.ca': 'PEI Government',
+  };
+
+  function detectBoard(url) {
+    if (!url) return null;
+    const u = url.toLowerCase();
+    for (const [k, v] of Object.entries(BOARD_LABELS)) {
+      if (u.includes(k)) return v;
+    }
+    return null;
+  }
+
+  // Map location keywords → specific provincial site: operator
+  const locLower = (location || '').toLowerCase();
+  const PROVINCE_SITE_MAP = [
+    { keys: ['ontario','toronto','ottawa','hamilton','london, on','mississauga','brampton'],
+      site: 'site:gojobs.gov.on.ca' },
+    { keys: ['alberta','calgary','edmonton','red deer'],
+      site: 'site:jobs.alberta.ca' },
+    { keys: ['british columbia','bc','vancouver','victoria','surrey','burnaby'],
+      site: 'site:bcpublicservice.ca' },
+    { keys: ['quebec','québec','montreal','laval','gatineau'],
+      site: 'site:carrieres.gouv.qc.ca' },
+    { keys: ['manitoba','winnipeg'],
+      site: 'site:manitobapublicservice.ca' },
+    { keys: ['saskatchewan','saskatoon','regina'],
+      site: 'site:saskjobs.ca' },
+    { keys: ['nova scotia','halifax'],
+      site: 'site:novascotia.ca' },
+    { keys: ['new brunswick','fredericton','moncton','saint john'],
+      site: 'site:ere.gnb.ca' },
+    { keys: ['newfoundland','labrador','st. john'],
+      site: 'site:careers.gov.nl.ca' },
+    { keys: ['prince edward island','pei','charlottetown'],
+      site: 'site:jobs.princeedwardisland.ca' },
+    { keys: ['yukon','whitehorse'],
+      site: 'site:jobs.yukon.ca' },
+    { keys: ['northwest territories','nwt','yellowknife'],
+      site: 'site:nwtjobs.ca' },
+    { keys: ['nunavut','iqaluit'],
+      site: 'site:recruitmentnu.ca' },
+  ];
+
+  let provinceSite = null;
+  for (const entry of PROVINCE_SITE_MAP) {
+    if (entry.keys.some(k => locLower.includes(k))) {
+      provinceSite = entry.site;
+      break;
+    }
+  }
+
+  // Federal search always runs: Job Bank (national aggregator) + federal public service
+  const federalQuery = `${query.trim()} (site:jobbank.gc.ca OR site:jobs.gc.ca)${location ? ' ' + location.trim() : ' Canada'}${workType === 'remote' ? ' remote' : ''}`;
+
+  // Provincial search runs when a province/city is detected — max 2 site: operators
+  const provincialQuery = provinceSite
+    ? `${query.trim()} ${provinceSite}${location ? ' ' + location.trim() : ''}${workType === 'remote' ? ' remote' : ''}`
+    : null;
+
+  function serperFetch(q) {
+    return fetch('https://google.serper.dev/search', {
+      method:  'POST',
+      headers: { 'X-API-KEY': serperKey, 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ q, num: 10, gl: 'ca', hl: 'en' }),
+      signal:  AbortSignal.timeout(12000),
+    });
+  }
+
+  function mapResults(organic, offset) {
+    return (organic || [])
+      .filter(r => r.link && detectBoard(r.link))
+      .map((r, i) => {
+        const url   = r.link || '';
+        const board = detectBoard(url) || 'Canadian Government';
+        const cleanTitle = (r.title || '')
+          .replace(/\s*[|\-–]\s*(Job Bank|Government of Canada|Ontario|Alberta|BC|Quebec|Manitoba|Saskatchewan|Nova Scotia|New Brunswick|Newfoundland|Yukon|Public Service|Canada\.ca).*$/i, '')
+          .replace(/\s*\|\s*[^|]{1,60}$/, '')
+          .trim();
+        const isRemote = workType === 'remote' ||
+          (r.snippet || '').toLowerCase().includes('remote') ||
+          (r.title   || '').toLowerCase().includes('remote');
+        return {
+          id:             'gov-' + (i + offset) + '-' + url.slice(-8),
+          title:          cleanTitle || r.title || 'Government Position',
+          company:        board,
+          companyLogo:    null,
+          location:       location || (isRemote ? 'Remote' : 'Canada'),
+          isRemote,
+          applyUrl:       url,
+          applyOptions:   [],
+          description:    (r.snippet || '').replace(/\s+/g, ' ').trim(),
+          salary:         null,
+          employmentType: null,
+          posted:         null,
+          source:         board,
+          via:            board,
+          verified:       true,
+          gov:            true,
+        };
+      });
+  }
+
+  try {
+    // Run federal + provincial in parallel
+    const fetches = [serperFetch(federalQuery)];
+    if (provincialQuery) fetches.push(serperFetch(provincialQuery));
+
+    const responses = await Promise.all(fetches);
+    let allJobs = [];
+
+    for (let i = 0; i < responses.length; i++) {
+      if (responses[i].ok) {
+        const data = await responses[i].json();
+        allJobs = allJobs.concat(mapResults(data.organic || [], allJobs.length));
+      }
+    }
+
+    // Deduplicate by URL
+    const seen = new Set();
+    const jobs = allJobs.filter(j => {
+      if (seen.has(j.applyUrl)) return false;
+      seen.add(j.applyUrl);
+      return true;
+    });
+
+    console.log(`GovCA /jobs → ${jobs.length} listings (federal: ${federalQuery.slice(0,50)}${provincialQuery ? ' + provincial' : ''})`);
+    res.json({ jobs, source: 'gov-canada' });
+
+  } catch (err) {
+    console.error('Gov Canada jobs error:', err.message);
+    res.json({ jobs: [], source: 'none', error: err.message });
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
 //  SALARY NEGOTIATION
 // ══════════════════════════════════════════════════════════════
 app.post('/api/salary-negotiate', requireAuth, async (req, res) => {

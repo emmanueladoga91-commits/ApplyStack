@@ -4100,8 +4100,12 @@ async function runJobMatch() {
 
     var allJobs = [];
     var authJobs = [];
+    var govJobs = [];
     var seenIds = {};
     var apiErrors = [];
+
+    // Detect if user is searching for jobs in Canada (any province/territory)
+    var isCanadaSearch = /canada|ontario|alberta|british columbia|\bbc\b|quebec|manitoba|saskatchewan|nova scotia|new brunswick|newfoundland|yukon|northwest territories|\bnwt\b|nunavut|toronto|vancouver|calgary|edmonton|ottawa|montreal|winnipeg|halifax/i.test(locPref);
 
     // Regular job board search (Google Jobs / JSearch / Remotive)
     var regularPromise = Promise.all(searches.slice(0, 5).map(async function(s) {
@@ -4147,11 +4151,35 @@ async function runJobMatch() {
       } catch(e) { /* fail silently — auth jobs are a bonus */ }
     }));
 
-    // Wait for both to finish
-    await Promise.all([regularPromise, authPromise]);
+    // Canadian Government & Provincial job boards — TOP PRIORITY when location is in Canada
+    // Federal (jobs.gc.ca, jobbank.gc.ca) + all 10 provinces + 3 territories + major cities
+    var govPromise = isCanadaSearch
+      ? Promise.all(searches.slice(0, 3).map(async function(s) {
+          try {
+            var r = await fetch('/api/jobs-gov-canada', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok },
+              body: JSON.stringify({ query: s.query, location: locPref, workType: _jmWorkType })
+            });
+            if (!r.ok) return;
+            var d = await r.json();
+            (d.jobs || []).forEach(function(job) {
+              var dedupKey = (job.company + '|' + job.title).toLowerCase();
+              if (!seenIds[dedupKey]) {
+                seenIds[dedupKey] = true;
+                job._searchMeta = s;
+                govJobs.push(job);
+              }
+            });
+          } catch(e) { /* fail silently */ }
+        }))
+      : Promise.resolve();
 
-    // Verified ATS jobs go first so users see direct-source listings at the top
-    allJobs = authJobs.concat(allJobs);
+    // Wait for all three to finish
+    await Promise.all([regularPromise, authPromise, govPromise]);
+
+    // Priority order: 🏛️ Gov Canada first → ✓ Direct ATS second → Regular boards last
+    allJobs = govJobs.concat(authJobs).concat(allJobs);
 
     // Store state for load-more
     _jmSearchState = { searches: searches, locPref: locPref, workType: _jmWorkType, datePosted: _jmDatePosted, exp: _jmExp, page: 1, allJobs: allJobs, seenIds: seenIds, topKeywords: topKeywords, resumeText: resumeText };
@@ -4416,7 +4444,8 @@ function renderDashboard(jobs, scores) {
       // Role + Company
       html += '<td><div class="jm-dash-title">' + escJm(job.title) + '</div>';
       html += '<div class="jm-dash-company">' + escJm(job.company) + '</div>';
-      if (job.verified) html += '<div style="font-size:.62rem;color:#34d399;margin-top:2px;font-weight:700">✓ Direct Source</div>';
+      if (job.gov) html += '<div style="font-size:.62rem;color:#f59e0b;margin-top:2px;font-weight:700">🏛️ Government</div>';
+      else if (job.verified) html += '<div style="font-size:.62rem;color:#34d399;margin-top:2px;font-weight:700">✓ Direct Source</div>';
       html += '</td>';
 
       // Location
@@ -4497,7 +4526,8 @@ function buildJobCards(jobs, locPref) {
     if (job.employmentType) html += '<span class="jm-tag">' + escJm(job.employmentType.replace(/_/g,' ')) + '</span>';
     if (job.salary) html += '<span class="jm-tag salary">💰 ' + escJm(job.salary) + '</span>';
     if (postedStr) html += '<span class="jm-tag" style="background:rgba(255,255,255,.04);color:rgba(255,255,255,.3)">🕒 ' + escJm(postedStr) + '</span>';
-    if (job.verified) html += '<span class="jm-tag verified">✓ Direct Source</span>';
+    if (job.gov) html += '<span class="jm-tag" style="background:rgba(245,158,11,.12);color:#fbbf24;border-color:rgba(245,158,11,.35);font-weight:700">🏛️ Government</span>';
+    else if (job.verified) html += '<span class="jm-tag verified">✓ Direct Source</span>';
     html += '<span class="jm-tag" style="color:' + srcColor + ';background:rgba(96,165,250,.08);border-color:rgba(96,165,250,.2)">' + escJm(job.source || '') + '</span>';
     html += '</div></div>';
     html += '</div>'; // .jm-card-top
