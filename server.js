@@ -1915,29 +1915,52 @@ app.post('/api/jobs-gov-canada', requireAuth, async (req, res) => {
   const serperKey = process.env.SERPER_API_KEY;
   if (!serperKey) return res.json({ jobs: [], source: 'none', reason: 'no-serper-key' });
 
-  // ── Verified direct posting domains (researched April 2026) ────────────
+  // ── Verified direct posting domains — provinces + major cities ──────────
   const BOARD_LABELS = {
     // Federal
     'emploisfp-psjobs.cfp-psc.gc.ca': 'Government of Canada (GC Jobs)',
     'psjobs-emploisfp.psc-cfp.gc.ca': 'Government of Canada (GC Jobs)',
     'jobbank.gc.ca':                   'Job Bank Canada',
-    // Ontario
+    // Ontario — Province
     'gojobs.gov.on.ca':                'Ontario Public Service',
-    // Alberta  ← confirmed by user: jobpostings.alberta.ca
+    // Ontario — Cities
+    'jobs.toronto.ca':                 'City of Toronto',
+    'eos.toronto.ca':                  'City of Toronto',
+    'jobs-emplois.ottawa.ca':          'City of Ottawa',
+    'jobs.mississauga.ca':             'City of Mississauga',
+    'brampton.ca':                     'City of Brampton',
+    'hamilton.ca':                     'City of Hamilton',
+    'kitchener.ca':                    'City of Kitchener',
+    // Alberta — Province
     'jobpostings.alberta.ca':          'Government of Alberta',
-    // BC — actual postings live under www2.gov.bc.ca/careers-myhr
+    // Alberta — Cities
+    'recruiting.calgary.ca':           'City of Calgary',
+    'recruitment.edmonton.ca':         'City of Edmonton',
+    'edmonton.taleo.net':              'City of Edmonton',
+    // BC — Province
     'www2.gov.bc.ca':                  'BC Public Service',
     'bcpublicservice.hua.hrsmart.com': 'BC Public Service',
-    // Quebec
+    // BC — Cities
+    'jobs.vancouver.ca':               'City of Vancouver',
+    'surrey.ca':                       'City of Surrey',
+    'burnaby.ca':                      'City of Burnaby',
+    // Quebec — Province
     'recrutement.carrieres.gouv.qc.ca':'Québec Public Service',
     'carrieres.gouv.qc.ca':            'Québec Public Service',
-    // Manitoba
+    // Quebec — Cities
+    'montreal.ca':                     'City of Montreal',
+    // Manitoba — Province
     'jobsearch.gov.mb.ca':             'Manitoba Government Jobs',
-    // Saskatchewan
+    // Manitoba — Cities
+    'winnipeg.ca':                     'City of Winnipeg',
+    // Saskatchewan — Province + Cities
     'govskpsc.taleo.net':              'Government of Saskatchewan',
     'saskjobs.ca':                     'Saskatchewan Jobs',
-    // Nova Scotia
+    'saskatoon.ca':                    'City of Saskatoon',
+    'regina.ca':                       'City of Regina',
+    // Nova Scotia — Province + City
     'jobs.novascotia.ca':              'Nova Scotia Government',
+    'halifax.ca':                      'Halifax Regional Municipality',
     // New Brunswick
     'ere.gnb.ca':                      'Government of New Brunswick',
     // Newfoundland
@@ -1961,22 +1984,60 @@ app.post('/api/jobs-gov-canada', requireAuth, async (req, res) => {
     return null;
   }
 
-  // ── Province → verified direct posting site ─────────────────────────────
+  // ── City/Province → site: operators (province + city combined when city detected)
+  // Format: 'site:X OR site:Y' — keeps each query to max 2-3 operators so Google doesn't choke
   const locLower = (location || '').toLowerCase();
   const PROVINCE_SITE_MAP = [
-    { keys: ['ontario','toronto','ottawa','hamilton','mississauga','brampton','london, on','kitchener','windsor'],
+    // Ontario — city-specific combos first, then province fallback
+    { keys: ['toronto'],
+      site: 'site:gojobs.gov.on.ca OR site:jobs.toronto.ca' },
+    { keys: ['ottawa'],
+      site: 'site:gojobs.gov.on.ca OR site:jobs-emplois.ottawa.ca' },
+    { keys: ['mississauga'],
+      site: 'site:gojobs.gov.on.ca OR site:jobs.mississauga.ca' },
+    { keys: ['brampton'],
+      site: 'site:gojobs.gov.on.ca OR site:brampton.ca' },
+    { keys: ['hamilton'],
+      site: 'site:gojobs.gov.on.ca OR site:hamilton.ca' },
+    { keys: ['ontario','london, on','kitchener','windsor','barrie','kingston','sudbury'],
       site: 'site:gojobs.gov.on.ca' },
-    { keys: ['alberta','calgary','edmonton','red deer','lethbridge','medicine hat'],
-      site: 'site:jobpostings.alberta.ca' },                      // ← fixed: was jobs.alberta.ca
-    { keys: ['british columbia','bc','vancouver','victoria','surrey','burnaby','kelowna','abbotsford'],
-      site: 'site:www2.gov.bc.ca' },                             // ← fixed: was bcpublicservice.ca
-    { keys: ['quebec','québec','montreal','laval','gatineau','longueuil','sherbrooke'],
-      site: 'site:recrutement.carrieres.gouv.qc.ca' },           // ← fixed: verified Quebec recruitment portal
-    { keys: ['manitoba','winnipeg','brandon'],
-      site: 'site:jobsearch.gov.mb.ca' },                        // ← fixed: was manitobapublicservice.ca
-    { keys: ['saskatchewan','saskatoon','regina','prince albert'],
-      site: 'site:govskpsc.taleo.net' },                         // ← fixed: direct SK public service ATS
-    { keys: ['nova scotia','halifax','sydne','truro'],
+    // Alberta — city-specific combos first
+    { keys: ['calgary'],
+      site: 'site:jobpostings.alberta.ca OR site:recruiting.calgary.ca' },
+    { keys: ['edmonton'],
+      site: 'site:jobpostings.alberta.ca OR site:recruitment.edmonton.ca' },
+    { keys: ['alberta','red deer','lethbridge','medicine hat','grande prairie'],
+      site: 'site:jobpostings.alberta.ca' },
+    // BC — city-specific combos first
+    { keys: ['vancouver'],
+      site: 'site:www2.gov.bc.ca OR site:jobs.vancouver.ca' },
+    { keys: ['surrey'],
+      site: 'site:www2.gov.bc.ca OR site:surrey.ca' },
+    { keys: ['burnaby'],
+      site: 'site:www2.gov.bc.ca OR site:burnaby.ca' },
+    { keys: ['british columbia','bc','victoria','kelowna','abbotsford','coquitlam','richmond'],
+      site: 'site:www2.gov.bc.ca' },
+    // Quebec — city-specific combos first
+    { keys: ['montreal'],
+      site: 'site:recrutement.carrieres.gouv.qc.ca OR site:montreal.ca' },
+    { keys: ['quebec','québec','laval','gatineau','longueuil','sherbrooke'],
+      site: 'site:recrutement.carrieres.gouv.qc.ca' },
+    // Manitoba — city-specific combos first
+    { keys: ['winnipeg'],
+      site: 'site:jobsearch.gov.mb.ca OR site:winnipeg.ca' },
+    { keys: ['manitoba','brandon'],
+      site: 'site:jobsearch.gov.mb.ca' },
+    // Saskatchewan — city-specific combos first
+    { keys: ['saskatoon'],
+      site: 'site:govskpsc.taleo.net OR site:saskatoon.ca' },
+    { keys: ['regina'],
+      site: 'site:govskpsc.taleo.net OR site:regina.ca' },
+    { keys: ['saskatchewan','prince albert'],
+      site: 'site:govskpsc.taleo.net' },
+    // Nova Scotia — city-specific combos first
+    { keys: ['halifax'],
+      site: 'site:jobs.novascotia.ca OR site:halifax.ca' },
+    { keys: ['nova scotia','sydney','truro'],
       site: 'site:jobs.novascotia.ca' },
     { keys: ['new brunswick','fredericton','moncton','saint john','miramichi'],
       site: 'site:ere.gnb.ca' },
