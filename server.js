@@ -1904,9 +1904,9 @@ app.post('/api/jobs-authentic', requireAuth, async (req, res) => {
 
 // ══════════════════════════════════════════════════════════════
 //  CANADIAN GOVERNMENT & PROVINCIAL JOB BOARDS
-//  Two focused Serper calls (federal + province-specific) so
-//  Google doesn't choke on too many site: operators at once.
-//  Results are tagged gov:true and surfaced first in the UI.
+//  Uses verified direct posting URLs (not aggregators).
+//  Two focused Serper calls: federal + province-specific.
+//  Results tagged gov:true, surfaced first in the UI.
 // ══════════════════════════════════════════════════════════════
 app.post('/api/jobs-gov-canada', requireAuth, async (req, res) => {
   const { query, location, workType } = req.body || {};
@@ -1915,26 +1915,41 @@ app.post('/api/jobs-gov-canada', requireAuth, async (req, res) => {
   const serperKey = process.env.SERPER_API_KEY;
   if (!serperKey) return res.json({ jobs: [], source: 'none', reason: 'no-serper-key' });
 
-  // Board labels — domain-only keys so matching is reliable
+  // ── Verified direct posting domains (researched April 2026) ────────────
   const BOARD_LABELS = {
-    'jobbank.gc.ca':          'Job Bank Canada',
-    'jobs.gc.ca':             'Government of Canada',
-    'emploisfp-psjobs.cfp-psc.gc.ca': 'Public Service Canada',
-    'gojobs.gov.on.ca':       'Ontario Public Service',
-    'jobs.alberta.ca':        'Government of Alberta',
-    'bcpublicservice.ca':     'BC Public Service',
-    'careers.gov.bc.ca':      'BC Public Service',
-    'carrieres.gouv.qc.ca':   'Québec Public Service',
-    'emploiquebec.gouv.qc.ca':'Emploi-Québec',
-    'manitobapublicservice.ca':'Manitoba Public Service',
-    'saskjobs.ca':            'Saskatchewan Jobs',
-    'novascotia.ca':          'Nova Scotia Government',
-    'ere.gnb.ca':             'Government of New Brunswick',
-    'careers.gov.nl.ca':      'Government of Newfoundland',
-    'jobs.yukon.ca':          'Yukon Government',
-    'nwtjobs.ca':             'NWT Government',
-    'recruitmentnu.ca':       'Government of Nunavut',
-    'jobs.princeedwardisland.ca': 'PEI Government',
+    // Federal
+    'emploisfp-psjobs.cfp-psc.gc.ca': 'Government of Canada (GC Jobs)',
+    'psjobs-emploisfp.psc-cfp.gc.ca': 'Government of Canada (GC Jobs)',
+    'jobbank.gc.ca':                   'Job Bank Canada',
+    // Ontario
+    'gojobs.gov.on.ca':                'Ontario Public Service',
+    // Alberta  ← confirmed by user: jobpostings.alberta.ca
+    'jobpostings.alberta.ca':          'Government of Alberta',
+    // BC — actual postings live under www2.gov.bc.ca/careers-myhr
+    'www2.gov.bc.ca':                  'BC Public Service',
+    'bcpublicservice.hua.hrsmart.com': 'BC Public Service',
+    // Quebec
+    'recrutement.carrieres.gouv.qc.ca':'Québec Public Service',
+    'carrieres.gouv.qc.ca':            'Québec Public Service',
+    // Manitoba
+    'jobsearch.gov.mb.ca':             'Manitoba Government Jobs',
+    // Saskatchewan
+    'govskpsc.taleo.net':              'Government of Saskatchewan',
+    'saskjobs.ca':                     'Saskatchewan Jobs',
+    // Nova Scotia
+    'jobs.novascotia.ca':              'Nova Scotia Government',
+    // New Brunswick
+    'ere.gnb.ca':                      'Government of New Brunswick',
+    // Newfoundland
+    'careers.gov.nl.ca':               'Government of Newfoundland',
+    // PEI
+    'jobs.princeedwardisland.ca':      'PEI Government',
+    // Yukon
+    'jobs.yukon.ca':                   'Yukon Government',
+    // NWT
+    'nwtjobs.ca':                      'NWT Government',
+    // Nunavut
+    'recruitmentnu.ca':                'Government of Nunavut',
   };
 
   function detectBoard(url) {
@@ -1946,34 +1961,34 @@ app.post('/api/jobs-gov-canada', requireAuth, async (req, res) => {
     return null;
   }
 
-  // Map location keywords → specific provincial site: operator
+  // ── Province → verified direct posting site ─────────────────────────────
   const locLower = (location || '').toLowerCase();
   const PROVINCE_SITE_MAP = [
-    { keys: ['ontario','toronto','ottawa','hamilton','london, on','mississauga','brampton'],
+    { keys: ['ontario','toronto','ottawa','hamilton','mississauga','brampton','london, on','kitchener','windsor'],
       site: 'site:gojobs.gov.on.ca' },
-    { keys: ['alberta','calgary','edmonton','red deer'],
-      site: 'site:jobs.alberta.ca' },
-    { keys: ['british columbia','bc','vancouver','victoria','surrey','burnaby'],
-      site: 'site:bcpublicservice.ca' },
-    { keys: ['quebec','québec','montreal','laval','gatineau'],
-      site: 'site:carrieres.gouv.qc.ca' },
-    { keys: ['manitoba','winnipeg'],
-      site: 'site:manitobapublicservice.ca' },
-    { keys: ['saskatchewan','saskatoon','regina'],
-      site: 'site:saskjobs.ca' },
-    { keys: ['nova scotia','halifax'],
-      site: 'site:novascotia.ca' },
-    { keys: ['new brunswick','fredericton','moncton','saint john'],
+    { keys: ['alberta','calgary','edmonton','red deer','lethbridge','medicine hat'],
+      site: 'site:jobpostings.alberta.ca' },                      // ← fixed: was jobs.alberta.ca
+    { keys: ['british columbia','bc','vancouver','victoria','surrey','burnaby','kelowna','abbotsford'],
+      site: 'site:www2.gov.bc.ca' },                             // ← fixed: was bcpublicservice.ca
+    { keys: ['quebec','québec','montreal','laval','gatineau','longueuil','sherbrooke'],
+      site: 'site:recrutement.carrieres.gouv.qc.ca' },           // ← fixed: verified Quebec recruitment portal
+    { keys: ['manitoba','winnipeg','brandon'],
+      site: 'site:jobsearch.gov.mb.ca' },                        // ← fixed: was manitobapublicservice.ca
+    { keys: ['saskatchewan','saskatoon','regina','prince albert'],
+      site: 'site:govskpsc.taleo.net' },                         // ← fixed: direct SK public service ATS
+    { keys: ['nova scotia','halifax','sydne','truro'],
+      site: 'site:jobs.novascotia.ca' },
+    { keys: ['new brunswick','fredericton','moncton','saint john','miramichi'],
       site: 'site:ere.gnb.ca' },
-    { keys: ['newfoundland','labrador','st. john'],
+    { keys: ['newfoundland','labrador','st. john','corner brook','gander'],
       site: 'site:careers.gov.nl.ca' },
-    { keys: ['prince edward island','pei','charlottetown'],
+    { keys: ['prince edward island','pei','charlottetown','summerside'],
       site: 'site:jobs.princeedwardisland.ca' },
-    { keys: ['yukon','whitehorse'],
+    { keys: ['yukon','whitehorse','watson lake'],
       site: 'site:jobs.yukon.ca' },
-    { keys: ['northwest territories','nwt','yellowknife'],
+    { keys: ['northwest territories','nwt','yellowknife','hay river'],
       site: 'site:nwtjobs.ca' },
-    { keys: ['nunavut','iqaluit'],
+    { keys: ['nunavut','iqaluit','rankin inlet'],
       site: 'site:recruitmentnu.ca' },
   ];
 
@@ -1985,12 +2000,13 @@ app.post('/api/jobs-gov-canada', requireAuth, async (req, res) => {
     }
   }
 
-  // Federal search always runs: Job Bank (national aggregator) + federal public service
-  const federalQuery = `${query.trim()} (site:jobbank.gc.ca OR site:jobs.gc.ca)${location ? ' ' + location.trim() : ' Canada'}${workType === 'remote' ? ' remote' : ''}`;
-
-  // Provincial search runs when a province/city is detected — max 2 site: operators
+  // ── Build queries ────────────────────────────────────────────────────────
+  // Federal: GC Jobs (direct public service postings) is the primary federal source
+  const locSuffix = location ? ' ' + location.trim() : ' Canada';
+  const remoteSuffix = workType === 'remote' ? ' remote' : '';
+  const federalQuery    = `${query.trim()} (site:emploisfp-psjobs.cfp-psc.gc.ca OR site:jobbank.gc.ca)${locSuffix}${remoteSuffix}`;
   const provincialQuery = provinceSite
-    ? `${query.trim()} ${provinceSite}${location ? ' ' + location.trim() : ''}${workType === 'remote' ? ' remote' : ''}`
+    ? `${query.trim()} ${provinceSite}${locSuffix}${remoteSuffix}`
     : null;
 
   function serperFetch(q) {
@@ -2009,7 +2025,7 @@ app.post('/api/jobs-gov-canada', requireAuth, async (req, res) => {
         const url   = r.link || '';
         const board = detectBoard(url) || 'Canadian Government';
         const cleanTitle = (r.title || '')
-          .replace(/\s*[|\-–]\s*(Job Bank|Government of Canada|Ontario|Alberta|BC|Quebec|Manitoba|Saskatchewan|Nova Scotia|New Brunswick|Newfoundland|Yukon|Public Service|Canada\.ca).*$/i, '')
+          .replace(/\s*[|\-–]\s*(Job Bank|Government of Canada|GC Jobs|Ontario|Alberta|BC|Quebec|Manitoba|Saskatchewan|Nova Scotia|New Brunswick|Newfoundland|Yukon|Public Service|Canada\.ca|Jobs with the).*$/i, '')
           .replace(/\s*\|\s*[^|]{1,60}$/, '')
           .trim();
         const isRemote = workType === 'remote' ||
@@ -2059,7 +2075,7 @@ app.post('/api/jobs-gov-canada', requireAuth, async (req, res) => {
       return true;
     });
 
-    console.log(`GovCA /jobs → ${jobs.length} listings (federal: ${federalQuery.slice(0,50)}${provincialQuery ? ' + provincial' : ''})`);
+    console.log(`GovCA → ${jobs.length} listings | federal: "${federalQuery.slice(0,60)}"${provincialQuery ? ` | provincial: "${provincialQuery.slice(0,50)}"` : ''}`);
     res.json({ jobs, source: 'gov-canada' });
 
   } catch (err) {
