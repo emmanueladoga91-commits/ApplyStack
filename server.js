@@ -2085,7 +2085,8 @@ app.post('/api/jobs-gov-canada', requireAuth, async (req, res) => {
   // Federal: GC Jobs (direct public service postings) is the primary federal source
   const locSuffix = location ? ' ' + location.trim() : ' Canada';
   const remoteSuffix = workType === 'remote' ? ' remote' : '';
-  const federalQuery    = `${query.trim()} (site:emploisfp-psjobs.cfp-psc.gc.ca OR site:jobbank.gc.ca)${locSuffix}${remoteSuffix}`;
+  // Restrict jobbank to /jobsearch/jobposting/* to avoid news/market-info pages
+  const federalQuery    = `${query.trim()} (site:emploisfp-psjobs.cfp-psc.gc.ca OR site:jobbank.gc.ca/jobsearch/jobposting)${locSuffix}${remoteSuffix}`;
   const provincialQuery = provinceSite
     ? `${query.trim()} ${provinceSite}${locSuffix}${remoteSuffix}`
     : null;
@@ -2099,9 +2100,13 @@ app.post('/api/jobs-gov-canada', requireAuth, async (req, res) => {
     });
   }
 
+  // Titles that indicate non-job content (news, info pages, guides)
+  const NON_JOB_TITLE_RE = /\b(labour market (information|news|report|bulletin)|market news|market report|employment insurance|ei benefits|lmi insight|job bank news|news release|program guide|about us|contact us|accessibility|privacy policy|terms of (use|service))\b/i;
+
   function mapResults(organic, offset) {
     return (organic || [])
       .filter(r => r.link && detectBoard(r.link))
+      .filter(r => !NON_JOB_TITLE_RE.test(r.title || ''))
       .map((r, i) => {
         const url   = r.link || '';
         const board = detectBoard(url) || 'Canadian Government';
