@@ -3979,12 +3979,75 @@ var _jmSource      = 'vault'; // 'vault' | 'resume'
 var _jmWorkType    = 'any';   // 'any' | 'remote' | 'hybrid' | 'onsite'
 var _jmDatePosted  = 'any';   // 'any' | 'today' | 'week' | 'month'
 var _jmExp         = 'any';   // 'any' | 'entry' | 'mid' | 'senior'
+var _jmTitles      = [];      // user-specified target job titles
 var _jmSearchState = null;    // { searches, locPref, workType, page, allJobs, seenIds, hasMore, resumeText }
 var _jmDashScores  = null;    // cached per-job scores from dashboard view
+
+// ── Job Title tag management ───────────────────────────────────
+function jmTitleKeydown(e) {
+  var inp = document.getElementById('jmTitleInput');
+  var val = (inp.value || '').trim();
+  if ((e.key === 'Enter' || e.key === ',') && val.length > 1) {
+    e.preventDefault();
+    jmAddTitle(val);
+    inp.value = '';
+    jmUpdateTitleHint();
+  } else if (e.key === 'Backspace' && !inp.value && _jmTitles.length) {
+    _jmTitles.pop();
+    jmRenderTitleTags();
+    jmUpdateTitleHint();
+  }
+}
+
+function jmTitleTyping(val) {
+  // Auto-add on comma
+  if (val.endsWith(',')) {
+    var t = val.slice(0, -1).trim();
+    if (t.length > 1) { jmAddTitle(t); document.getElementById('jmTitleInput').value = ''; }
+    jmUpdateTitleHint();
+  }
+}
+
+function jmAddTitle(title) {
+  var clean = title.replace(/,/g, '').trim();
+  if (!clean) return;
+  // Avoid exact duplicates (case-insensitive)
+  if (_jmTitles.some(function(t){ return t.toLowerCase() === clean.toLowerCase(); })) return;
+  _jmTitles.push(clean);
+  jmRenderTitleTags();
+}
+
+function jmRemoveTitle(idx) {
+  _jmTitles.splice(idx, 1);
+  jmRenderTitleTags();
+  jmUpdateTitleHint();
+}
+
+function jmRenderTitleTags() {
+  var container = document.getElementById('jmTitleTags');
+  if (!container) return;
+  container.innerHTML = _jmTitles.map(function(t, i) {
+    return '<span class="jm-title-tag">' + escJm(t)
+      + '<button class="jm-title-tag-x" onclick="jmRemoveTitle(' + i + ')" title="Remove">✕</button>'
+      + '</span>';
+  }).join('');
+  jmUpdateTitleHint();
+}
+
+function jmUpdateTitleHint() {
+  var hint = document.getElementById('jmTitleHint');
+  if (!hint) return;
+  if (_jmTitles.length === 0) {
+    hint.textContent = 'Optional — leave blank to auto-detect from resume';
+  } else {
+    hint.textContent = 'Press Enter or comma to add more';
+  }
+}
 
 function openJobMatch() {
   document.getElementById('jmOverlay').classList.add('on');
   document.body.style.overflow = 'hidden';
+  jmUpdateTitleHint(); // show hint on open
   // Auto-select source based on what's loaded
   if (extractedText && !fileBuffer) {
     // vault text is loaded
@@ -4101,6 +4164,16 @@ async function runJobMatch() {
   locPref = locPref.trim();
   var wtLabel = { any: 'any work type', remote: 'Remote only', hybrid: 'Hybrid', onsite: 'On-site only' }[_jmWorkType] || 'any work type';
 
+  // ── User-specified job titles (overrides Claude auto-detect) ──
+  // Flush any typed-but-not-committed title from the input box
+  var titleInputEl = document.getElementById('jmTitleInput');
+  if (titleInputEl && titleInputEl.value.trim().length > 1) {
+    jmAddTitle(titleInputEl.value.trim());
+    titleInputEl.value = '';
+    jmRenderTitleTags();
+  }
+  var userTitles = _jmTitles.slice(); // snapshot
+
   // ── Show loading ──────────────────────────────────────────
   _jmDashScores = null; // reset cached dashboard scores from any prior search
   runBtn.disabled = true;
@@ -4112,11 +4185,18 @@ async function runJobMatch() {
   if (locPref) locInstruction += ' Location preference: ' + locPref + '.';
   if (_jmWorkType !== 'any') locInstruction += ' Work type: ' + wtLabel + '.';
 
-  var systemPrompt = 'You are a career coach. Analyse the resume and return ONLY a valid JSON object — no markdown, no explanation.\n\nRules:\n- "primary_role": the single most precise job title that best matches this person (e.g. "Business Analyst", "Senior Software Engineer", "Project Manager") — be specific, NOT just "Analyst" or "Engineer"\n- "searches": 5 job board search strings. Each query MUST start with the specific role title (e.g. "Business Analyst Agile", "Business Systems Analyst ERP", "BA Requirements Management") — never a generic word like just "Analyst". Vary by specialisation, not just synonyms.\n- "title_keywords": 4–6 exact job title words/phrases that MUST appear in a matching job title (e.g. ["Business Analyst","Systems Analyst","BA","Business Systems"]). These are used to filter irrelevant results — be precise.\n- "top_keywords": 5 resume keywords to add.\n\nFormat:\n{\n  "primary_role": "Business Analyst",\n  "searches": [\n    { "query": "Business Analyst Agile BRD", "title": "Business Analyst", "why": "One sentence why.", "skills": ["Skill1","Skill2"] }\n  ],\n  "title_keywords": ["Business Analyst","Systems Analyst","BA","Product Analyst"],\n  "top_keywords": ["kw1","kw2","kw3","kw4","kw5"]\n}' + locInstruction;
+  var titleOverrideInstruction = userTitles.length
+    ? '\n\nThe user has specified these TARGET JOB TITLES: ' + userTitles.join(', ') + '. '
+      + 'Use these as the primary_role and build all 5 search queries tightly around these titles and their closest variants. '
+      + 'title_keywords must include every user-specified title plus 2–3 close synonyms/variants.'
+    : '';
+
+  var systemPrompt = 'You are a career coach. Analyse the resume and return ONLY a valid JSON object — no markdown, no explanation.\n\nRules:\n- "primary_role": the single most precise job title that best matches this person (e.g. "Business Analyst", "Senior Software Engineer", "Project Manager") — be specific, NOT just "Analyst" or "Engineer"\n- "searches": 5 job board search strings. Each query MUST start with the specific role title (e.g. "Business Analyst Agile", "Business Systems Analyst ERP", "BA Requirements Management") — never a generic word like just "Analyst". Vary by specialisation, not just synonyms.\n- "title_keywords": 4–6 exact job title words/phrases that MUST appear in a matching job title (e.g. ["Business Analyst","Systems Analyst","BA","Business Systems"]). These are used to filter irrelevant results — be precise.\n- "top_keywords": 5 resume keywords to add.\n\nFormat:\n{\n  "primary_role": "Business Analyst",\n  "searches": [\n    { "query": "Business Analyst Agile BRD", "title": "Business Analyst", "why": "One sentence why.", "skills": ["Skill1","Skill2"] }\n  ],\n  "title_keywords": ["Business Analyst","Systems Analyst","BA","Product Analyst"],\n  "top_keywords": ["kw1","kw2","kw3","kw4","kw5"]\n}' + locInstruction + titleOverrideInstruction;
 
   var userMsg = 'Resume:\n\n' + resumeText.slice(0, 4000)
     + (locPref ? '\n\nLocation: ' + locPref : '')
-    + (_jmWorkType !== 'any' ? '\nWork type: ' + wtLabel : '');
+    + (_jmWorkType !== 'any' ? '\nWork type: ' + wtLabel : '')
+    + (userTitles.length ? '\n\nTarget job titles specified by user: ' + userTitles.join(', ') : '');
 
   try {
     // ── Call Claude for search queries ────────────────────────
@@ -4138,8 +4218,15 @@ async function runJobMatch() {
     var parsed = JSON.parse(raw);
     var searches = parsed.searches || [];
     var topKeywords = parsed.top_keywords || [];
-    var primaryRole = (parsed.primary_role || '').trim();
-    var titleKeywords = (parsed.title_keywords || []).map(function(k){ return k.toLowerCase().trim(); });
+    // If user specified titles, they take priority over Claude's auto-detected role
+    var primaryRole = userTitles.length
+      ? userTitles[0]
+      : (parsed.primary_role || '').trim();
+    var titleKeywords = userTitles.length
+      ? (parsed.title_keywords || []).map(function(k){ return k.toLowerCase().trim(); })
+          .concat(userTitles.map(function(t){ return t.toLowerCase().trim(); }))
+          .filter(function(k, i, a){ return a.indexOf(k) === i; }) // dedupe
+      : (parsed.title_keywords || []).map(function(k){ return k.toLowerCase().trim(); });
 
     if (!searches.length) throw new Error('No search queries returned');
 

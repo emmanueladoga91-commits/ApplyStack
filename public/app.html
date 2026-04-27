@@ -1707,7 +1707,7 @@
     background: rgba(91,99,240,.12); color: #c7d2fe; border: 1px solid rgba(91,99,240,.25);
   }
   .jm-error { background: rgba(239,68,68,.1); border: 1px solid rgba(239,68,68,.3); border-radius: 12px; padding: 16px 20px; color: #fca5a5; font-size: .85rem; }
-  /* Location filter bar */
+  /* Location + title filter bars */
   .jm-loc-bar {
     display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
     padding: 10px 24px 12px; border-bottom: 1px solid rgba(255,255,255,.06);
@@ -1722,6 +1722,33 @@
   }
   .jm-loc-input::placeholder { color: rgba(255,255,255,.28); }
   .jm-loc-input:focus { border-color: rgba(91,99,240,.5); }
+  /* Title search bar */
+  .jm-title-bar { border-bottom: 1px solid rgba(255,255,255,.06); }
+  .jm-title-input-wrap {
+    flex: 1; display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+    background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.12);
+    border-radius: 8px; padding: 5px 10px; min-height: 34px;
+    transition: border-color .15s; cursor: text;
+  }
+  .jm-title-input-wrap:focus-within { border-color: rgba(91,99,240,.5); }
+  .jm-title-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .jm-title-tag {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: rgba(91,99,240,.25); border: 1px solid rgba(91,99,240,.4);
+    color: #a5b4fc; border-radius: 99px; padding: 2px 10px 2px 10px;
+    font-size: .75rem; font-weight: 600; white-space: nowrap;
+  }
+  .jm-title-tag-x {
+    cursor: pointer; opacity: .6; font-size: .8rem; line-height: 1;
+    background: none; border: none; color: inherit; padding: 0; margin-left: 2px;
+  }
+  .jm-title-tag-x:hover { opacity: 1; }
+  .jm-title-input {
+    flex: 1; min-width: 180px; background: none; border: none; outline: none;
+    color: #fff; font-size: .8rem; font-family: inherit; padding: 0;
+  }
+  .jm-title-input::placeholder { color: rgba(255,255,255,.28); }
+  .jm-title-hint { font-size: .7rem; color: rgba(255,255,255,.3); white-space: nowrap; flex-shrink: 0; }
   .jm-wt-group { display: flex; gap: 5px; flex-wrap: wrap; }
   .jm-wt-chip {
     font-size: .72rem; font-weight: 700; padding: 5px 12px; border-radius: 99px;
@@ -2841,6 +2868,18 @@
       </div>
       <div class="jm-upload-label" style="margin-top:4px">Or paste resume text directly:</div>
       <textarea class="jm-paste-area" id="jmPasteArea" placeholder="Paste your resume text here (name, experience, skills, education)…" oninput="jmHandlePaste(this.value)"></textarea>
+    </div>
+
+    <!-- Job title search bar -->
+    <div class="jm-loc-bar jm-title-bar">
+      <span class="jm-loc-icon">🎯</span>
+      <div class="jm-title-input-wrap" id="jmTitleWrap">
+        <div class="jm-title-tags" id="jmTitleTags"></div>
+        <input class="jm-title-input" id="jmTitleInput" type="text"
+          placeholder="Job title (e.g. Business Analyst, Project Manager)…"
+          onkeydown="jmTitleKeydown(event)" oninput="jmTitleTyping(this.value)" />
+      </div>
+      <span class="jm-title-hint" id="jmTitleHint"></span>
     </div>
 
     <div class="jm-loc-bar">
