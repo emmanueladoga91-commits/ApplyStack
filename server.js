@@ -2101,12 +2101,16 @@ app.post('/api/jobs-gov-canada', requireAuth, async (req, res) => {
   }
 
   // Titles that indicate non-job content (news, info pages, guides)
-  const NON_JOB_TITLE_RE = /\b(labour market (information|news|report|bulletin)|market news|market report|employment insurance|ei benefits|lmi insight|job bank news|news release|program guide|about us|contact us|accessibility|privacy policy|terms of (use|service))\b/i;
+  const NON_JOB_TITLE_RE = /^search\b|^browse\b|^all jobs\b|^job listings\b|^careers home\b|^jobs at\b|search in\.\.\.|search results|\b(labour market (information|news|report|bulletin)|market news|market report|employment insurance|ei benefits|lmi insight|job bank news|news release|program guide|about us|contact us|accessibility|privacy policy|terms of (use|service)|current (openings|opportunities)$|job search portal|job board)\b/i;
+
+  // URL patterns that indicate category/search pages rather than individual postings
+  const NON_JOB_URL_RE = /\/(search|browse|careers\/?$|jobs\/?$|all-jobs\/?$|current-opportunities\/?$|job-listings\/?$|jobsearch\/?$|jobsearch\?(?!.*jobid)|en\/jobs\/?$)(\?|#|$)/i;
 
   function mapResults(organic, offset) {
     return (organic || [])
       .filter(r => r.link && detectBoard(r.link))
       .filter(r => !NON_JOB_TITLE_RE.test(r.title || ''))
+      .filter(r => !NON_JOB_URL_RE.test(r.link || ''))
       .map((r, i) => {
         const url   = r.link || '';
         const board = detectBoard(url) || 'Canadian Government';
