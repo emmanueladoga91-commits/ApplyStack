@@ -1510,16 +1510,36 @@ app.post('/api/jobs-search', requireAuth, async (req, res) => {
   const rapidKey   = process.env.RAPIDAPI_KEY;
   const errors     = []; // collect errors from each source for debugging
 
-  // Detect ISO country code from a plain-text location string
+  // Detect ISO country code from a plain-text location string.
+  // Canadian provinces and major cities are explicitly mapped to 'ca' so that
+  // Serper uses the correct Google country and returns Canadian results.
   function countryCode(loc) {
     if (!loc) return null;
     const l = loc.toLowerCase().trim();
     const map = {
-      'canada':'ca','uk':'gb','united kingdom':'gb','england':'gb','scotland':'gb','wales':'gb',
-      'australia':'au','india':'in','germany':'de','france':'fr','netherlands':'nl',
-      'usa':'us','united states':'us','america':'us','nigeria':'ng','south africa':'za',
-      'kenya':'ke','ghana':'gh','ireland':'ie','new zealand':'nz','singapore':'sg',
-      'pakistan':'pk','brazil':'br','mexico':'mx','uae':'ae','dubai':'ae',
+      // Canada — country, provinces, territories
+      'canada':'ca','ontario':'ca','alberta':'ca','british columbia':'ca','bc':'ca',
+      'quebec':'ca','manitoba':'ca','saskatchewan':'ca','nova scotia':'ca',
+      'new brunswick':'ca','newfoundland':'ca','labrador':'ca','prince edward island':'ca',
+      'pei':'ca','yukon':'ca','northwest territories':'ca','nwt':'ca','nunavut':'ca',
+      // Canada — major cities
+      'toronto':'ca','vancouver':'ca','calgary':'ca','edmonton':'ca','ottawa':'ca',
+      'montreal':'ca','winnipeg':'ca','halifax':'ca','victoria':'ca','saskatoon':'ca',
+      'regina':'ca','st. john\'s':'ca','kitchener':'ca','london ontario':'ca',
+      'hamilton':'ca','brampton':'ca','mississauga':'ca','surrey':'ca','burnaby':'ca',
+      // UK
+      'uk':'gb','united kingdom':'gb','england':'gb','scotland':'gb','wales':'gb',
+      'london':'gb','manchester':'gb','birmingham':'gb','edinburgh':'gb','glasgow':'gb',
+      // Others
+      'australia':'au','sydney':'au','melbourne':'au','brisbane':'au',
+      'india':'in','germany':'de','france':'fr','netherlands':'nl',
+      'usa':'us','united states':'us','america':'us','new york':'us','chicago':'us',
+      'los angeles':'us','san francisco':'us','seattle':'us','austin':'us',
+      'nigeria':'ng','lagos':'ng','abuja':'ng','south africa':'za','johannesburg':'za',
+      'kenya':'ke','nairobi':'ke','ghana':'gh','accra':'gh',
+      'ireland':'ie','dublin':'ie','new zealand':'nz','auckland':'nz',
+      'singapore':'sg','pakistan':'pk','karachi':'pk','brazil':'br','sao paulo':'br',
+      'mexico':'mx','uae':'ae','dubai':'ae','abu dhabi':'ae',
     };
     for (const [k, v] of Object.entries(map)) {
       if (l.includes(k)) return v;
@@ -1615,7 +1635,9 @@ app.post('/api/jobs-search', requireAuth, async (req, res) => {
     try {
       let q = query.trim() + expSuffix;
       if (workType === 'remote') q += ' remote';
-      if (location && !gl) q += ' ' + location.trim(); // append city if no country code mapping
+      // Always append location to the query for city-level specificity.
+      // gl sets the Google country region; the city still needs to be in the query.
+      if (location) q += ' ' + location.trim();
 
       const body = { q, num: 10 };
       if (start > 0) body.start = start;
@@ -1646,7 +1668,9 @@ app.post('/api/jobs-search', requireAuth, async (req, res) => {
       if (workType === 'remote') q += ' remote';
       if (location) q += ' ' + location.trim();
 
-      const body = { q, num: 10, gl: gl || 'us' };
+      // Use detected country code; fall back to 'us' only when no location given at all
+      const body = { q, num: 10, gl: gl || (location ? null : 'us') };
+      if (!body.gl) delete body.gl; // don't send gl:null to Serper
       if (start > 0) body.start = start;
       if (tbsMap[datePosted]) body.tbs = tbsMap[datePosted];
 
@@ -1683,7 +1707,7 @@ app.post('/api/jobs-search', requireAuth, async (req, res) => {
     try {
       let searchQ = query.trim();
       if (workType === 'remote') searchQ += ' remote';
-      else if (location)         searchQ += ' ' + location.trim();
+      if (location) searchQ += ' ' + location.trim(); // always include location for specificity
 
       const jDateMap = { today: 'today', '3days': 'today', week: 'week', month: 'month' };
       const params = new URLSearchParams({
