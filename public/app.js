@@ -4186,9 +4186,13 @@ async function runJobMatch() {
   if (_jmWorkType !== 'any') locInstruction += ' Work type: ' + wtLabel + '.';
 
   var titleOverrideInstruction = userTitles.length
-    ? '\n\nThe user has specified these TARGET JOB TITLES: ' + userTitles.join(', ') + '. '
-      + 'Use these as the primary_role and build all 5 search queries tightly around these titles and their closest variants. '
-      + 'title_keywords must include every user-specified title plus 2–3 close synonyms/variants.'
+    ? '\n\nThe user has specified TARGET JOB TITLES: ' + userTitles.join(', ') + '. '
+      + 'STRICT RULES when user titles are provided:\n'
+      + '1. primary_role = first user title exactly as given.\n'
+      + '2. All 5 search queries must start with one of the user titles or a direct variant (e.g. "Senior Business Analyst", "IT Business Analyst", "Business Systems Analyst") — no unrelated roles.\n'
+      + '3. title_keywords MUST be FULL JOB TITLE PHRASES only — never individual words like "analyst" or "manager" alone. '
+      + 'Example for "Business Analyst": ["business analyst","business systems analyst","business intelligence analyst","it business analyst","sr business analyst","junior business analyst"]. '
+      + 'These phrases are used for STRICT phrase-matching to filter results — broad single words will cause irrelevant jobs to appear.'
     : '';
 
   var systemPrompt = 'You are a career coach. Analyse the resume and return ONLY a valid JSON object — no markdown, no explanation.\n\nRules:\n- "primary_role": the single most precise job title that best matches this person (e.g. "Business Analyst", "Senior Software Engineer", "Project Manager") — be specific, NOT just "Analyst" or "Engineer"\n- "searches": 5 job board search strings. Each query MUST start with the specific role title (e.g. "Business Analyst Agile", "Business Systems Analyst ERP", "BA Requirements Management") — never a generic word like just "Analyst". Vary by specialisation, not just synonyms.\n- "title_keywords": 4–6 exact job title words/phrases that MUST appear in a matching job title (e.g. ["Business Analyst","Systems Analyst","BA","Business Systems"]). These are used to filter irrelevant results — be precise.\n- "top_keywords": 5 resume keywords to add.\n\nFormat:\n{\n  "primary_role": "Business Analyst",\n  "searches": [\n    { "query": "Business Analyst Agile BRD", "title": "Business Analyst", "why": "One sentence why.", "skills": ["Skill1","Skill2"] }\n  ],\n  "title_keywords": ["Business Analyst","Systems Analyst","BA","Product Analyst"],\n  "top_keywords": ["kw1","kw2","kw3","kw4","kw5"]\n}' + locInstruction + titleOverrideInstruction;
@@ -4240,19 +4244,33 @@ async function runJobMatch() {
           || /\d+ (open|new|current) (position|job|role)s?\b/i.test(title);
     }
 
-    // Title relevance — word-level, not phrase-level.
-    // "Business Systems Analyst" doesn't contain "Business Analyst" as a phrase,
-    // but DOES contain "business" and "analyst" — so we check individual words too.
+    // Title relevance — two modes:
+    //
+    // STRICT (user typed specific titles in the 🎯 search bar):
+    //   Job title must contain at least one FULL PHRASE from title_keywords.
+    //   e.g. "Business Analyst" search → only accepts "Business Analyst",
+    //   "Business Systems Analyst", "IT Business Analyst", etc.
+    //   Rejects "Network Analyst", "Financial Analyst" — shares "analyst" word
+    //   but is a completely different domain.
+    //
+    // LOOSE (no user titles — resume auto-detect mode):
+    //   Word-level match is fine since we're casting a wider net.
     function isTitleRelevant(jobTitle) {
       if (!titleKeywords.length) return true;
       var t = (jobTitle || '').toLowerCase();
-      var words = [];
-      titleKeywords.forEach(function(kw) {
-        words.push(kw); // full phrase check
-        kw.split(/\s+/).forEach(function(w){ if (w.length > 2) words.push(w); }); // word-level
-      });
-      words = words.filter(function(w, i, a){ return a.indexOf(w) === i; });
-      return words.some(function(w){ return t.includes(w); });
+      if (userTitles.length > 0) {
+        // STRICT: full phrase match only
+        return titleKeywords.some(function(kw){ return t.includes(kw.toLowerCase()); });
+      } else {
+        // LOOSE: word-level match (resume-based, broader net)
+        var words = [];
+        titleKeywords.forEach(function(kw) {
+          words.push(kw.toLowerCase());
+          kw.split(/\s+/).forEach(function(w){ if (w.length > 2) words.push(w.toLowerCase()); });
+        });
+        words = words.filter(function(w, i, a){ return a.indexOf(w) === i; });
+        return words.some(function(w){ return t.includes(w); });
+      }
     }
 
     // ── Step 2: Fetch real listings + authentic ATS jobs in parallel ──
@@ -4345,7 +4363,13 @@ async function runJobMatch() {
     await Promise.all([regularPromise, authPromise, govPromise]);
 
     // ── Relevance + aggregator filtering ─────────────────────────
-    govJobs  = govJobs.filter(function(j){ return !isAggregatorTitle(j.title); });
+    // When user specified titles in the 🎯 search bar, apply STRICT title filter
+    // to ALL sources including gov jobs (user said exactly what they want).
+    // When no user titles, gov jobs are trusted as-is (query already constrains them).
+    var strictGovFilter = userTitles.length > 0;
+    govJobs  = govJobs.filter(function(j){
+      return !isAggregatorTitle(j.title) && (!strictGovFilter || isTitleRelevant(j.title));
+    });
     authJobs = authJobs.filter(function(j){ return !isAggregatorTitle(j.title) && isTitleRelevant(j.title); });
     allJobs  = allJobs.filter(function(j){ return !isAggregatorTitle(j.title) && isTitleRelevant(j.title); });
 
