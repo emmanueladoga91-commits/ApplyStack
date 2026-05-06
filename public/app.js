@@ -4256,11 +4256,21 @@ async function runJobMatch() {
     // LOOSE (no user titles — resume auto-detect mode):
     //   Word-level match is fine since we're casting a wider net.
     function isTitleRelevant(jobTitle) {
-      if (!titleKeywords.length) return true;
+      if (!titleKeywords.length && !userTitles.length) return true;
       var t = (jobTitle || '').toLowerCase();
       if (userTitles.length > 0) {
-        // STRICT: full phrase match only
-        return titleKeywords.some(function(kw){ return t.includes(kw.toLowerCase()); });
+        // STRICT: ALL significant words from at least one user title must appear in the job title.
+        // e.g. "Business Analyst" → job title must contain BOTH "business" AND "analyst"
+        // This prevents "Transload Logistics Coordinator" from matching "Business Analyst".
+        var userMatch = userTitles.some(function(ut) {
+          var words = ut.toLowerCase().split(/\s+/).filter(function(w){ return w.length > 2; });
+          return words.length > 0 && words.every(function(w){ return t.includes(w); });
+        });
+        if (userMatch) return true;
+        // Also accept multi-word phrases from Claude's title_keywords (skip single-word/abbreviation)
+        return titleKeywords.some(function(kw) {
+          return kw.split(/\s+/).length >= 2 && t.includes(kw.toLowerCase());
+        });
       } else {
         // LOOSE: word-level match (resume-based, broader net)
         var words = [];
@@ -4271,6 +4281,29 @@ async function runJobMatch() {
         words = words.filter(function(w, i, a){ return a.indexOf(w) === i; });
         return words.some(function(w){ return t.includes(w); });
       }
+    }
+
+    // Title relevance score — higher = closer match to what was searched
+    function titleScore(jobTitle) {
+      var t = (jobTitle || '').toLowerCase();
+      if (userTitles.length > 0) {
+        for (var i = 0; i < userTitles.length; i++) {
+          var ut = userTitles[i].toLowerCase();
+          // Exact title match (ignoring seniority prefix/suffix)
+          if (t === ut) return 100;
+          if (t.startsWith(ut) || t.endsWith(ut)) return 95;
+          if (t.includes(ut)) return 90;
+          // All words from user title present
+          var words = ut.split(/\s+/).filter(function(w){ return w.length > 2; });
+          if (words.length > 0 && words.every(function(w){ return t.includes(w); })) return 80;
+        }
+      }
+      if (!titleKeywords.length) return 50;
+      // Multi-word keyword phrase match
+      for (var j = 0; j < titleKeywords.length; j++) {
+        if (titleKeywords[j].split(/\s+/).length >= 2 && t.includes(titleKeywords[j])) return 70;
+      }
+      return 50;
     }
 
     // ── Step 2: Fetch real listings + authentic ATS jobs in parallel ──
@@ -4373,14 +4406,13 @@ async function runJobMatch() {
     authJobs = authJobs.filter(function(j){ return !isAggregatorTitle(j.title) && isTitleRelevant(j.title); });
     allJobs  = allJobs.filter(function(j){ return !isAggregatorTitle(j.title) && isTitleRelevant(j.title); });
 
-    // ── Priority merge ─────────────────────────────────────────────
-    // 1st: Eluta / Hiring.cafe / LinkedIn (_tier:1 tagged by server)
-    // 2nd: 🏛️ Canadian Government boards
-    // 3rd: ✓ Direct ATS (Greenhouse, Lever, Workday, etc.)
-    // 4th: Regular boards (Indeed, Glassdoor, etc.)
-    var tier1Jobs    = allJobs.filter(function(j){ return j._tier === 1; });
-    var regularJobs  = allJobs.filter(function(j){ return j._tier !== 1; });
-    allJobs = tier1Jobs.concat(govJobs).concat(authJobs).concat(regularJobs);
+    // ── Relevance-based merge ────────────────────────────────────────
+    // All sources (job boards, gov, ATS) merged together then sorted
+    // by title relevance score — best title match appears first regardless of source.
+    allJobs = allJobs.concat(govJobs).concat(authJobs);
+    allJobs.sort(function(a, b) {
+      return titleScore(b.title) - titleScore(a.title);
+    });
 
     // Store state for load-more
     _jmSearchState = { searches: searches, locPref: locPref, workType: _jmWorkType, datePosted: _jmDatePosted, exp: _jmExp, page: 1, allJobs: allJobs, seenIds: seenIds, topKeywords: topKeywords, resumeText: resumeText, primaryRole: primaryRole, titleKeywords: titleKeywords };
