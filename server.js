@@ -1684,15 +1684,18 @@ app.post('/api/jobs-search', requireAuth, async (req, res) => {
     const baseQ   = query.trim() + expSuffix + (workType === 'remote' ? ' remote' : '') + (location ? ' ' + location.trim() : '');
 
     // ── Run all three Serper searches in PARALLEL ─────────────────
-    // P1: Priority sites — Eluta + Hiring.cafe + LinkedIn
-    // P2: Google Jobs panel (structured job data, best quality)
-    // P3: Broader boards fallback — Indeed, Glassdoor, Greenhouse, etc.
+    // P1: Eluta.ca — Canadian job board, dedicated search, up to 10 results.
+    // P2: Hiring.cafe + ATS boards — direct company postings + broader coverage.
+    // P3: Google Jobs panel — LinkedIn/Indeed/Glassdoor aggregated feed.
     const [p1Result, p2Result, p3Result] = await Promise.allSettled([
 
-      // P1 — Priority: eluta.ca, hiring.cafe, linkedin.com/jobs
-      serperSearch(`${baseQ} (site:eluta.ca OR site:hiring.cafe OR site:linkedin.com/jobs)`),
+      // P1 — Eluta.ca dedicated
+      serperSearch(`${baseQ} site:eluta.ca`, { num: 10 }),
 
-      // P2 — Google Jobs panel (Serper /jobs endpoint)
+      // P2 — Hiring.cafe + broader ATS/job boards
+      serperSearch(`${baseQ} (site:hiring.cafe OR site:jobs.lever.co OR site:boards.greenhouse.io OR site:ca.indeed.com OR site:ziprecruiter.com/jobs OR site:workday.com)`),
+
+      // P3 — Google Jobs panel (LinkedIn, Indeed, Glassdoor all included)
       fetch('https://google.serper.dev/jobs', {
         method:  'POST',
         headers: { 'X-API-KEY': serperKey, 'Content-Type': 'application/json' },
@@ -1705,9 +1708,6 @@ app.post('/api/jobs-search', requireAuth, async (req, res) => {
         })()),
         signal: AbortSignal.timeout(10000),
       }).then(r => r.ok ? r.json() : Promise.reject(new Error(`/jobs HTTP ${r.status}`))),
-
-      // P3 — Broader boards: Indeed, Glassdoor, Greenhouse, ZipRecruiter, etc.
-      serperSearch(`${baseQ} (site:indeed.com OR site:glassdoor.com/job-listing OR site:jobs.lever.co OR site:boards.greenhouse.io OR site:ziprecruiter.com/jobs)`),
     ]);
 
     // ── Extract jobs from each result ─────────────────────────────
@@ -1722,48 +1722,44 @@ app.post('/api/jobs-search', requireAuth, async (req, res) => {
       });
     }
 
-    let priorityJobs = [];
     // Helper: normalise + filter aggregators in one step
     const cleanJobs = arr => arr.filter(j => !isAggregatorResult(j.title, j.description));
 
+    // P1 — Eluta.ca dedicated
+    let elutaJobs = [];
     if (p1Result.status === 'fulfilled') {
       const d = p1Result.value;
       const organic   = (d.organic || []).map(normaliseOrganicResult).filter(j => j.applyUrl);
       const jobsBlock = (d.jobs    || []).map(normaliseSerperJob);
-      // Tag P1 jobs so app.js can hoist them above gov/ATS results
-      priorityJobs = cleanJobs([...organic, ...jobsBlock]).map(j => ({ ...j, _tier: 1 }));
-      console.log(`Serper priority (eluta/hiring.cafe/linkedin) → ${priorityJobs.length} results`);
+      elutaJobs = cleanJobs([...organic, ...jobsBlock]);
+      console.log(`Eluta.ca → ${elutaJobs.length} results`);
     } else {
-      errors.push('Serper priority: ' + p1Result.reason?.message);
+      errors.push('Eluta search: ' + p1Result.reason?.message);
     }
 
-    let googleJobs = [];
-    if (p2Result.status === 'fulfilled') {
-      // Tag LinkedIn jobs from the Google Jobs panel as tier-1 (priority source)
-      googleJobs = cleanJobs((p2Result.value.jobs || []).map(normaliseSerperJob)).map(j => {
-        const via = (j.via || '').toLowerCase();
-        const url = (j.applyUrl || '').toLowerCase();
-        if (via.includes('linkedin') || url.includes('linkedin.com')) return { ...j, _tier: 1 };
-        return j;
-      });
-      console.log(`Serper /jobs (Google Jobs panel) → ${googleJobs.length} results`);
-    } else {
-      errors.push('Serper /jobs: ' + p2Result.reason?.message);
-    }
-
+    // P2 — Hiring.cafe + ATS boards
     let boardJobs = [];
-    if (p3Result.status === 'fulfilled') {
-      const d = p3Result.value;
+    if (p2Result.status === 'fulfilled') {
+      const d = p2Result.value;
       const organic   = (d.organic || []).map(normaliseOrganicResult).filter(j => j.applyUrl);
       const jobsBlock = (d.jobs    || []).map(normaliseSerperJob);
       boardJobs = cleanJobs([...jobsBlock, ...organic]);
-      console.log(`Serper boards (Indeed/Glassdoor/etc) → ${boardJobs.length} results`);
+      console.log(`Hiring.cafe + ATS boards → ${boardJobs.length} results`);
     } else {
-      errors.push('Serper boards: ' + p3Result.reason?.message);
+      errors.push('Boards search: ' + p2Result.reason?.message);
     }
 
-    // ── Merge with priority order: Eluta/Hiring.cafe/LinkedIn → Google Jobs → Other boards ──
-    const merged = dedup([...priorityJobs, ...googleJobs, ...boardJobs]);
+    // P3 — Google Jobs panel (LinkedIn, Indeed, Glassdoor all included)
+    let googlePanelJobs = [];
+    if (p3Result.status === 'fulfilled') {
+      googlePanelJobs = cleanJobs((p3Result.value.jobs || []).map(normaliseSerperJob));
+      console.log(`Google Jobs panel → ${googlePanelJobs.length} results`);
+    } else {
+      errors.push('Google Jobs panel: ' + p3Result.reason?.message);
+    }
+
+    // ── Merge: Eluta first, then Hiring.cafe/ATS, then Google Jobs panel ──
+    const merged = dedup([...elutaJobs, ...boardJobs, ...googlePanelJobs]);
     if (merged.length > 0) {
       return res.json({ jobs: merged, source: 'google', hasMore: merged.length >= 10 });
     }
