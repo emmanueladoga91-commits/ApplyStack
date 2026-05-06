@@ -1582,6 +1582,28 @@ app.post('/api/jobs-search', requireAuth, async (req, res) => {
       } catch (e) { return null; }
     }
 
+    // Detect aggregator/search-results pages masquerading as job postings.
+    // Checks both title AND snippet because the snippet always betrays them
+    // (e.g. "Browse 157 Costco, Business Analyst job openings from Remote").
+    function isAggregatorResult(title, snippet) {
+      const t = (title   || '');
+      const s = (snippet || '');
+      return (
+        // Title patterns
+        /\bjobs? (in|at|near|now available|available)\b/i.test(t) ||
+        /\d[\d,]* .+ jobs?\b/i.test(t)                           ||
+        /^(search|browse) \d/i.test(t)                           ||
+        /\bjob listings?\b/i.test(t)                             ||
+        // Snippet patterns — the dead giveaway
+        /browse \d[\d,]* .+ jobs?/i.test(s)                      ||
+        /search \d[\d,]* .+ jobs?/i.test(s)                      ||
+        /\d[\d,]* .+ jobs? (now available|available in|in )/i.test(s) ||
+        /discover .+ jobs? (in|at|near)/i.test(s)                ||
+        /job openings? (from|in|at|on) /i.test(s)                ||
+        /apply (now|today) for .+ jobs?/i.test(s)
+      );
+    }
+
     // Normalise a Serper /jobs result into a standard job object
     function normaliseSerperJob(j) {
       const ext  = j.detectedExtensions || j.detected_extensions || {};
@@ -1701,11 +1723,14 @@ app.post('/api/jobs-search', requireAuth, async (req, res) => {
     }
 
     let priorityJobs = [];
+    // Helper: normalise + filter aggregators in one step
+    const cleanJobs = arr => arr.filter(j => !isAggregatorResult(j.title, j.description));
+
     if (p1Result.status === 'fulfilled') {
       const d = p1Result.value;
-      const organic = (d.organic || []).map(normaliseOrganicResult).filter(j => j.applyUrl);
-      const jobsBlock = (d.jobs || []).map(normaliseSerperJob);
-      priorityJobs = [...organic, ...jobsBlock];
+      const organic   = (d.organic || []).map(normaliseOrganicResult).filter(j => j.applyUrl);
+      const jobsBlock = (d.jobs    || []).map(normaliseSerperJob);
+      priorityJobs = cleanJobs([...organic, ...jobsBlock]);
       console.log(`Serper priority (eluta/hiring.cafe/linkedin) → ${priorityJobs.length} results`);
     } else {
       errors.push('Serper priority: ' + p1Result.reason?.message);
@@ -1713,7 +1738,7 @@ app.post('/api/jobs-search', requireAuth, async (req, res) => {
 
     let googleJobs = [];
     if (p2Result.status === 'fulfilled') {
-      googleJobs = (p2Result.value.jobs || []).map(normaliseSerperJob);
+      googleJobs = cleanJobs((p2Result.value.jobs || []).map(normaliseSerperJob));
       console.log(`Serper /jobs (Google Jobs panel) → ${googleJobs.length} results`);
     } else {
       errors.push('Serper /jobs: ' + p2Result.reason?.message);
@@ -1722,9 +1747,9 @@ app.post('/api/jobs-search', requireAuth, async (req, res) => {
     let boardJobs = [];
     if (p3Result.status === 'fulfilled') {
       const d = p3Result.value;
-      const organic = (d.organic || []).map(normaliseOrganicResult).filter(j => j.applyUrl);
-      const jobsBlock = (d.jobs || []).map(normaliseSerperJob);
-      boardJobs = [...jobsBlock, ...organic];
+      const organic   = (d.organic || []).map(normaliseOrganicResult).filter(j => j.applyUrl);
+      const jobsBlock = (d.jobs    || []).map(normaliseSerperJob);
+      boardJobs = cleanJobs([...jobsBlock, ...organic]);
       console.log(`Serper boards (Indeed/Glassdoor/etc) → ${boardJobs.length} results`);
     } else {
       errors.push('Serper boards: ' + p3Result.reason?.message);
