@@ -1552,11 +1552,16 @@ app.post('/api/jobs-search', requireAuth, async (req, res) => {
     const gl = countryCode(location);
 
     // Known job board hostnames → display label
+    // Priority sites (eluta, hiring.cafe, linkedin) are listed first for easy reference
     const BOARD_LABELS = {
-      'linkedin.com': 'LinkedIn', 'indeed.com': 'Indeed', 'ca.indeed.com': 'Indeed',
-      'glassdoor.com': 'Glassdoor', 'lever.co': 'Lever', 'greenhouse.io': 'Greenhouse',
-      'workday.com': 'Workday', 'ashbyhq.com': 'Ashby', 'smartrecruiters.com': 'SmartRecruiters',
-      'dover.com': 'Dover', 'jobs.google.com': 'Google Careers', 'careers.google.com': 'Google Careers',
+      'eluta.ca':           'Eluta',
+      'hiring.cafe':        'Hiring.cafe',
+      'linkedin.com':       'LinkedIn',
+      'indeed.com':         'Indeed', 'ca.indeed.com': 'Indeed',
+      'glassdoor.com':      'Glassdoor', 'lever.co': 'Lever', 'greenhouse.io': 'Greenhouse',
+      'workday.com':        'Workday', 'ashbyhq.com': 'Ashby', 'smartrecruiters.com': 'SmartRecruiters',
+      'dover.com':          'Dover', 'jobs.google.com': 'Google Careers', 'careers.google.com': 'Google Careers',
+      'ziprecruiter.com':   'ZipRecruiter', 'wellfound.com': 'Wellfound', 'monster.ca': 'Monster',
     };
 
     // Pick the best direct URL from a Serper job object.
@@ -1631,75 +1636,106 @@ app.post('/api/jobs-search', requireAuth, async (req, res) => {
       };
     }
 
-    // Strategy A: Serper dedicated /jobs endpoint (Google Jobs panel data)
-    try {
-      let q = query.trim() + expSuffix;
-      if (workType === 'remote') q += ' remote';
-      // Always append location to the query for city-level specificity.
-      // gl sets the Google country region; the city still needs to be in the query.
-      if (location) q += ' ' + location.trim();
-
-      const body = { q, num: 10 };
-      if (start > 0) body.start = start;
-      if (gl) body.gl = gl;
-      if (dateMap[datePosted]) body.datePosted = dateMap[datePosted];
-
-      const sresp = await fetch('https://google.serper.dev/jobs', {
-        method:  'POST',
-        headers: { 'X-API-KEY': serperKey, 'Content-Type': 'application/json' },
-        body:    JSON.stringify(body),
-        signal:  AbortSignal.timeout(10000),
-      });
-      if (!sresp.ok) throw new Error(`Serper /jobs HTTP ${sresp.status}`);
-      const sdata = await sresp.json();
-      const jobs  = (sdata.jobs || []).map(normaliseSerperJob);
-      console.log(`Serper /jobs → ${jobs.length} results for "${q}"`);
-      if (jobs.length > 0) return res.json({ jobs, source: 'google', hasMore: jobs.length >= 10 });
-    } catch (err) {
-      console.error('Serper /jobs error:', err.message);
-      errors.push('Serper /jobs: ' + err.message);
-    }
-
-    // Strategy B: Serper /search scoped to job-board domains (fallback)
-    // Uses site: operators so Google only indexes pages from known job boards.
-    try {
-      const jobSites = 'site:linkedin.com/jobs OR site:indeed.com OR site:glassdoor.com/job-listing OR site:jobs.lever.co OR site:boards.greenhouse.io OR site:ashbyhq.com OR site:smartrecruiters.com/jobs OR site:ziprecruiter.com/jobs OR site:wellfound.com/jobs';
-      let q = `${query.trim()}${expSuffix} (${jobSites})`;
-      if (workType === 'remote') q += ' remote';
-      if (location) q += ' ' + location.trim();
-
-      // Use detected country code; fall back to 'us' only when no location given at all
-      const body = { q, num: 10, gl: gl || (location ? null : 'us') };
-      if (!body.gl) delete body.gl; // don't send gl:null to Serper
+    // Helper: build common Serper /search body
+    function serperSearchBody(q, extra = {}) {
+      const body = { q, num: 10, ...extra };
+      const glCode = gl || (location ? null : 'us');
+      if (glCode) body.gl = glCode;
+      if (!body.gl) delete body.gl;
       if (start > 0) body.start = start;
       if (tbsMap[datePosted]) body.tbs = tbsMap[datePosted];
+      return body;
+    }
 
-      const sresp = await fetch('https://google.serper.dev/search', {
+    async function serperSearch(q, extraBody = {}) {
+      const resp = await fetch('https://google.serper.dev/search', {
         method:  'POST',
         headers: { 'X-API-KEY': serperKey, 'Content-Type': 'application/json' },
-        body:    JSON.stringify(body),
-        signal:  AbortSignal.timeout(10000),
+        body:    JSON.stringify(serperSearchBody(q, extraBody)),
+        signal:  AbortSignal.timeout(11000),
       });
-      if (!sresp.ok) throw new Error(`Serper /search HTTP ${sresp.status}`);
-      const sdata = await sresp.json();
-
-      // If the response includes a jobs block, use it (already individual postings)
-      if ((sdata.jobs || []).length > 0) {
-        const jobs = sdata.jobs.map(normaliseSerperJob);
-        return res.json({ jobs, source: 'google', hasMore: jobs.length >= 10 });
-      }
-
-      // Use organic results — scoped to job board URLs so they're individual listings
-      const organic = (sdata.organic || []).slice(0, 10);
-      if (organic.length > 0) {
-        const jobs = organic.map(normaliseOrganicResult).filter(j => j.applyUrl);
-        if (jobs.length > 0) return res.json({ jobs, source: 'google-search', hasMore: jobs.length >= 10 });
-      }
-      errors.push('Serper /search: 0 results');
-    } catch (err) {
-      console.error('Serper /search error:', err.message);
-      errors.push('Serper /search: ' + err.message);
+      if (!resp.ok) throw new Error(`Serper /search HTTP ${resp.status}`);
+      return resp.json();
     }
+
+    // Build base query parts
+    const baseQ   = query.trim() + expSuffix + (workType === 'remote' ? ' remote' : '') + (location ? ' ' + location.trim() : '');
+
+    // ── Run all three Serper searches in PARALLEL ─────────────────
+    // P1: Priority sites — Eluta + Hiring.cafe + LinkedIn
+    // P2: Google Jobs panel (structured job data, best quality)
+    // P3: Broader boards fallback — Indeed, Glassdoor, Greenhouse, etc.
+    const [p1Result, p2Result, p3Result] = await Promise.allSettled([
+
+      // P1 — Priority: eluta.ca, hiring.cafe, linkedin.com/jobs
+      serperSearch(`${baseQ} (site:eluta.ca OR site:hiring.cafe OR site:linkedin.com/jobs)`),
+
+      // P2 — Google Jobs panel (Serper /jobs endpoint)
+      fetch('https://google.serper.dev/jobs', {
+        method:  'POST',
+        headers: { 'X-API-KEY': serperKey, 'Content-Type': 'application/json' },
+        body:    JSON.stringify((() => {
+          const b = { q: baseQ, num: 10 };
+          if (start > 0) b.start = start;
+          if (gl) b.gl = gl;
+          if (dateMap[datePosted]) b.datePosted = dateMap[datePosted];
+          return b;
+        })()),
+        signal: AbortSignal.timeout(10000),
+      }).then(r => r.ok ? r.json() : Promise.reject(new Error(`/jobs HTTP ${r.status}`))),
+
+      // P3 — Broader boards: Indeed, Glassdoor, Greenhouse, ZipRecruiter, etc.
+      serperSearch(`${baseQ} (site:indeed.com OR site:glassdoor.com/job-listing OR site:jobs.lever.co OR site:boards.greenhouse.io OR site:ziprecruiter.com/jobs)`),
+    ]);
+
+    // ── Extract jobs from each result ─────────────────────────────
+    // Dedup key: normalised title+company
+    const seen = new Set();
+    function dedup(jobs) {
+      return jobs.filter(j => {
+        const k = ((j.title || '') + '|' + (j.company || '')).toLowerCase().replace(/\s+/g, ' ').trim();
+        if (seen.has(k)) return false;
+        seen.add(k);
+        return true;
+      });
+    }
+
+    let priorityJobs = [];
+    if (p1Result.status === 'fulfilled') {
+      const d = p1Result.value;
+      const organic = (d.organic || []).map(normaliseOrganicResult).filter(j => j.applyUrl);
+      const jobsBlock = (d.jobs || []).map(normaliseSerperJob);
+      priorityJobs = [...organic, ...jobsBlock];
+      console.log(`Serper priority (eluta/hiring.cafe/linkedin) → ${priorityJobs.length} results`);
+    } else {
+      errors.push('Serper priority: ' + p1Result.reason?.message);
+    }
+
+    let googleJobs = [];
+    if (p2Result.status === 'fulfilled') {
+      googleJobs = (p2Result.value.jobs || []).map(normaliseSerperJob);
+      console.log(`Serper /jobs (Google Jobs panel) → ${googleJobs.length} results`);
+    } else {
+      errors.push('Serper /jobs: ' + p2Result.reason?.message);
+    }
+
+    let boardJobs = [];
+    if (p3Result.status === 'fulfilled') {
+      const d = p3Result.value;
+      const organic = (d.organic || []).map(normaliseOrganicResult).filter(j => j.applyUrl);
+      const jobsBlock = (d.jobs || []).map(normaliseSerperJob);
+      boardJobs = [...jobsBlock, ...organic];
+      console.log(`Serper boards (Indeed/Glassdoor/etc) → ${boardJobs.length} results`);
+    } else {
+      errors.push('Serper boards: ' + p3Result.reason?.message);
+    }
+
+    // ── Merge with priority order: Eluta/Hiring.cafe/LinkedIn → Google Jobs → Other boards ──
+    const merged = dedup([...priorityJobs, ...googleJobs, ...boardJobs]);
+    if (merged.length > 0) {
+      return res.json({ jobs: merged, source: 'google', hasMore: merged.length >= 10 });
+    }
+    errors.push('Serper: all strategies returned 0 results');
   }
 
   // ── 2. JSearch (RapidAPI) ─────────────────────────────────────
