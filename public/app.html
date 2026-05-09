@@ -702,6 +702,17 @@
       transition:border-color var(--t);
     }
     .tj-status:focus { border-color:var(--mid); }
+    .tj-jd-btn { background:var(--accent-lite); border:1.5px solid var(--accent-bd); color:var(--accent); border-radius:6px; font-size:10.5px; font-weight:700; font-family:inherit; padding:3px 8px; cursor:pointer; white-space:nowrap; transition:all var(--t); }
+    .tj-jd-btn:hover { background:var(--accent); color:#fff; }
+    /* ── JD View Modal ── */
+    .jd-modal-overlay { display:none; position:fixed; inset:0; background:rgba(6,14,28,.75); z-index:9999; align-items:center; justify-content:center; padding:20px; }
+    .jd-modal-overlay.open { display:flex; }
+    .jd-modal-box { background:#fff; border-radius:18px; padding:28px 28px 24px; max-width:640px; width:100%; max-height:80vh; display:flex; flex-direction:column; box-shadow:0 24px 70px rgba(0,0,0,.35); }
+    .jd-modal-header { display:flex; align-items:flex-start; gap:12px; margin-bottom:16px; }
+    .jd-modal-title { font-size:1.05rem; font-weight:800; color:#1e3a5f; flex:1; line-height:1.3; }
+    .jd-modal-close { background:none; border:none; color:#64748b; cursor:pointer; font-size:1.25rem; line-height:1; padding:2px 6px; border-radius:6px; transition:color .15s; flex-shrink:0; }
+    .jd-modal-close:hover { color:#b91c1c; background:#fef2f2; }
+    .jd-modal-body { overflow-y:auto; flex:1; font-size:.85rem; line-height:1.75; color:#374151; white-space:pre-wrap; word-break:break-word; border-top:1px solid #e2e8f0; padding-top:14px; }
     .tracker-toggle {
       position:fixed; right:22px; bottom:26px;
       background:linear-gradient(135deg,#1a3356,#1e3a5f,#2d5a8e);
@@ -3045,6 +3056,17 @@
     </div>
     <button id="umUpgradeBtn" onclick="startUpgradeCheckout()" style="width:100%;padding:14px;background:linear-gradient(135deg,#4f6ef7,#3a5ce4);color:#fff;border:none;border-radius:10px;font-size:1rem;font-weight:700;font-family:inherit;cursor:pointer;margin-bottom:12px">Upgrade to Pro →</button>
     <button onclick="closeUpgradeModal()" style="background:none;border:none;color:#94a3b8;font-size:.85rem;cursor:pointer;font-family:inherit">Maybe later</button>
+  </div>
+</div>
+
+<!-- JD View Modal -->
+<div class="jd-modal-overlay" id="jdViewModal" onclick="if(event.target===this)closeJDModal()">
+  <div class="jd-modal-box">
+    <div class="jd-modal-header">
+      <div class="jd-modal-title" id="jdModalTitle"></div>
+      <button class="jd-modal-close" onclick="closeJDModal()" title="Close">✕</button>
+    </div>
+    <div class="jd-modal-body" id="jdModalBody"></div>
   </div>
 </div>
 

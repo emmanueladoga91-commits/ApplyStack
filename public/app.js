@@ -1462,7 +1462,7 @@ async function build(){
     // ── Auto-save session & add tracker entry ──────────────────────────────
     saveSession(true);
     var trackerAts = (atsResultRef && atsResultRef.overallScore !== undefined) ? atsResultRef.overallScore : null;
-    addTrackerEntry(company, role, selectedTemplate, selectedProfile, trackerAts);
+    addTrackerEntry(company, role, selectedTemplate, selectedProfile, trackerAts, jd);
 
     // Save interview context so Interview Coach can auto-load JD + role
     try {
@@ -2501,7 +2501,7 @@ function loadTracker() {
 }
 function saveTracker(entries) { localStorage.setItem(TRACKER_KEY, JSON.stringify(entries)); }
 
-function addTrackerEntry(company, role, template, profile, atsScore) {
+function addTrackerEntry(company, role, template, profile, atsScore, jd) {
   var entries = loadTracker();
   var now = new Date();
   entries.unshift({
@@ -2514,7 +2514,8 @@ function addTrackerEntry(company, role, template, profile, atsScore) {
     profile:  profile || '',
     profileLabel: (PROFILES[profile] ? PROFILES[profile].name : (profile||'General')),
     atsScore: (atsScore !== null && atsScore !== undefined) ? atsScore : null,
-    status: 'Applied'
+    status: 'Applied',
+    jd: jd || ''
   });
   saveTracker(entries);
   renderTracker();
@@ -2559,7 +2560,9 @@ function renderTracker() {
     h += '<div class="status-dot" style="background:'+statusColor+'"></div>';
     h += '<select class="tj-status" data-status-id="'+esc(e.id)+'">';
     statuses.forEach(function(s){ h += '<option value="'+s+'"'+(e.status===s?' selected':'')+'>'+s+'</option>'; });
-    h += '</select></div></div>';
+    h += '</select>';
+    if (e.jd) h += '<button class="tj-jd-btn" data-jd-id="'+esc(e.id)+'" title="View Job Description">📋 JD</button>';
+    h += '</div></div>';
   });
   list.innerHTML = h;
 
@@ -2580,6 +2583,27 @@ function renderTracker() {
       renderTracker();
     });
   });
+  list.querySelectorAll('[data-jd-id]').forEach(function(btn) {
+    btn.addEventListener('click', function(ev) {
+      ev.stopPropagation();
+      var id = btn.getAttribute('data-jd-id');
+      var all = loadTracker();
+      var entry = all.find(function(e){ return e.id===id; });
+      if (entry && entry.jd) showTrackerJD(entry.company, entry.role, entry.jd);
+    });
+  });
+}
+
+function showTrackerJD(company, role, jdText) {
+  var modal = document.getElementById('jdViewModal');
+  if (!modal) return;
+  document.getElementById('jdModalTitle').textContent = role + ' — ' + company;
+  document.getElementById('jdModalBody').textContent  = jdText;
+  modal.classList.add('open');
+}
+function closeJDModal() {
+  var modal = document.getElementById('jdViewModal');
+  if (modal) modal.classList.remove('open');
 }
 
 function openTracker()  { document.getElementById('trackerSidebar').classList.add('open');    document.getElementById('trackerOverlay').classList.add('on'); }

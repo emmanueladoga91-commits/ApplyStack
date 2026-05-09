@@ -76,6 +76,18 @@
     .td-del { text-align:center; }
     .del-btn { background:none; border:none; color:var(--gray400); cursor:pointer; font-size:1rem; padding:4px 8px; border-radius:6px; }
     .del-btn:hover { color:var(--red); background:var(--red-bg); }
+    .jd-btn { background:#eef2ff; border:1.5px solid #c7d2fe; color:#4f6ef7; border-radius:8px; font-size:.78rem; font-weight:700; font-family:inherit; padding:4px 10px; cursor:pointer; white-space:nowrap; transition:all .15s; }
+    .jd-btn:hover { background:#4f6ef7; color:#fff; }
+
+    /* ── JD Modal ── */
+    .jd-modal-overlay { display:none; position:fixed; inset:0; background:rgba(15,23,42,.65); z-index:300; align-items:center; justify-content:center; padding:20px; }
+    .jd-modal-overlay.open { display:flex; }
+    .jd-modal-box { background:#fff; border-radius:20px; padding:28px 28px 24px; max-width:680px; width:100%; max-height:82vh; display:flex; flex-direction:column; box-shadow:0 20px 60px rgba(0,0,0,.22); }
+    .jd-modal-hdr { display:flex; align-items:flex-start; gap:12px; margin-bottom:16px; }
+    .jd-modal-title { font-size:1.1rem; font-weight:800; color:var(--navy); flex:1; line-height:1.35; }
+    .jd-modal-close { background:none; border:none; color:var(--gray400); cursor:pointer; font-size:1.25rem; line-height:1; padding:2px 8px; border-radius:6px; }
+    .jd-modal-close:hover { color:var(--red); background:var(--red-bg); }
+    .jd-modal-body { overflow-y:auto; flex:1; font-size:.875rem; line-height:1.75; color:#374151; white-space:pre-wrap; word-break:break-word; border-top:1px solid var(--gray200); padding-top:14px; }
 
     /* ── Status color map ── */
     select.Applied    { color:#1d4ed8; } select.Phone   { color:#0369a1; }
@@ -148,6 +160,7 @@
           <th class="hide-sm">Applied</th>
           <th class="hide-sm">ATS</th>
           <th>Status</th>
+          <th class="hide-sm">JD</th>
           <th>Notes</th>
           <th></th>
         </tr>
@@ -156,6 +169,17 @@
     </table>
   </div>
 </main>
+
+<!-- JD Viewer Modal -->
+<div class="jd-modal-overlay" id="jdModal" onclick="if(event.target===this)closeJD()">
+  <div class="jd-modal-box">
+    <div class="jd-modal-hdr">
+      <div class="jd-modal-title" id="jdModalTitle"></div>
+      <button class="jd-modal-close" onclick="closeJD()" title="Close">✕</button>
+    </div>
+    <div class="jd-modal-body" id="jdModalBody"></div>
+  </div>
+</div>
 
 <!-- Add Application Modal -->
 <div class="modal-overlay" id="addModal" onclick="handleModalClick(event)">
@@ -297,12 +321,16 @@ function renderTable() {
       return '<option value="'+s+'"'+(e.status===s?' selected':'')+'>'+s+'</option>';
     }).join('');
     var noteVal = (e.notes || '').replace(/"/g, '&quot;');
+    var jdCell = e.jd
+      ? '<button class="jd-btn" data-jd-id="'+e.id+'" title="View saved job description">📋 View JD</button>'
+      : '<span style="color:var(--gray400);font-size:.78rem">—</span>';
     h += '<tr>'
        + '<td class="td-company">'+esc(e.company)+'</td>'
        + '<td class="td-role">'+esc(e.role)+'</td>'
        + '<td class="td-date hide-sm">'+esc(e.date||'·')+'</td>'
        + '<td class="td-ats hide-sm">'+atsHtml+'</td>'
        + '<td><select class="status-select" data-id="'+e.id+'" style="color:'+sc+';background:'+sbg+'">'+opts+'</select></td>'
+       + '<td class="hide-sm">'+jdCell+'</td>'
        + '<td class="td-notes"><textarea data-notes-id="'+e.id+'" placeholder="Add notes…">'+esc(e.notes||'')+'</textarea></td>'
        + '<td class="td-del"><button class="del-btn" data-del="'+e.id+'" title="Remove">✕</button></td>'
        + '</tr>';
@@ -335,9 +363,23 @@ function renderTable() {
       renderTable();
     });
   });
+  body.querySelectorAll('[data-jd-id]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var id = btn.getAttribute('data-jd-id');
+      var entry = load().find(function(e){ return e.id===id; });
+      if (entry && entry.jd) showJD(entry.company, entry.role, entry.jd);
+    });
+  });
 }
 
 function filterTable() { renderTable(); }
+
+function showJD(company, role, jdText) {
+  document.getElementById('jdModalTitle').textContent = role + ' — ' + company;
+  document.getElementById('jdModalBody').textContent  = jdText;
+  document.getElementById('jdModal').classList.add('open');
+}
+function closeJD() { document.getElementById('jdModal').classList.remove('open'); }
 
 function esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
