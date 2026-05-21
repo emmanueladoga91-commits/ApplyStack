@@ -1462,7 +1462,7 @@ async function build(){
     // ── Auto-save session & add tracker entry ──────────────────────────────
     saveSession(true);
     var trackerAts = (atsResultRef && atsResultRef.overallScore !== undefined) ? atsResultRef.overallScore : null;
-    addTrackerEntry(company, role, selectedTemplate, selectedProfile, trackerAts, jd);
+    addTrackerEntry(company, role, selectedTemplate, selectedProfile, trackerAts, jd, resumeBlob, rName, clBlob, cName);
 
     // Save interview context so Interview Coach can auto-load JD + role
     try {
@@ -2501,10 +2501,35 @@ function loadTracker() {
 }
 function saveTracker(entries) { localStorage.setItem(TRACKER_KEY, JSON.stringify(entries)); }
 
-function addTrackerEntry(company, role, template, profile, atsScore, jd) {
+function blobToDataURL(blob) {
+  return new Promise(function(resolve) {
+    if (!blob) { resolve(null); return; }
+    var reader = new FileReader();
+    reader.onload = function(e) { resolve(e.target.result); };
+    reader.onerror = function() { resolve(null); };
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function addTrackerEntry(company, role, template, profile, atsScore, jd, resumeBlob, resumeName, clBlob, clName) {
   var entries = loadTracker();
   var now = new Date();
-  entries.unshift({
+
+  // Convert blobs to base64 data URLs so they can be stored in localStorage
+  var resumeFileObj = null;
+  var coverFileObj  = null;
+  try {
+    if (resumeBlob) {
+      var resumeData = await blobToDataURL(resumeBlob);
+      if (resumeData) resumeFileObj = { name: resumeName || 'Resume.docx', type: resumeBlob.type || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', size: resumeBlob.size, data: resumeData };
+    }
+    if (clBlob) {
+      var clData = await blobToDataURL(clBlob);
+      if (clData) coverFileObj = { name: clName || 'Cover_Letter.docx', type: clBlob.type || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', size: clBlob.size, data: clData };
+    }
+  } catch(e) { /* If storage fails we still save the entry without files */ }
+
+  var entry = {
     id: Date.now().toString(),
     company: company || 'Unknown Company',
     role:    role    || 'Unknown Role',
@@ -2515,9 +2540,22 @@ function addTrackerEntry(company, role, template, profile, atsScore, jd) {
     profileLabel: (PROFILES[profile] ? PROFILES[profile].name : (profile||'General')),
     atsScore: (atsScore !== null && atsScore !== undefined) ? atsScore : null,
     status: 'Applied',
-    jd: jd || ''
-  });
-  saveTracker(entries);
+    jd: jd || '',
+    resumeFile:      resumeFileObj,
+    coverLetterFile: coverFileObj,
+  };
+
+  entries.unshift(entry);
+  try {
+    saveTracker(entries);
+  } catch(e) {
+    // If quota exceeded, try saving without the file data
+    entry.resumeFile = null;
+    entry.coverLetterFile = null;
+    entries[0] = entry;
+    try { saveTracker(entries); } catch(e2) {}
+    console.warn('Tracker: file storage quota exceeded \u2014 entry saved without file attachments.');
+  }
   renderTracker();
 }
 
@@ -2562,6 +2600,8 @@ function renderTracker() {
     statuses.forEach(function(s){ h += '<option value="'+s+'"'+(e.status===s?' selected':'')+'>'+s+'</option>'; });
     h += '</select>';
     if (e.jd) h += '<button class="tj-jd-btn" data-jd-id="'+esc(e.id)+'" title="View Job Description">📋 JD</button>';
+    if (e.resumeFile)      h += '<button class="tj-jd-btn" data-dl-resume="'+esc(e.id)+'" title="Download Resume" style="background:#dbeafe;border-color:#bfdbfe;color:#1d4ed8">📄 Resume</button>';
+    if (e.coverLetterFile) h += '<button class="tj-jd-btn" data-dl-cover="'+esc(e.id)+'" title="Download Cover Letter" style="background:#d1fae5;border-color:#a7f3d0;color:#065f46">✉️ Cover</button>';
     h += '</div></div>';
   });
   list.innerHTML = h;
@@ -2592,6 +2632,30 @@ function renderTracker() {
       if (entry && entry.jd) showTrackerJD(entry.company, entry.role, entry.jd);
     });
   });
+  list.querySelectorAll('[data-dl-resume]').forEach(function(btn) {
+    btn.addEventListener('click', function(ev) {
+      ev.stopPropagation();
+      var id = btn.getAttribute('data-dl-resume');
+      var entry = loadTracker().find(function(e){ return e.id===id; });
+      if (entry && entry.resumeFile) trackerDownloadFile(entry.resumeFile);
+    });
+  });
+  list.querySelectorAll('[data-dl-cover]').forEach(function(btn) {
+    btn.addEventListener('click', function(ev) {
+      ev.stopPropagation();
+      var id = btn.getAttribute('data-dl-cover');
+      var entry = loadTracker().find(function(e){ return e.id===id; });
+      if (entry && entry.coverLetterFile) trackerDownloadFile(entry.coverLetterFile);
+    });
+  });
+}
+
+function trackerDownloadFile(fileObj) {
+  if (!fileObj || !fileObj.data) return;
+  var a = document.createElement('a');
+  a.href = fileObj.data;
+  a.download = fileObj.name || 'document';
+  a.click();
 }
 
 function showTrackerJD(company, role, jdText) {
