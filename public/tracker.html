@@ -167,13 +167,39 @@
     .status-badge { display:inline-block; padding:4px 12px; border-radius:50px; font-size:.78rem; font-weight:700; margin-top:8px; }
     .files-row { display:flex; flex-wrap:wrap; gap:8px; }
 
+    /* ── File Viewer Modal ── */
+    .viewer-overlay { display:none; position:fixed; inset:0; background:rgba(15,23,42,.75); z-index:600; align-items:center; justify-content:center; padding:16px; }
+    .viewer-overlay.open { display:flex; }
+    .viewer-box { background:#fff; border-radius:20px; width:100%; max-width:860px; height:90vh; display:flex; flex-direction:column; box-shadow:0 24px 80px rgba(0,0,0,.3); overflow:hidden; }
+    .viewer-hdr { display:flex; align-items:center; gap:12px; padding:16px 20px; border-bottom:1px solid var(--gray200); background:#fff; flex-shrink:0; }
+    .viewer-hdr-info { flex:1; min-width:0; }
+    .viewer-filename { font-size:.95rem; font-weight:700; color:var(--navy); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .viewer-filesize { font-size:.75rem; color:var(--gray400); margin-top:2px; }
+    .viewer-dl-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:var(--indigo); color:#fff; border:none; border-radius:var(--radius); font-size:.85rem; font-weight:700; font-family:inherit; cursor:pointer; white-space:nowrap; flex-shrink:0; }
+    .viewer-dl-btn:hover { background:var(--indigo2); }
+    .viewer-close-btn { background:none; border:none; color:var(--gray400); cursor:pointer; font-size:1.2rem; padding:6px 8px; border-radius:8px; flex-shrink:0; }
+    .viewer-close-btn:hover { color:var(--red); background:var(--red-bg); }
+    .viewer-body { flex:1; overflow:auto; background:#f1f5f9; position:relative; }
+    .viewer-body iframe { width:100%; height:100%; border:none; display:block; }
+    .viewer-body .viewer-docx { background:#fff; min-height:100%; padding:40px 48px; font-family:Georgia,'Times New Roman',serif; font-size:11pt; line-height:1.75; color:#1e293b; max-width:780px; margin:0 auto; box-shadow:0 0 0 1px rgba(0,0,0,.06); }
+    .viewer-body .viewer-docx h1,.viewer-body .viewer-docx h2,.viewer-body .viewer-docx h3 { font-family:inherit; margin:1em 0 .3em; }
+    .viewer-body .viewer-docx p { margin:.4em 0; }
+    .viewer-body .viewer-docx table { border-collapse:collapse; width:100%; margin:.6em 0; }
+    .viewer-body .viewer-docx td,.viewer-body .viewer-docx th { border:1px solid #ddd; padding:4px 8px; }
+    .viewer-body .viewer-placeholder { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; padding:40px; text-align:center; color:var(--gray600); gap:14px; }
+    .viewer-body .viewer-placeholder .vp-ico { font-size:3rem; }
+    .viewer-loading { display:flex; align-items:center; justify-content:center; height:100%; color:var(--gray400); font-size:.95rem; }
+
     /* ── Responsive ── */
     @media (max-width:640px) {
       th.hide-sm, td.hide-sm { display:none; }
       .form-row, .form-row-3 { grid-template-columns:1fr; }
       .detail-grid { grid-template-columns:1fr; }
+      .viewer-box { height:95vh; border-radius:16px; }
+      .viewer-body .viewer-docx { padding:24px 20px; }
     }
   </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 </head>
 <body>
 
@@ -229,6 +255,23 @@
     </table>
   </div>
 </main>
+
+<!-- File Viewer Modal -->
+<div class="viewer-overlay" id="viewerModal" onclick="if(event.target===this)closeViewer()">
+  <div class="viewer-box">
+    <div class="viewer-hdr">
+      <div class="viewer-hdr-info">
+        <div class="viewer-filename" id="viewerFilename"></div>
+        <div class="viewer-filesize" id="viewerFilesize"></div>
+      </div>
+      <button class="viewer-dl-btn" onclick="viewerDownload()">⬇ Download</button>
+      <button class="viewer-close-btn" onclick="closeViewer()" title="Close">✕</button>
+    </div>
+    <div class="viewer-body" id="viewerBody">
+      <div class="viewer-loading">Loading preview…</div>
+    </div>
+  </div>
+</div>
 
 <!-- JD Viewer Modal -->
 <div class="jd-modal-overlay" id="jdModal" onclick="if(event.target===this)closeJD()">
@@ -679,22 +722,15 @@ function renderTable() {
       openDetail(id);
     });
   });
-  // File download from table
+  // File view from table (click badge → open viewer)
   body.querySelectorAll('[data-dl-resume]').forEach(function(badge) {
     badge.addEventListener('click', function() {
-      var id = badge.getAttribute('data-dl-resume');
-      // Support both new separate-key and legacy inline formats
-      var legacy = (load().find(function(e){ return e.id===id; })||{}).resumeFile;
-      if (legacy && legacy.data) { var a=document.createElement('a'); a.href=legacy.data; a.download=legacy.name||'Resume.docx'; a.click(); }
-      else downloadTrackerFile(id, 'resume');
+      viewTrackerFile(badge.getAttribute('data-dl-resume'), 'resume');
     });
   });
   body.querySelectorAll('[data-dl-cover]').forEach(function(badge) {
     badge.addEventListener('click', function() {
-      var id = badge.getAttribute('data-dl-cover');
-      var legacy = (load().find(function(e){ return e.id===id; })||{}).coverLetterFile;
-      if (legacy && legacy.data) { var a=document.createElement('a'); a.href=legacy.data; a.download=legacy.name||'Cover_Letter.docx'; a.click(); }
-      else downloadTrackerFile(id, 'cover');
+      viewTrackerFile(badge.getAttribute('data-dl-cover'), 'cover');
     });
   });
 }
@@ -749,21 +785,15 @@ function openDetail(id) {
   if (resumeName) {
     var rb = document.createElement('button');
     rb.className = 'file-action-btn file-action-resume';
-    rb.innerHTML = '📄 Download Resume — ' + esc(resumeName);
-    rb.onclick = function(){
-      if (entry.resumeFile && entry.resumeFile.data) { var a=document.createElement('a'); a.href=entry.resumeFile.data; a.download=entry.resumeFile.name; a.click(); }
-      else downloadTrackerFile(entry.id, 'resume');
-    };
+    rb.innerHTML = '📄 View Resume — ' + esc(resumeName);
+    rb.onclick = function(){ viewTrackerFile(entry.id, 'resume'); };
     filesRow.appendChild(rb);
   }
   if (coverName) {
     var cb = document.createElement('button');
     cb.className = 'file-action-btn file-action-cover';
-    cb.innerHTML = '✉️ Download Cover Letter — ' + esc(coverName);
-    cb.onclick = function(){
-      if (entry.coverLetterFile && entry.coverLetterFile.data) { var a=document.createElement('a'); a.href=entry.coverLetterFile.data; a.download=entry.coverLetterFile.name; a.click(); }
-      else downloadTrackerFile(entry.id, 'cover');
-    };
+    cb.innerHTML = '✉️ View Cover Letter — ' + esc(coverName);
+    cb.onclick = function(){ viewTrackerFile(entry.id, 'cover'); };
     filesRow.appendChild(cb);
   }
   if (entry.jd) {
@@ -926,6 +956,94 @@ function exportCSV() {
   a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
   a.download = 'tailorcv-applications-' + new Date().toISOString().slice(0,10) + '.csv';
   a.click();
+}
+
+// ── File Viewer ───────────────────────────────────────────────
+var _viewerFileRef = null;
+
+function viewTrackerFile(entryId, type) {
+  // Load from separate key (new format), fall back to inline legacy format
+  var f = loadTrackerFile(entryId, type);
+  if (!f) {
+    var entry = load().find(function(e){ return e.id === entryId; });
+    if (entry) {
+      f = type === 'resume' ? entry.resumeFile : entry.coverLetterFile;
+    }
+  }
+  if (!f || !f.data) { alert('File not found. It may not have been saved.'); return; }
+  _viewerFileRef = f;
+  openViewer(f);
+}
+
+function openViewer(f) {
+  var name = f.name || 'Document';
+  var size = f.size ? (f.size / 1024).toFixed(0) + ' KB' : '';
+  document.getElementById('viewerFilename').textContent = name;
+  document.getElementById('viewerFilesize').textContent = size;
+
+  var body = document.getElementById('viewerBody');
+  body.innerHTML = '<div class="viewer-loading">Loading preview…</div>';
+  document.getElementById('viewerModal').classList.add('open');
+
+  var ext  = name.split('.').pop().toLowerCase();
+  var mime = f.type || '';
+
+  if (mime === 'application/pdf' || ext === 'pdf') {
+    // PDF → show in an iframe using the data URL directly
+    body.innerHTML = '';
+    var iframe = document.createElement('iframe');
+    iframe.src = f.data;
+    iframe.title = name;
+    body.appendChild(iframe);
+
+  } else if (mime.includes('word') || ext === 'docx' || ext === 'doc') {
+    // DOCX → convert with mammoth.js
+    if (typeof mammoth === 'undefined') {
+      body.innerHTML = '<div class="viewer-placeholder"><span class="vp-ico">📄</span><strong>' + esc(name) + '</strong><p style="color:var(--gray400);font-size:.88rem">DOCX preview couldn\'t load the converter.<br>Use the Download button to open the file.</p></div>';
+      return;
+    }
+    // Decode base64 → ArrayBuffer
+    try {
+      var b64  = f.data.split(',')[1];
+      var bin  = atob(b64);
+      var buf  = new ArrayBuffer(bin.length);
+      var view = new Uint8Array(buf);
+      for (var i = 0; i < bin.length; i++) view[i] = bin.charCodeAt(i);
+      mammoth.convertToHtml({ arrayBuffer: buf }).then(function(result) {
+        body.innerHTML = '<div class="viewer-docx">' + result.value + '</div>';
+      }).catch(function() {
+        body.innerHTML = '<div class="viewer-placeholder"><span class="vp-ico">📄</span><p>Preview failed. Use the Download button to open the file.</p></div>';
+      });
+    } catch(e) {
+      body.innerHTML = '<div class="viewer-placeholder"><span class="vp-ico">📄</span><p>Preview failed. Use the Download button to open the file.</p></div>';
+    }
+
+  } else if (ext === 'txt') {
+    // Plain text
+    try {
+      var text = decodeURIComponent(escape(atob(f.data.split(',')[1])));
+      body.innerHTML = '<pre style="padding:32px;font-family:monospace;font-size:.88rem;white-space:pre-wrap;word-break:break-word;color:#1e293b;line-height:1.65">' + esc(text) + '</pre>';
+    } catch(e) {
+      body.innerHTML = '<div class="viewer-placeholder"><span class="vp-ico">📄</span><p>Preview failed. Use the Download button.</p></div>';
+    }
+
+  } else {
+    body.innerHTML = '<div class="viewer-placeholder"><span class="vp-ico">📄</span><strong>' + esc(name) + '</strong><p style="color:var(--gray400);font-size:.88rem">Preview not available for this file type.<br>Click Download to open it.</p></div>';
+  }
+}
+
+function viewerDownload() {
+  if (!_viewerFileRef || !_viewerFileRef.data) return;
+  var a = document.createElement('a');
+  a.href = _viewerFileRef.data;
+  a.download = _viewerFileRef.name || 'document';
+  a.click();
+}
+
+function closeViewer() {
+  document.getElementById('viewerModal').classList.remove('open');
+  document.getElementById('viewerBody').innerHTML = '<div class="viewer-loading">Loading preview…</div>';
+  _viewerFileRef = null;
 }
 
 // ── Auth guard ────────────────────────────────────────────────
