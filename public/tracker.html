@@ -13,6 +13,7 @@
       --gray400:#94a3b8; --gray600:#475569; --gray800:#1e293b;
       --green:#166534; --green-bg:#dcfce7; --green-bd:#86efac;
       --red:#991b1b; --red-bg:#fef2f2; --amber:#92400e; --amber-bg:#fffbeb;
+      --purple:#5b21b6; --purple-bg:#f3e8ff;
       --radius:12px;
     }
     body { font-family:'Inter',system-ui,sans-serif; background:var(--gray50); color:var(--gray800); min-height:100vh; }
@@ -27,7 +28,7 @@
     .btn-nav { padding:9px 20px; background:var(--indigo); color:#fff; border-radius:50px; font-size:.88rem; font-weight:700; text-decoration:none; }
 
     /* ── Layout ── */
-    main { max-width:1100px; margin:0 auto; padding:32px 20px 80px; }
+    main { max-width:1200px; margin:0 auto; padding:32px 20px 80px; }
     .page-hdr { display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:16px; margin-bottom:28px; }
     .page-title { font-size:1.7rem; font-weight:900; color:var(--navy); }
     .page-sub { font-size:.95rem; color:var(--gray600); margin-top:4px; }
@@ -58,7 +59,7 @@
     table { width:100%; border-collapse:collapse; }
     thead tr { background:var(--gray50); border-bottom:1px solid var(--gray200); }
     th { padding:12px 16px; font-size:.78rem; font-weight:700; color:var(--gray600); text-align:left; text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; }
-    td { padding:14px 16px; font-size:.88rem; vertical-align:middle; border-bottom:1px solid var(--gray100); }
+    td { padding:12px 16px; font-size:.88rem; vertical-align:middle; border-bottom:1px solid var(--gray100); }
     tr:last-child td { border-bottom:none; }
     tr:hover td { background:#fafbff; }
     .td-company { font-weight:700; color:var(--navy); }
@@ -78,6 +79,16 @@
     .del-btn:hover { color:var(--red); background:var(--red-bg); }
     .jd-btn { background:#eef2ff; border:1.5px solid #c7d2fe; color:#4f6ef7; border-radius:8px; font-size:.78rem; font-weight:700; font-family:inherit; padding:4px 10px; cursor:pointer; white-space:nowrap; transition:all .15s; }
     .jd-btn:hover { background:#4f6ef7; color:#fff; }
+    .detail-btn { background:#f3e8ff; border:1.5px solid #ddd6fe; color:var(--purple); border-radius:8px; font-size:.78rem; font-weight:700; font-family:inherit; padding:4px 10px; cursor:pointer; white-space:nowrap; transition:all .15s; }
+    .detail-btn:hover { background:var(--purple); color:#fff; }
+
+    /* ── Files column ── */
+    .file-badges { display:flex; flex-direction:column; gap:3px; }
+    .file-badge { display:inline-flex; align-items:center; gap:4px; padding:2px 7px; border-radius:50px; font-size:.72rem; font-weight:600; white-space:nowrap; cursor:pointer; transition:opacity .15s; }
+    .file-badge:hover { opacity:.78; }
+    .file-badge.resume { background:#dbeafe; color:#1d4ed8; border:1px solid #bfdbfe; }
+    .file-badge.cover  { background:#d1fae5; color:#065f46; border:1px solid #a7f3d0; }
+    .file-badge.none   { background:var(--gray100); color:var(--gray400); border:1px solid var(--gray200); cursor:default; font-size:.7rem; }
 
     /* ── JD Modal ── */
     .jd-modal-overlay { display:none; position:fixed; inset:0; background:rgba(15,23,42,.65); z-index:300; align-items:center; justify-content:center; padding:20px; }
@@ -94,25 +105,73 @@
     select.Interview  { color:#7c3aed; } select.Final   { color:#92400e; }
     select.Offer      { color:#166534; } select.Rejected { color:#991b1b; }
 
-    /* ── Add modal ── */
-    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(15,23,42,.6); z-index:200; align-items:center; justify-content:center; padding:20px; }
+    /* ── Add / Edit modal ── */
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(15,23,42,.6); z-index:200; align-items:center; justify-content:center; padding:20px; overflow-y:auto; }
     .modal-overlay.open { display:flex; }
-    .modal-box { background:#fff; border-radius:20px; padding:32px; max-width:500px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,.18); }
-    .modal-title { font-size:1.2rem; font-weight:800; color:var(--navy); margin-bottom:20px; }
+    .modal-box { background:#fff; border-radius:20px; padding:32px; max-width:640px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,.18); margin:auto; }
+    .modal-title { font-size:1.2rem; font-weight:800; color:var(--navy); margin-bottom:6px; }
+    .modal-sub { font-size:.85rem; color:var(--gray600); margin-bottom:22px; }
+    .section-label { font-size:.72rem; font-weight:800; color:var(--indigo); text-transform:uppercase; letter-spacing:.06em; margin:20px 0 10px; border-top:1px solid var(--gray100); padding-top:16px; }
+    .section-label:first-of-type { margin-top:0; border-top:none; padding-top:0; }
     .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+    .form-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; margin-bottom:14px; }
+    .form-row-1 { display:grid; grid-template-columns:1fr; gap:14px; margin-bottom:14px; }
     .f label { display:block; font-size:.78rem; font-weight:700; color:var(--gray600); text-transform:uppercase; letter-spacing:.04em; margin-bottom:5px; }
     .f input, .f select, .f textarea { width:100%; padding:10px 12px; border:1.5px solid var(--gray200); border-radius:var(--radius); font-size:.9rem; font-family:inherit; outline:none; }
     .f input:focus, .f select:focus, .f textarea:focus { border-color:var(--indigo); }
     .f textarea { resize:vertical; min-height:70px; }
-    .modal-actions { display:flex; gap:10px; margin-top:20px; }
+    .modal-actions { display:flex; gap:10px; margin-top:22px; }
     .btn-primary { background:var(--indigo); color:#fff; flex:1; justify-content:center; }
     .btn-primary:hover { background:var(--indigo2); }
     .btn-cancel { background:#fff; border:1.5px solid var(--gray200); color:var(--gray800); }
 
+    /* ── File upload ── */
+    .file-upload-area { border:2px dashed var(--gray200); border-radius:var(--radius); padding:14px 16px; cursor:pointer; transition:border-color .2s, background .2s; background:#fafbff; position:relative; }
+    .file-upload-area:hover { border-color:var(--indigo); background:#f0f4ff; }
+    .file-upload-area input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+    .file-upload-label { display:flex; align-items:center; gap:8px; font-size:.84rem; color:var(--gray600); font-weight:500; pointer-events:none; }
+    .file-upload-label .ico { font-size:1.1rem; }
+    .file-chosen { display:flex; align-items:center; gap:8px; padding:8px 12px; background:#eef2ff; border-radius:8px; margin-top:8px; font-size:.82rem; color:#1d4ed8; font-weight:600; }
+    .file-chosen .rm { background:none; border:none; color:var(--gray400); cursor:pointer; font-size:.9rem; margin-left:auto; padding:0 4px; }
+    .file-chosen .rm:hover { color:var(--red); }
+
+    /* ── Detail modal ── */
+    .detail-modal-overlay { display:none; position:fixed; inset:0; background:rgba(15,23,42,.65); z-index:400; align-items:flex-start; justify-content:center; padding:20px; overflow-y:auto; }
+    .detail-modal-overlay.open { display:flex; }
+    .detail-modal-box { background:#fff; border-radius:20px; padding:0; max-width:720px; width:100%; box-shadow:0 20px 60px rgba(0,0,0,.22); margin:auto; overflow:hidden; }
+    .detail-hdr { background:linear-gradient(135deg,#1a2744,#4f6ef7); padding:28px 32px 24px; color:#fff; }
+    .detail-hdr-top { display:flex; align-items:flex-start; gap:12px; }
+    .detail-company { font-size:1.3rem; font-weight:900; line-height:1.2; }
+    .detail-role { font-size:.95rem; font-weight:500; opacity:.82; margin-top:3px; }
+    .detail-close { background:rgba(255,255,255,.15); border:none; color:#fff; cursor:pointer; font-size:1rem; padding:6px 10px; border-radius:8px; margin-left:auto; flex-shrink:0; }
+    .detail-close:hover { background:rgba(255,255,255,.3); }
+    .detail-body { padding:28px 32px 32px; }
+    .detail-section { margin-bottom:24px; }
+    .detail-section-title { font-size:.72rem; font-weight:800; color:var(--indigo); text-transform:uppercase; letter-spacing:.06em; margin-bottom:12px; }
+    .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .detail-field { }
+    .detail-field-label { font-size:.72rem; font-weight:700; color:var(--gray400); text-transform:uppercase; letter-spacing:.04em; margin-bottom:3px; }
+    .detail-field-value { font-size:.88rem; color:var(--gray800); font-weight:500; word-break:break-word; }
+    .detail-field-value a { color:var(--indigo); text-decoration:none; }
+    .detail-field-value a:hover { text-decoration:underline; }
+    .detail-field-value.empty { color:var(--gray400); font-style:italic; }
+    .file-action-btn { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:8px; font-size:.82rem; font-weight:700; cursor:pointer; text-decoration:none; border:none; font-family:inherit; transition:opacity .15s; }
+    .file-action-btn:hover { opacity:.85; }
+    .file-action-resume { background:#dbeafe; color:#1d4ed8; }
+    .file-action-cover  { background:#d1fae5; color:#065f46; }
+    .file-action-jd     { background:#eef2ff; color:var(--indigo); }
+    .detail-notes-ta { width:100%; border:1.5px solid var(--gray200); border-radius:var(--radius); padding:10px 12px; font-size:.88rem; font-family:inherit; resize:vertical; min-height:80px; outline:none; }
+    .detail-notes-ta:focus { border-color:var(--indigo); }
+    .detail-save-btn { background:var(--indigo); color:#fff; border:none; border-radius:var(--radius); padding:9px 22px; font-size:.88rem; font-weight:700; font-family:inherit; cursor:pointer; display:block; margin-top:10px; }
+    .detail-save-btn:hover { background:var(--indigo2); }
+    .status-badge { display:inline-block; padding:4px 12px; border-radius:50px; font-size:.78rem; font-weight:700; margin-top:8px; }
+    .files-row { display:flex; flex-wrap:wrap; gap:8px; }
+
     /* ── Responsive ── */
     @media (max-width:640px) {
       th.hide-sm, td.hide-sm { display:none; }
-      .form-row { grid-template-columns:1fr; }
+      .form-row, .form-row-3 { grid-template-columns:1fr; }
+      .detail-grid { grid-template-columns:1fr; }
     }
   </style>
 </head>
@@ -160,6 +219,7 @@
           <th class="hide-sm">Applied</th>
           <th class="hide-sm">ATS</th>
           <th>Status</th>
+          <th class="hide-sm">Files</th>
           <th class="hide-sm">JD</th>
           <th>Notes</th>
           <th></th>
@@ -181,10 +241,69 @@
   </div>
 </div>
 
-<!-- Add Application Modal -->
+<!-- Application Details Modal -->
+<div class="detail-modal-overlay" id="detailModal" onclick="if(event.target===this)closeDetail()">
+  <div class="detail-modal-box">
+    <div class="detail-hdr">
+      <div class="detail-hdr-top">
+        <div>
+          <div class="detail-company" id="dmCompany"></div>
+          <div class="detail-role" id="dmRole"></div>
+          <div id="dmStatusBadge"></div>
+        </div>
+        <button class="detail-close" onclick="closeDetail()">✕ Close</button>
+      </div>
+    </div>
+    <div class="detail-body">
+
+      <!-- Application Info -->
+      <div class="detail-section">
+        <div class="detail-section-title">📋 Application Info</div>
+        <div class="detail-grid">
+          <div class="detail-field"><div class="detail-field-label">Date Applied</div><div class="detail-field-value" id="dmDate"></div></div>
+          <div class="detail-field"><div class="detail-field-label">ATS Score</div><div class="detail-field-value" id="dmAts"></div></div>
+          <div class="detail-field"><div class="detail-field-label">Application Method</div><div class="detail-field-value" id="dmMethod"></div></div>
+          <div class="detail-field"><div class="detail-field-label">Follow-up Date</div><div class="detail-field-value" id="dmFollowUp"></div></div>
+          <div class="detail-field"><div class="detail-field-label">Salary / Comp</div><div class="detail-field-value" id="dmSalary"></div></div>
+          <div class="detail-field"><div class="detail-field-label">Job Posting URL</div><div class="detail-field-value" id="dmUrl"></div></div>
+        </div>
+      </div>
+
+      <!-- Recruiter Info -->
+      <div class="detail-section">
+        <div class="detail-section-title">👤 Recruiter / Contact</div>
+        <div class="detail-grid">
+          <div class="detail-field"><div class="detail-field-label">Name</div><div class="detail-field-value" id="dmRecruiterName"></div></div>
+          <div class="detail-field"><div class="detail-field-label">Email</div><div class="detail-field-value" id="dmRecruiterEmail"></div></div>
+          <div class="detail-field"><div class="detail-field-label">Phone</div><div class="detail-field-value" id="dmRecruiterPhone"></div></div>
+          <div class="detail-field"><div class="detail-field-label">LinkedIn</div><div class="detail-field-value" id="dmRecruiterLinkedin"></div></div>
+        </div>
+      </div>
+
+      <!-- Documents -->
+      <div class="detail-section">
+        <div class="detail-section-title">📁 Documents</div>
+        <div class="files-row" id="dmFiles"></div>
+      </div>
+
+      <!-- Notes -->
+      <div class="detail-section">
+        <div class="detail-section-title">📝 Notes</div>
+        <textarea class="detail-notes-ta" id="dmNotes" placeholder="Add notes…"></textarea>
+        <button class="detail-save-btn" onclick="saveDetailNotes()">Save Notes</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Add / Edit Application Modal -->
 <div class="modal-overlay" id="addModal" onclick="handleModalClick(event)">
   <div class="modal-box">
     <div class="modal-title">➕ Add Application</div>
+    <div class="modal-sub">Fill in what you know — you can always update it later.</div>
+
+    <div class="section-label">Basic Info</div>
     <div class="form-row">
       <div class="f">
         <label>Company *</label>
@@ -213,10 +332,99 @@
         </select>
       </div>
     </div>
+    <div class="form-row">
+      <div class="f">
+        <label>Application Method</label>
+        <select id="addMethod">
+          <option value="">— Select —</option>
+          <option>Company Website</option>
+          <option>LinkedIn</option>
+          <option>Indeed</option>
+          <option>Glassdoor</option>
+          <option>Referral</option>
+          <option>Email</option>
+          <option>Recruiter</option>
+          <option>Job Fair</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="f">
+        <label>Follow-up Date</label>
+        <input type="date" id="addFollowUp" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="f">
+        <label>Salary / Compensation</label>
+        <input type="text" id="addSalary" placeholder="e.g. $90k–$110k" />
+      </div>
+      <div class="f">
+        <label>Job Posting URL</label>
+        <input type="url" id="addUrl" placeholder="https://…" />
+      </div>
+    </div>
+
+    <div class="section-label">Recruiter / Contact</div>
+    <div class="form-row">
+      <div class="f">
+        <label>Recruiter Name</label>
+        <input type="text" id="addRecruiterName" placeholder="Jane Smith" />
+      </div>
+      <div class="f">
+        <label>Recruiter Email</label>
+        <input type="email" id="addRecruiterEmail" placeholder="jane@company.com" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="f">
+        <label>Recruiter Phone</label>
+        <input type="tel" id="addRecruiterPhone" placeholder="+1 (555) 000-0000" />
+      </div>
+      <div class="f">
+        <label>Recruiter LinkedIn</label>
+        <input type="url" id="addRecruiterLinkedin" placeholder="linkedin.com/in/…" />
+      </div>
+    </div>
+
+    <div class="section-label">Documents</div>
+    <div class="form-row">
+      <div class="f">
+        <label>Resume Used</label>
+        <div class="file-upload-area" id="resumeUploadArea">
+          <input type="file" id="addResume" accept=".pdf,.doc,.docx,.txt" onchange="handleFileSelect('resume')" />
+          <div class="file-upload-label">
+            <span class="ico">📄</span>
+            <span>Upload resume (PDF, DOCX, TXT)</span>
+          </div>
+        </div>
+        <div class="file-chosen" id="resumeChosen" style="display:none">
+          <span>📄</span>
+          <span id="resumeChosenName"></span>
+          <button class="rm" onclick="clearFile('resume')" title="Remove">✕</button>
+        </div>
+      </div>
+      <div class="f">
+        <label>Cover Letter Used</label>
+        <div class="file-upload-area" id="coverUploadArea">
+          <input type="file" id="addCover" accept=".pdf,.doc,.docx,.txt" onchange="handleFileSelect('cover')" />
+          <div class="file-upload-label">
+            <span class="ico">✉️</span>
+            <span>Upload cover letter (PDF, DOCX, TXT)</span>
+          </div>
+        </div>
+        <div class="file-chosen" id="coverChosen" style="display:none">
+          <span>✉️</span>
+          <span id="coverChosenName"></span>
+          <button class="rm" onclick="clearFile('cover')" title="Remove">✕</button>
+        </div>
+      </div>
+    </div>
+
     <div class="f" style="margin-bottom:14px">
       <label>Notes</label>
-      <textarea id="addNotes" placeholder="Recruiter name, salary range, anything useful…"></textarea>
+      <textarea id="addNotes" placeholder="Recruiter name, salary range, interview tips, anything useful…"></textarea>
     </div>
+
     <div class="modal-actions">
       <button class="btn btn-primary" onclick="confirmAdd()">Add Application</button>
       <button class="btn btn-cancel" onclick="closeAddModal()">Cancel</button>
@@ -232,6 +440,11 @@
 
 var TRACKER_KEY = 'proresume_tracker_v2';
 var _activeFilter = 'All';
+var _detailId = null;
+
+// Temp file store (before saving)
+var _pendingResume = null;
+var _pendingCover  = null;
 
 var STATUS_COLORS = {
   'Applied':      '#2d5a8e',
@@ -256,7 +469,64 @@ var STATUSES = ['Applied','Phone Screen','Interview','Final Round','Offer','Reje
 function load() {
   try { return JSON.parse(localStorage.getItem(TRACKER_KEY)) || []; } catch(e) { return []; }
 }
-function save(entries) { localStorage.setItem(TRACKER_KEY, JSON.stringify(entries)); }
+function save(entries) {
+  try {
+    localStorage.setItem(TRACKER_KEY, JSON.stringify(entries));
+  } catch(e) {
+    // localStorage quota exceeded — files may be too large
+    alert('Storage limit reached. Try removing older applications or using smaller file sizes (compressed PDFs work best).');
+  }
+}
+
+// ── File handling ─────────────────────────────────────────────
+function handleFileSelect(type) {
+  var inputId = type === 'resume' ? 'addResume' : 'addCover';
+  var file = document.getElementById(inputId).files[0];
+  if (!file) return;
+
+  // Warn if file > 2MB
+  if (file.size > 2 * 1024 * 1024) {
+    if (!confirm('This file is ' + (file.size / 1024 / 1024).toFixed(1) + 'MB. Large files use more browser storage. Continue?')) {
+      document.getElementById(inputId).value = '';
+      return;
+    }
+  }
+
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var fileObj = { name: file.name, type: file.type, size: file.size, data: ev.target.result };
+    if (type === 'resume') {
+      _pendingResume = fileObj;
+      document.getElementById('resumeChosenName').textContent = file.name;
+      document.getElementById('resumeChosen').style.display = 'flex';
+    } else {
+      _pendingCover = fileObj;
+      document.getElementById('coverChosenName').textContent = file.name;
+      document.getElementById('coverChosen').style.display = 'flex';
+    }
+  };
+  reader.readAsDataURL(file);
+}
+
+function clearFile(type) {
+  if (type === 'resume') {
+    _pendingResume = null;
+    document.getElementById('addResume').value = '';
+    document.getElementById('resumeChosen').style.display = 'none';
+  } else {
+    _pendingCover = null;
+    document.getElementById('addCover').value = '';
+    document.getElementById('coverChosen').style.display = 'none';
+  }
+}
+
+function downloadFile(fileObj) {
+  if (!fileObj || !fileObj.data) return;
+  var a = document.createElement('a');
+  a.href = fileObj.data;
+  a.download = fileObj.name || 'document';
+  a.click();
+}
 
 // ── Pipeline ──────────────────────────────────────────────────
 function renderPipeline() {
@@ -321,22 +591,40 @@ function renderTable() {
       return '<option value="'+s+'"'+(e.status===s?' selected':'')+'>'+s+'</option>';
     }).join('');
     var noteVal = (e.notes || '').replace(/"/g, '&quot;');
+
     var jdCell = e.jd
       ? '<button class="jd-btn" data-jd-id="'+e.id+'" title="View saved job description">📋 View JD</button>'
       : '<span style="color:var(--gray400);font-size:.78rem">—</span>';
+
+    // Files badges
+    var filesBadges = '<div class="file-badges">';
+    if (e.resumeFile) {
+      filesBadges += '<span class="file-badge resume" data-dl-resume="'+e.id+'" title="'+esc(e.resumeFile.name)+'">📄 Resume</span>';
+    } else {
+      filesBadges += '<span class="file-badge none">No resume</span>';
+    }
+    if (e.coverLetterFile) {
+      filesBadges += '<span class="file-badge cover" data-dl-cover="'+e.id+'" title="'+esc(e.coverLetterFile.name)+'">✉️ Cover</span>';
+    } else {
+      filesBadges += '<span class="file-badge none">No cover</span>';
+    }
+    filesBadges += '</div>';
+
     h += '<tr>'
        + '<td class="td-company">'+esc(e.company)+'</td>'
        + '<td class="td-role">'+esc(e.role)+'</td>'
        + '<td class="td-date hide-sm">'+esc(e.date||'·')+'</td>'
        + '<td class="td-ats hide-sm">'+atsHtml+'</td>'
        + '<td><select class="status-select" data-id="'+e.id+'" style="color:'+sc+';background:'+sbg+'">'+opts+'</select></td>'
-       + '<td class="hide-sm">'+jdCell+'</td>'
+       + '<td class="hide-sm">'+filesBadges+'</td>'
+       + '<td class="hide-sm">'+jdCell+' <button class="detail-btn" data-detail-id="'+e.id+'" title="View full details" style="margin-top:4px">🗂 Details</button></td>'
        + '<td class="td-notes"><textarea data-notes-id="'+e.id+'" placeholder="Add notes…">'+esc(e.notes||'')+'</textarea></td>'
        + '<td class="td-del"><button class="del-btn" data-del="'+e.id+'" title="Remove">✕</button></td>'
        + '</tr>';
   });
   body.innerHTML = h;
 
+  // Status change
   body.querySelectorAll('.status-select').forEach(function(sel) {
     sel.addEventListener('change', function() {
       var id = sel.getAttribute('data-id');
@@ -347,6 +635,7 @@ function renderTable() {
       renderTable();
     });
   });
+  // Notes change
   body.querySelectorAll('[data-notes-id]').forEach(function(ta) {
     ta.addEventListener('change', function() {
       var id = ta.getAttribute('data-notes-id');
@@ -355,6 +644,7 @@ function renderTable() {
       save(all);
     });
   });
+  // Delete
   body.querySelectorAll('[data-del]').forEach(function(btn) {
     btn.addEventListener('click', function() {
       if (!confirm('Remove this application?')) return;
@@ -363,11 +653,34 @@ function renderTable() {
       renderTable();
     });
   });
+  // JD viewer
   body.querySelectorAll('[data-jd-id]').forEach(function(btn) {
     btn.addEventListener('click', function() {
       var id = btn.getAttribute('data-jd-id');
       var entry = load().find(function(e){ return e.id===id; });
       if (entry && entry.jd) showJD(entry.company, entry.role, entry.jd);
+    });
+  });
+  // Details modal
+  body.querySelectorAll('[data-detail-id]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var id = btn.getAttribute('data-detail-id');
+      openDetail(id);
+    });
+  });
+  // File download from table
+  body.querySelectorAll('[data-dl-resume]').forEach(function(badge) {
+    badge.addEventListener('click', function() {
+      var id = badge.getAttribute('data-dl-resume');
+      var entry = load().find(function(e){ return e.id===id; });
+      if (entry && entry.resumeFile) downloadFile(entry.resumeFile);
+    });
+  });
+  body.querySelectorAll('[data-dl-cover]').forEach(function(badge) {
+    badge.addEventListener('click', function() {
+      var id = badge.getAttribute('data-dl-cover');
+      var entry = load().find(function(e){ return e.id===id; });
+      if (entry && entry.coverLetterFile) downloadFile(entry.coverLetterFile);
     });
   });
 }
@@ -385,13 +698,115 @@ function esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+// ── Detail modal ───────────────────────────────────────────────
+function openDetail(id) {
+  var entry = load().find(function(e){ return e.id===id; });
+  if (!entry) return;
+  _detailId = id;
+
+  document.getElementById('dmCompany').textContent = entry.company || '—';
+  document.getElementById('dmRole').textContent    = entry.role    || '—';
+
+  // Status badge
+  var sc  = STATUS_COLORS[entry.status] || '#4b5563';
+  var sbg = STATUS_BG[entry.status]     || '#f1f5f9';
+  document.getElementById('dmStatusBadge').innerHTML =
+    '<span class="status-badge" style="background:rgba(255,255,255,.18);color:#fff;border:1px solid rgba(255,255,255,.3)">'+esc(entry.status||'')+'</span>';
+
+  // Info fields
+  setDmField('dmDate',           entry.date);
+  setDmField('dmAts',            entry.atsScore != null ? entry.atsScore + '%' : null);
+  setDmField('dmMethod',         entry.applicationMethod);
+  setDmField('dmFollowUp',       entry.followUpDate);
+  setDmField('dmSalary',         entry.salaryRange);
+  setDmField('dmUrl',            entry.jobUrl, true);
+
+  // Recruiter
+  setDmField('dmRecruiterName',     entry.recruiterName);
+  setDmField('dmRecruiterEmail',    entry.recruiterEmail, true);
+  setDmField('dmRecruiterPhone',    entry.recruiterPhone);
+  setDmField('dmRecruiterLinkedin', entry.recruiterLinkedin, true);
+
+  // Files
+  var filesRow = document.getElementById('dmFiles');
+  filesRow.innerHTML = '';
+  if (entry.resumeFile) {
+    var rb = document.createElement('button');
+    rb.className = 'file-action-btn file-action-resume';
+    rb.innerHTML = '📄 Download Resume — ' + esc(entry.resumeFile.name);
+    rb.onclick = function(){ downloadFile(entry.resumeFile); };
+    filesRow.appendChild(rb);
+  }
+  if (entry.coverLetterFile) {
+    var cb = document.createElement('button');
+    cb.className = 'file-action-btn file-action-cover';
+    cb.innerHTML = '✉️ Download Cover Letter — ' + esc(entry.coverLetterFile.name);
+    cb.onclick = function(){ downloadFile(entry.coverLetterFile); };
+    filesRow.appendChild(cb);
+  }
+  if (entry.jd) {
+    var jb = document.createElement('button');
+    jb.className = 'file-action-btn file-action-jd';
+    jb.innerHTML = '📋 View Job Description';
+    jb.onclick = function(){ closeDetail(); showJD(entry.company, entry.role, entry.jd); };
+    filesRow.appendChild(jb);
+  }
+  if (!entry.resumeFile && !entry.coverLetterFile && !entry.jd) {
+    filesRow.innerHTML = '<span style="color:var(--gray400);font-size:.85rem;font-style:italic">No documents attached yet.</span>';
+  }
+
+  // Notes
+  document.getElementById('dmNotes').value = entry.notes || '';
+
+  document.getElementById('detailModal').classList.add('open');
+}
+
+function setDmField(id, val, isLink) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  if (!val) {
+    el.innerHTML = '<span class="empty">—</span>';
+  } else if (isLink) {
+    var href = String(val);
+    if (id === 'dmRecruiterEmail' && !href.startsWith('mailto:')) href = 'mailto:' + href;
+    else if (id !== 'dmRecruiterEmail' && !href.startsWith('http')) href = 'https://' + href;
+    el.innerHTML = '<a href="'+esc(href)+'" target="_blank" rel="noopener">'+esc(val)+'</a>';
+  } else {
+    el.textContent = val;
+  }
+}
+
+function saveDetailNotes() {
+  if (!_detailId) return;
+  var all = load();
+  all.forEach(function(e) {
+    if (e.id === _detailId) e.notes = document.getElementById('dmNotes').value;
+  });
+  save(all);
+  renderTable();
+  // Brief visual confirm
+  var btn = document.querySelector('.detail-save-btn');
+  btn.textContent = '✓ Saved!';
+  setTimeout(function(){ btn.textContent = 'Save Notes'; }, 1500);
+}
+
+function closeDetail() {
+  document.getElementById('detailModal').classList.remove('open');
+  _detailId = null;
+}
+
 // ── Add modal ─────────────────────────────────────────────────
 function openAddModal() {
-  document.getElementById('addCompany').value = '';
-  document.getElementById('addRole').value    = '';
-  document.getElementById('addNotes').value   = '';
+  // Clear all fields
+  ['addCompany','addRole','addNotes','addSalary','addUrl',
+   'addRecruiterName','addRecruiterEmail','addRecruiterPhone','addRecruiterLinkedin'].forEach(function(id){
+    document.getElementById(id).value = '';
+  });
   document.getElementById('addStatus').value  = 'Applied';
-  // Default date = today
+  document.getElementById('addMethod').value  = '';
+  document.getElementById('addFollowUp').value = '';
+  clearFile('resume');
+  clearFile('cover');
   var today = new Date();
   document.getElementById('addDate').value = today.toISOString().split('T')[0];
   document.getElementById('addModal').classList.add('open');
@@ -411,22 +826,35 @@ function confirmAdd() {
     : new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
 
   var all = load();
-  all.unshift({
-    id: Date.now().toString(),
-    company:      company,
-    role:         role,
-    date:         date,
-    template:     '',
-    templateLabel:'Manual entry',
-    profile:      '',
-    profileLabel: '',
-    atsScore:     null,
-    status:       document.getElementById('addStatus').value,
-    notes:        document.getElementById('addNotes').value.trim(),
-    statusDate:   new Date().toISOString(),
-  });
+  var newEntry = {
+    id:                 Date.now().toString(),
+    company:            company,
+    role:               role,
+    date:               date,
+    template:           '',
+    templateLabel:      'Manual entry',
+    profile:            '',
+    profileLabel:       '',
+    atsScore:           null,
+    status:             document.getElementById('addStatus').value,
+    notes:              document.getElementById('addNotes').value.trim(),
+    statusDate:         new Date().toISOString(),
+    applicationMethod:  document.getElementById('addMethod').value || '',
+    followUpDate:       document.getElementById('addFollowUp').value || '',
+    salaryRange:        document.getElementById('addSalary').value.trim(),
+    jobUrl:             document.getElementById('addUrl').value.trim(),
+    recruiterName:      document.getElementById('addRecruiterName').value.trim(),
+    recruiterEmail:     document.getElementById('addRecruiterEmail').value.trim(),
+    recruiterPhone:     document.getElementById('addRecruiterPhone').value.trim(),
+    recruiterLinkedin:  document.getElementById('addRecruiterLinkedin').value.trim(),
+    resumeFile:         _pendingResume || null,
+    coverLetterFile:    _pendingCover  || null,
+  };
+  all.unshift(newEntry);
   save(all);
   closeAddModal();
+  _pendingResume = null;
+  _pendingCover  = null;
   renderPipeline();
   renderTable();
 }
@@ -435,7 +863,8 @@ function confirmAdd() {
 function exportCSV() {
   var entries = load();
   if (!entries.length) { alert('No applications to export.'); return; }
-  var cols = ['Company','Role','Date','Status','ATS Score','Template','Notes'];
+  var cols = ['Company','Role','Date Applied','Status','ATS Score','Application Method','Salary Range','Job URL',
+              'Recruiter Name','Recruiter Email','Recruiter Phone','Follow-up Date','Has Resume','Has Cover Letter','Template','Notes'];
   var rows = entries.map(function(e) {
     return [
       '"'+(e.company||'').replace(/"/g,'""')+'"',
@@ -443,6 +872,15 @@ function exportCSV() {
       '"'+(e.date||'')+'"',
       '"'+(e.status||'')+'"',
       e.atsScore!=null ? e.atsScore : '',
+      '"'+(e.applicationMethod||'')+'"',
+      '"'+(e.salaryRange||'').replace(/"/g,'""')+'"',
+      '"'+(e.jobUrl||'')+'"',
+      '"'+(e.recruiterName||'').replace(/"/g,'""')+'"',
+      '"'+(e.recruiterEmail||'')+'"',
+      '"'+(e.recruiterPhone||'')+'"',
+      '"'+(e.followUpDate||'')+'"',
+      e.resumeFile ? 'Yes ('+e.resumeFile.name+')' : 'No',
+      e.coverLetterFile ? 'Yes ('+e.coverLetterFile.name+')' : 'No',
       '"'+(e.templateLabel||e.template||'')+'"',
       '"'+(e.notes||'').replace(/"/g,'""')+'"',
     ].join(',');
