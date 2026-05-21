@@ -470,37 +470,52 @@ function load() {
   try { return JSON.parse(localStorage.getItem(TRACKER_KEY)) || []; } catch(e) { return []; }
 }
 function save(entries) {
-  try {
-    localStorage.setItem(TRACKER_KEY, JSON.stringify(entries));
-  } catch(e) {
-    // localStorage quota exceeded — files may be too large
-    alert('Storage limit reached. Try removing older applications or using smaller file sizes (compressed PDFs work best).');
-  }
+  try { localStorage.setItem(TRACKER_KEY, JSON.stringify(entries)); }
+  catch(e) { alert('Storage limit reached. Try removing older applications.'); }
 }
 
-// ── File handling ─────────────────────────────────────────────
+// ── File storage (each file in its own localStorage key) ───────
+function saveTrackerFile(entryId, type, dataURL, name, mimeType, size) {
+  var key = 'tc_file_' + entryId + '_' + type;
+  try {
+    localStorage.setItem(key, JSON.stringify({ name: name, type: mimeType, size: size, data: dataURL }));
+    return true;
+  } catch(e) { return false; }
+}
+function loadTrackerFile(entryId, type) {
+  var key = 'tc_file_' + entryId + '_' + type;
+  try { return JSON.parse(localStorage.getItem(key)); } catch(e) { return null; }
+}
+function deleteTrackerFiles(entryId) {
+  localStorage.removeItem('tc_file_' + entryId + '_resume');
+  localStorage.removeItem('tc_file_' + entryId + '_cover');
+}
+function downloadTrackerFile(entryId, type) {
+  var f = loadTrackerFile(entryId, type);
+  if (!f || !f.data) { alert('File not found. It may not have been saved.'); return; }
+  var a = document.createElement('a');
+  a.href = f.data; a.download = f.name || 'document'; a.click();
+}
+
+// ── File upload (pending state before entry is saved) ──────────
 function handleFileSelect(type) {
   var inputId = type === 'resume' ? 'addResume' : 'addCover';
   var file = document.getElementById(inputId).files[0];
   if (!file) return;
-
-  // Warn if file > 2MB
-  if (file.size > 2 * 1024 * 1024) {
+  if (file.size > 3 * 1024 * 1024) {
     if (!confirm('This file is ' + (file.size / 1024 / 1024).toFixed(1) + 'MB. Large files use more browser storage. Continue?')) {
-      document.getElementById(inputId).value = '';
-      return;
+      document.getElementById(inputId).value = ''; return;
     }
   }
-
   var reader = new FileReader();
   reader.onload = function(ev) {
-    var fileObj = { name: file.name, type: file.type, size: file.size, data: ev.target.result };
+    var obj = { name: file.name, type: file.type, size: file.size, data: ev.target.result };
     if (type === 'resume') {
-      _pendingResume = fileObj;
+      _pendingResume = obj;
       document.getElementById('resumeChosenName').textContent = file.name;
       document.getElementById('resumeChosen').style.display = 'flex';
     } else {
-      _pendingCover = fileObj;
+      _pendingCover = obj;
       document.getElementById('coverChosenName').textContent = file.name;
       document.getElementById('coverChosen').style.display = 'flex';
     }
@@ -518,14 +533,6 @@ function clearFile(type) {
     document.getElementById('addCover').value = '';
     document.getElementById('coverChosen').style.display = 'none';
   }
-}
-
-function downloadFile(fileObj) {
-  if (!fileObj || !fileObj.data) return;
-  var a = document.createElement('a');
-  a.href = fileObj.data;
-  a.download = fileObj.name || 'document';
-  a.click();
 }
 
 // ── Pipeline ──────────────────────────────────────────────────
@@ -596,15 +603,17 @@ function renderTable() {
       ? '<button class="jd-btn" data-jd-id="'+e.id+'" title="View saved job description">📋 View JD</button>'
       : '<span style="color:var(--gray400);font-size:.78rem">—</span>';
 
-    // Files badges
+    // Files badges — check both new (resumeFileName) and legacy (resumeFile) formats
+    var hasResume = e.resumeFileName || (e.resumeFile && e.resumeFile.name);
+    var hasCover  = e.coverLetterFileName || (e.coverLetterFile && e.coverLetterFile.name);
     var filesBadges = '<div class="file-badges">';
-    if (e.resumeFile) {
-      filesBadges += '<span class="file-badge resume" data-dl-resume="'+e.id+'" title="'+esc(e.resumeFile.name)+'">📄 Resume</span>';
+    if (hasResume) {
+      filesBadges += '<span class="file-badge resume" data-dl-resume="'+e.id+'" title="'+esc(e.resumeFileName || e.resumeFile.name)+'">📄 Resume</span>';
     } else {
       filesBadges += '<span class="file-badge none">No resume</span>';
     }
-    if (e.coverLetterFile) {
-      filesBadges += '<span class="file-badge cover" data-dl-cover="'+e.id+'" title="'+esc(e.coverLetterFile.name)+'">✉️ Cover</span>';
+    if (hasCover) {
+      filesBadges += '<span class="file-badge cover" data-dl-cover="'+e.id+'" title="'+esc(e.coverLetterFileName || e.coverLetterFile.name)+'">✉️ Cover</span>';
     } else {
       filesBadges += '<span class="file-badge none">No cover</span>';
     }
@@ -648,7 +657,9 @@ function renderTable() {
   body.querySelectorAll('[data-del]').forEach(function(btn) {
     btn.addEventListener('click', function() {
       if (!confirm('Remove this application?')) return;
-      save(load().filter(function(e){ return e.id!==btn.getAttribute('data-del'); }));
+      var id = btn.getAttribute('data-del');
+      deleteTrackerFiles(id);
+      save(load().filter(function(e){ return e.id!==id; }));
       renderPipeline();
       renderTable();
     });
@@ -672,15 +683,18 @@ function renderTable() {
   body.querySelectorAll('[data-dl-resume]').forEach(function(badge) {
     badge.addEventListener('click', function() {
       var id = badge.getAttribute('data-dl-resume');
-      var entry = load().find(function(e){ return e.id===id; });
-      if (entry && entry.resumeFile) downloadFile(entry.resumeFile);
+      // Support both new separate-key and legacy inline formats
+      var legacy = (load().find(function(e){ return e.id===id; })||{}).resumeFile;
+      if (legacy && legacy.data) { var a=document.createElement('a'); a.href=legacy.data; a.download=legacy.name||'Resume.docx'; a.click(); }
+      else downloadTrackerFile(id, 'resume');
     });
   });
   body.querySelectorAll('[data-dl-cover]').forEach(function(badge) {
     badge.addEventListener('click', function() {
       var id = badge.getAttribute('data-dl-cover');
-      var entry = load().find(function(e){ return e.id===id; });
-      if (entry && entry.coverLetterFile) downloadFile(entry.coverLetterFile);
+      var legacy = (load().find(function(e){ return e.id===id; })||{}).coverLetterFile;
+      if (legacy && legacy.data) { var a=document.createElement('a'); a.href=legacy.data; a.download=legacy.name||'Cover_Letter.docx'; a.click(); }
+      else downloadTrackerFile(id, 'cover');
     });
   });
 }
@@ -727,21 +741,29 @@ function openDetail(id) {
   setDmField('dmRecruiterPhone',    entry.recruiterPhone);
   setDmField('dmRecruiterLinkedin', entry.recruiterLinkedin, true);
 
-  // Files
+  // Files — support both new separate-key and legacy inline formats
   var filesRow = document.getElementById('dmFiles');
   filesRow.innerHTML = '';
-  if (entry.resumeFile) {
+  var resumeName = entry.resumeFileName || (entry.resumeFile && entry.resumeFile.name);
+  var coverName  = entry.coverLetterFileName || (entry.coverLetterFile && entry.coverLetterFile.name);
+  if (resumeName) {
     var rb = document.createElement('button');
     rb.className = 'file-action-btn file-action-resume';
-    rb.innerHTML = '📄 Download Resume — ' + esc(entry.resumeFile.name);
-    rb.onclick = function(){ downloadFile(entry.resumeFile); };
+    rb.innerHTML = '📄 Download Resume — ' + esc(resumeName);
+    rb.onclick = function(){
+      if (entry.resumeFile && entry.resumeFile.data) { var a=document.createElement('a'); a.href=entry.resumeFile.data; a.download=entry.resumeFile.name; a.click(); }
+      else downloadTrackerFile(entry.id, 'resume');
+    };
     filesRow.appendChild(rb);
   }
-  if (entry.coverLetterFile) {
+  if (coverName) {
     var cb = document.createElement('button');
     cb.className = 'file-action-btn file-action-cover';
-    cb.innerHTML = '✉️ Download Cover Letter — ' + esc(entry.coverLetterFile.name);
-    cb.onclick = function(){ downloadFile(entry.coverLetterFile); };
+    cb.innerHTML = '✉️ Download Cover Letter — ' + esc(coverName);
+    cb.onclick = function(){
+      if (entry.coverLetterFile && entry.coverLetterFile.data) { var a=document.createElement('a'); a.href=entry.coverLetterFile.data; a.download=entry.coverLetterFile.name; a.click(); }
+      else downloadTrackerFile(entry.id, 'cover');
+    };
     filesRow.appendChild(cb);
   }
   if (entry.jd) {
@@ -751,7 +773,7 @@ function openDetail(id) {
     jb.onclick = function(){ closeDetail(); showJD(entry.company, entry.role, entry.jd); };
     filesRow.appendChild(jb);
   }
-  if (!entry.resumeFile && !entry.coverLetterFile && !entry.jd) {
+  if (!resumeName && !coverName && !entry.jd) {
     filesRow.innerHTML = '<span style="color:var(--gray400);font-size:.85rem;font-style:italic">No documents attached yet.</span>';
   }
 
@@ -825,9 +847,23 @@ function confirmAdd() {
     ? new Date(dateVal).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})
     : new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
 
+  var newId = Date.now().toString();
+
+  // Save files in their own keys (not inside the entry)
+  var savedResumeName = null;
+  var savedCoverName  = null;
+  if (_pendingResume && _pendingResume.data) {
+    var ok = saveTrackerFile(newId, 'resume', _pendingResume.data, _pendingResume.name, _pendingResume.type, _pendingResume.size);
+    if (ok) savedResumeName = _pendingResume.name;
+  }
+  if (_pendingCover && _pendingCover.data) {
+    var ok2 = saveTrackerFile(newId, 'cover', _pendingCover.data, _pendingCover.name, _pendingCover.type, _pendingCover.size);
+    if (ok2) savedCoverName = _pendingCover.name;
+  }
+
   var all = load();
   var newEntry = {
-    id:                 Date.now().toString(),
+    id:                 newId,
     company:            company,
     role:               role,
     date:               date,
@@ -847,8 +883,8 @@ function confirmAdd() {
     recruiterEmail:     document.getElementById('addRecruiterEmail').value.trim(),
     recruiterPhone:     document.getElementById('addRecruiterPhone').value.trim(),
     recruiterLinkedin:  document.getElementById('addRecruiterLinkedin').value.trim(),
-    resumeFile:         _pendingResume || null,
-    coverLetterFile:    _pendingCover  || null,
+    resumeFileName:      savedResumeName,
+    coverLetterFileName: savedCoverName,
   };
   all.unshift(newEntry);
   save(all);
