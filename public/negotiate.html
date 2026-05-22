@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ApplyStack | Salary Negotiation</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="/i18n.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -157,11 +158,12 @@
 <nav>
   <a href="/" class="logo">Apply<span>Stack</span></a>
   <div class="nav-right">
+    <div id="langSwitcher"></div>
     <a href="/app.html" class="nav-link">🏠 Home</a>
-    <a href="/tracker.html" class="nav-link">📋 Tracker</a>
+    <a href="/tracker.html" class="nav-link" data-i18n="nav.tracker">📋 Tracker</a>
     <a href="/prep.html" class="nav-link">🎤 Interview Prep</a>
     <a href="/negotiate.html" class="nav-link active">💰 Negotiate</a>
-    <a href="/account.html" class="nav-link">Account</a>
+    <a href="/account.html" class="nav-link" data-i18n="nav.account">Account</a>
   </div>
 </nav>
 
@@ -519,6 +521,8 @@ function editOffer() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+injectLangSwitcher(document.getElementById('langSwitcher'));
+applyLang(getLang());
 </script>
 
 </body>

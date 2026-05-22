@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Interview Coach | TailorCV</title>
+  <title>Interview Coach | ApplyStack</title>
+  <script src="/i18n.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -320,12 +321,13 @@
 <header>
   <div class="logo">🎤</div>
   <div class="header-text">
-    <h1>Interview Coach</h1>
-    <p>AI-powered practice questions tailored to your job</p>
+    <h1 data-i18n="ic.title">Interview Coach</h1>
+    <p data-i18n="ic.subtitle">AI-powered practice questions tailored to your job</p>
   </div>
   <div class="header-right">
-    <span class="pro-badge">⭐ PRO</span>
-    <a class="back-btn" href="app.html">← Back to Builder</a>
+    <div id="langSwitcher" style="margin-right:4px"></div>
+    <span class="pro-badge" data-i18n="ic.pro_badge">⭐ PRO</span>
+    <a class="back-btn" href="app.html" data-i18n="ic.back">← Back to Builder</a>
   </div>
 </header>
 
@@ -1228,6 +1230,10 @@ init = async function() {
   await _origInit();
   renderSavedSessionsList();
 };
+
+// Init language
+injectLangSwitcher(document.getElementById('langSwitcher'));
+applyLang(getLang());
 </script>
 </body>
 </html>

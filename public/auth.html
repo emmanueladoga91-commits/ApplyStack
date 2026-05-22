@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ApplyStack | Sign In</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="/i18n.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -58,20 +59,23 @@
 <body>
 <nav>
   <a href="/" class="logo">Apply<span>Stack</span></a>
-  <a href="/" class="nav-back">← Back to home</a>
+  <div style="display:flex;align-items:center;gap:16px;">
+    <div id="langSwitcher"></div>
+    <a href="/" class="nav-back" data-i18n="nav.back_home">← Back to home</a>
+  </div>
 </nav>
 <main>
   <div class="auth-card">
-    <div class="auth-title">Welcome to ApplyStack</div>
-    <p class="auth-sub">Your entire job stack, one place.</p>
+    <div class="auth-title" data-i18n="auth.title">Welcome to ApplyStack</div>
+    <p class="auth-sub" data-i18n="auth.subtitle">Your entire job stack, one place.</p>
 
-    <div class="free-badge">
+    <div class="free-badge" data-i18n="auth.free_badge">
       🎁 Free: 1 tailored resume + download · no credit card needed
     </div>
 
     <div class="tabs">
-      <div class="tab active" id="tabLogin" onclick="switchTab('login')">Sign in</div>
-      <div class="tab" id="tabRegister" onclick="switchTab('register')">Create account</div>
+      <div class="tab active" id="tabLogin" onclick="switchTab('login')" data-i18n="auth.tab_signin">Sign in</div>
+      <div class="tab" id="tabRegister" onclick="switchTab('register')" data-i18n="auth.tab_register">Create account</div>
     </div>
 
     <div id="alertBox" class="alert"></div>
@@ -79,48 +83,48 @@
     <!-- Login form -->
     <form id="loginForm" onsubmit="doLogin(event)">
       <div class="f">
-        <label>Email address</label>
-        <input type="email" id="loginEmail" placeholder="you@example.com" required autocomplete="email" />
+        <label data-i18n="auth.email">Email address</label>
+        <input type="email" id="loginEmail" data-i18n-ph="auth.placeholder_email" placeholder="you@example.com" required autocomplete="email" />
       </div>
       <div class="f">
-        <label>Password</label>
+        <label data-i18n="auth.password">Password</label>
         <div class="pw-wrap">
-          <input type="password" id="loginPassword" placeholder="Your password" required autocomplete="current-password" />
+          <input type="password" id="loginPassword" data-i18n-ph="auth.placeholder_pw" placeholder="Your password" required autocomplete="current-password" />
           <button type="button" class="pw-eye" onclick="togglePw('loginPassword', this)" tabindex="-1">👁</button>
         </div>
       </div>
-      <button class="btn-primary" type="submit" id="loginBtn">Sign in</button>
+      <button class="btn-primary" type="submit" id="loginBtn" data-i18n="auth.btn_signin">Sign in</button>
     </form>
 
     <!-- Register form -->
     <form id="registerForm" style="display:none" onsubmit="doRegister(event)">
       <div class="f">
-        <label>Email address</label>
-        <input type="email" id="regEmail" placeholder="you@example.com" required autocomplete="email" />
+        <label data-i18n="auth.email">Email address</label>
+        <input type="email" id="regEmail" data-i18n-ph="auth.placeholder_email" placeholder="you@example.com" required autocomplete="email" />
       </div>
       <div class="f">
-        <label>Password <span style="color:var(--gray400);font-weight:400">(min 8 characters)</span></label>
+        <label data-i18n="auth.password_min">Password (min 8 characters)</label>
         <div class="pw-wrap">
-          <input type="password" id="regPassword" placeholder="Create a password" required autocomplete="new-password" minlength="8" />
+          <input type="password" id="regPassword" data-i18n-ph="auth.placeholder_new_pw" placeholder="Create a password" required autocomplete="new-password" minlength="8" />
           <button type="button" class="pw-eye" onclick="togglePw('regPassword', this)" tabindex="-1">👁</button>
         </div>
       </div>
       <div class="f">
-        <label>Confirm password</label>
+        <label data-i18n="auth.confirm_password">Confirm password</label>
         <div class="pw-wrap">
-          <input type="password" id="regConfirm" placeholder="Repeat password" required autocomplete="new-password" />
+          <input type="password" id="regConfirm" data-i18n-ph="auth.placeholder_confirm" placeholder="Repeat password" required autocomplete="new-password" />
           <button type="button" class="pw-eye" onclick="togglePw('regConfirm', this)" tabindex="-1">👁</button>
         </div>
       </div>
       <div class="f" id="betaCodeWrap" style="margin-top:4px;">
         <label style="display:flex;align-items:center;gap:6px;">
-          Beta access code
-          <span style="color:var(--gray400);font-weight:400;font-size:.75rem;">(optional · unlocks full Pro access for 24h)</span>
+          <span data-i18n="auth.beta_code">Beta access code</span>
+          <span style="color:var(--gray400);font-weight:400;font-size:.75rem;" data-i18n="auth.beta_code_hint">(optional · unlocks full Pro access for 24h)</span>
         </label>
-        <input type="text" id="regBetaCode" placeholder="e.g. AB12-CD34-EF56" autocomplete="off" style="text-transform:uppercase;letter-spacing:.08em;" />
+        <input type="text" id="regBetaCode" data-i18n-ph="auth.placeholder_beta" placeholder="e.g. AB12-CD34-EF56" autocomplete="off" style="text-transform:uppercase;letter-spacing:.08em;" />
       </div>
-      <button class="btn-primary" type="submit" id="registerBtn">Create free account</button>
-      <p class="terms">By signing up you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</p>
+      <button class="btn-primary" type="submit" id="registerBtn" data-i18n="auth.btn_register">Create free account</button>
+      <p class="terms" data-i18n="auth.terms">By signing up you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.</p>
     </form>
   </div>
 </main>
@@ -150,8 +154,8 @@
 
   function setLoading(btnId, loading) {
     var btn = document.getElementById(btnId);
-    if (loading) { btn.disabled = true; btn.innerHTML = '<span class="spin"></span>Please wait…'; }
-    else { btn.disabled = false; btn.textContent = btnId === 'loginBtn' ? 'Sign in' : 'Create free account'; }
+    if (loading) { btn.disabled = true; btn.innerHTML = '<span class="spin"></span>' + t('auth.loading'); }
+    else { btn.disabled = false; btn.textContent = btnId === 'loginBtn' ? t('auth.btn_signin') : t('auth.btn_register'); }
   }
 
   async function doLogin(e) {
@@ -166,12 +170,12 @@
         }),
       });
       var data = await res.json();
-      if (!res.ok) { showAlert('error', data.error || 'Login failed.'); return; }
+      if (!res.ok) { showAlert('error', data.error || t('auth.error_network')); return; }
       localStorage.setItem('tc_token', data.token);
       localStorage.setItem('tc_user', JSON.stringify(data.user));
       window.location.href = '/app.html';
     } catch(err) {
-      showAlert('error', 'Network error. Please try again.');
+      showAlert('error', t('auth.error_network'));
     } finally { setLoading('loginBtn', false); }
   }
 
@@ -179,7 +183,7 @@
     e.preventDefault(); clearAlert();
     var pass = document.getElementById('regPassword').value;
     var conf = document.getElementById('regConfirm').value;
-    if (pass !== conf) { showAlert('error', 'Passwords do not match.'); return; }
+    if (pass !== conf) { showAlert('error', t('auth.error_mismatch')); return; }
     setLoading('registerBtn', true);
     try {
       var betaCode   = document.getElementById('regBetaCode').value.trim();
@@ -195,12 +199,12 @@
         }),
       });
       var data = await res.json();
-      if (!res.ok) { showAlert('error', data.error || 'Registration failed.'); return; }
+      if (!res.ok) { showAlert('error', data.error || t('auth.error_network')); return; }
       localStorage.setItem('tc_token', data.token);
       localStorage.setItem('tc_user', JSON.stringify(data.user));
       window.location.href = '/app.html';
     } catch(err) {
-      showAlert('error', 'Network error. Please try again.');
+      showAlert('error', t('auth.error_network'));
     } finally { setLoading('registerBtn', false); }
   }
 
@@ -214,6 +218,10 @@
   // Pre-fill tab from query string ?tab=register
   var _params = new URLSearchParams(location.search);
   if (_params.get('tab') === 'register') switchTab('register');
+
+  // Init language
+  injectLangSwitcher(document.getElementById('langSwitcher'));
+  applyLang(getLang());
 
   // Persist referral code from URL so it survives tab switches
   var _refCode = _params.get('ref');

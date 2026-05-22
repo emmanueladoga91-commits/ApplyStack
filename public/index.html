@@ -7,6 +7,7 @@
   <meta name="description" content="ApplyStack tailors your resume to every job posting using AI. 14 professional templates, 18 career niches, ATS scoring, cover letters, interview prep and salary negotiation. Sign up free." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="/i18n.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1557,9 +1558,10 @@
       <li><a href="#templates">Templates</a></li>
       <li><a href="#pricing">Pricing</a></li>
       <li><a href="#faq">FAQ</a></li>
-      <li><a href="/app.html" class="nav-cta">Get Started Free</a></li>
+      <li><div id="langSwitcher" style="display:inline-block"></div></li>
+      <li><a href="/app.html" class="nav-cta" data-i18n="idx.nav_signup">Get Started Free</a></li>
     </ul>
-    <a href="/app.html" class="nav-mobile-cta">Start Free</a>
+    <a href="/app.html" class="nav-mobile-cta" data-i18n="idx.nav_signup">Start Free</a>
   </div>
 </nav>
 
@@ -3186,6 +3188,10 @@ var LOREM_DATA_BULLET = {
     });
   })();
   /* ════ END HAMBURGER MENU ════ */
+
+  // Init language switcher
+  injectLangSwitcher(document.getElementById('langSwitcher'));
+  applyLang(getLang());
 
 </script>
 </body>

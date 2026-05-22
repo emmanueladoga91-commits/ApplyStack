@@ -6,6 +6,7 @@
   <title>ApplyStack</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="/i18n.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -1896,7 +1897,8 @@
     <a href="/account.html" class="app-drawer-item"><span class="di-icon">⚙️</span> Account</a>
   </nav>
   <div class="app-drawer-foot">
-    <button class="app-drawer-signout" onclick="doLogout()">Sign out</button>
+    <div id="langSwitcher" style="margin-bottom:10px;display:flex;justify-content:center"></div>
+    <button class="app-drawer-signout" onclick="doLogout()" data-i18n="nav.sign_out">Sign out</button>
   </div>
 </div>
 
@@ -3034,6 +3036,13 @@
     document.addEventListener('keydown', function(e) { if (e.key === 'Escape' && isOpen) closeAppDrawer(); });
   })();
   // ── End app hamburger ─────────────────────────────────
+
+  // ── Init language ──────────────────────────────────────
+  injectLangSwitcher(document.getElementById('langSwitcher'));
+  // App drawer has a dark background — add dark variant class
+  var ls = document.getElementById('langSwitcher').querySelector('.lang-switch');
+  if (ls) ls.classList.add('dark');
+  applyLang(getLang());
 </script>
 <script src="app.js?v=12"></script>
 

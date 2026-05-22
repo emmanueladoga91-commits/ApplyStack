@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ApplyStack | Interview Prep</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="/i18n.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -164,11 +165,12 @@
   <a href="/" class="logo">Apply<span>Stack</span></a>
   <nav>
     <a href="/app.html" class="nav-link">🏠 Home</a>
-    <a href="/tracker.html" class="nav-link">📋 Tracker</a>
+    <a href="/tracker.html" class="nav-link" data-i18n="nav.tracker">📋 Tracker</a>
     <a href="/prep.html" class="nav-link active">🎤 Interview Prep</a>
     <a href="/negotiate.html" class="nav-link">💰 Negotiate</a>
-    <a href="/account.html" class="nav-link">Account</a>
+    <a href="/account.html" class="nav-link" data-i18n="nav.account">Account</a>
   </nav>
+  <div id="langSwitcher" style="margin-left:auto"></div>
 </header>
 
 <main>
@@ -450,6 +452,9 @@ function copyToClipboard(text) {
     console.error('Copy failed:', err);
   });
 }
+
+injectLangSwitcher(document.getElementById('langSwitcher'));
+applyLang(getLang());
 </script>
 
 </body>

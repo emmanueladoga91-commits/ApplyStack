@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>TailorCV | My Account</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="/i18n.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -83,59 +84,60 @@
 </head>
 <body>
 <nav>
-  <a href="/" class="logo">Tailor<span>CV</span></a>
+  <a href="/" class="logo">Apply<span>Stack</span></a>
   <div class="nav-right">
-    <a href="/app.html" class="nav-link">← Back to builder</a>
-    <a href="#" class="nav-link" onclick="logout()">Sign out</a>
+    <div id="langSwitcher"></div>
+    <a href="/app.html" class="nav-link" data-i18n="nav.builder">← Resume Builder</a>
+    <a href="#" class="nav-link" onclick="logout()" data-i18n="nav.sign_out">Sign out</a>
   </div>
 </nav>
 
 <main>
-  <h1>My Account</h1>
+  <h1 data-i18n="acct.title">My Account</h1>
   <p class="sub" id="userEmail">Loading…</p>
 
   <div id="alertBox" class="alert"></div>
 
   <!-- Plan card -->
   <div class="card">
-    <div class="card-title">Your Plan</div>
+    <div class="card-title" data-i18n="acct.plan_card">Your Plan</div>
     <div class="plan-row">
       <div class="plan-badge">
         <span id="planName">Free</span>
         <span id="planBadge" class="badge-free">FREE</span>
       </div>
       <div id="manageBtn" style="display:none">
-        <button class="btn btn-outline" onclick="openPortal()">Manage billing →</button>
+        <button class="btn btn-outline" onclick="openPortal()" data-i18n="acct.manage_billing">Manage billing →</button>
       </div>
     </div>
 
     <div class="stat-grid">
       <div class="stat-box">
         <div class="stat-n" id="statTailors">0</div>
-        <div class="stat-l">Resumes tailored</div>
+        <div class="stat-l" data-i18n="acct.stat_tailors">Resumes tailored</div>
       </div>
       <div class="stat-box">
         <div class="stat-n" id="statPlan">Free</div>
-        <div class="stat-l">Current plan</div>
+        <div class="stat-l" data-i18n="acct.stat_plan">Current plan</div>
       </div>
       <div class="stat-box">
         <div class="stat-n" id="statStatus">·</div>
-        <div class="stat-l">Status</div>
+        <div class="stat-l" data-i18n="acct.stat_status">Status</div>
       </div>
     </div>
 
     <!-- Free tier limit bar -->
     <div id="freeLimitSection">
-      <div style="font-size:.88rem;color:var(--gray600);margin-bottom:4px;">Free tailoring used: <strong id="freeLimitText">0 / 1</strong></div>
+      <div style="font-size:.88rem;color:var(--gray600);margin-bottom:4px;"><span data-i18n="acct.free_used">Free tailoring used:</span> <strong id="freeLimitText">0 / 1</strong></div>
       <div class="free-limit-bar"><div class="free-limit-fill" id="freeLimitFill" style="width:0%"></div></div>
-      <div style="font-size:.8rem;color:var(--gray400);">Upgrade to Pro for unlimited tailoring and all premium features.</div>
+      <div style="font-size:.8rem;color:var(--gray400);" data-i18n="acct.free_hint">Upgrade to Pro for unlimited tailoring and all premium features.</div>
     </div>
   </div>
 
   <!-- Referral Card -->
   <div class="card" id="referralCard">
-    <div class="card-title">🎁 Refer a Friend · Earn Free Tailorings</div>
-    <p style="font-size:.9rem;color:var(--gray600);margin-bottom:16px;line-height:1.6">Share your personal link. When a friend signs up and builds their first resume, <strong>you both get 1 free bonus tailoring</strong>. Works even on the free plan.</p>
+    <div class="card-title" data-i18n="acct.referral_title">🎁 Refer a Friend · Earn Free Tailorings</div>
+    <p style="font-size:.9rem;color:var(--gray600);margin-bottom:16px;line-height:1.6" data-i18n="acct.referral_desc">Share your personal link. When a friend signs up and builds their first resume, you both get 1 free bonus tailoring. Works even on the free plan.</p>
 
     <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
       <input id="referralLinkInput" type="text" readonly
@@ -143,75 +145,75 @@
         value="Loading…" />
       <button onclick="copyReferralLink()" id="copyBtn"
         style="padding:11px 20px;background:var(--indigo);color:#fff;border:none;border-radius:10px;font-size:.88rem;font-weight:700;font-family:inherit;cursor:pointer;white-space:nowrap;transition:background .2s">
-        📋 Copy Link
+        <span data-i18n="acct.copy_link">📋 Copy Link</span>
       </button>
     </div>
 
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:4px">
       <div class="stat-box">
         <div class="stat-n" id="refStatCount">·</div>
-        <div class="stat-l">Friends referred</div>
+        <div class="stat-l" data-i18n="acct.ref_friends">Friends referred</div>
       </div>
       <div class="stat-box" style="border-color:#86efac;background:#f0fdf4">
         <div class="stat-n" style="color:#166534" id="refStatCredits">·</div>
-        <div class="stat-l">Free tailorings earned</div>
+        <div class="stat-l" data-i18n="acct.ref_credits">Free tailorings earned</div>
       </div>
       <div class="stat-box">
         <div class="stat-n" id="refStatCode" style="font-size:1.2rem;letter-spacing:.05em">·</div>
-        <div class="stat-l">Your referral code</div>
+        <div class="stat-l" data-i18n="acct.ref_code">Your referral code</div>
       </div>
     </div>
-    <p style="font-size:.78rem;color:var(--gray400);margin-top:10px">Credits are awarded automatically when your referred friend completes their first resume build.</p>
+    <p style="font-size:.78rem;color:var(--gray400);margin-top:10px" data-i18n="acct.ref_note">Credits are awarded automatically when your referred friend completes their first resume build.</p>
   </div>
 
   <!-- Upgrade card (shown only for free users) -->
   <div class="card" id="upgradeCard">
-    <div class="card-title">Upgrade to Pro</div>
-    <p style="font-size:.9rem;color:var(--gray600);margin-bottom:20px;">Get unlimited resume tailoring, ATS scoring, cover letters, skills gap analysis, interview prep, and more.</p>
+    <div class="card-title" data-i18n="acct.upgrade_title">Upgrade to Pro</div>
+    <p style="font-size:.9rem;color:var(--gray600);margin-bottom:20px;" data-i18n="acct.upgrade_desc">Get unlimited resume tailoring, ATS scoring, cover letters, skills gap analysis, interview prep, and more.</p>
 
     <div class="pricing-grid">
       <div class="price-option selected" id="optMonthly" onclick="selectPlan('monthly')">
         <div class="price">$9</div>
-        <div class="period">per month</div>
+        <div class="period" data-i18n="acct.per_month">per month</div>
       </div>
       <div class="price-option" id="optAnnual" onclick="selectPlan('annual')">
-        <div class="save">Save 27%</div>
+        <div class="save" data-i18n="acct.save_27">Save 27%</div>
         <div class="price">$79</div>
-        <div class="period">per year</div>
+        <div class="period" data-i18n="acct.per_year">per year</div>
       </div>
     </div>
 
-    <button class="btn btn-primary" id="upgradeBtn" onclick="startCheckout()">
+    <button class="btn btn-primary" id="upgradeBtn" onclick="startCheckout()" data-i18n="acct.upgrade_btn">
       Upgrade to Pro →
     </button>
-    <p style="font-size:.78rem;color:var(--gray400);text-align:center;margin-top:10px;">Secure payment via Stripe · Cancel anytime</p>
+    <p style="font-size:.78rem;color:var(--gray400);text-align:center;margin-top:10px;" data-i18n="acct.stripe_note">Secure payment via Stripe · Cancel anytime</p>
   </div>
 
   <!-- Account info -->
   <div class="card">
-    <div class="card-title">Account Details</div>
+    <div class="card-title" data-i18n="acct.details_title">Account Details</div>
     <div class="info-row">
-      <span class="info-label">Email</span>
+      <span class="info-label" data-i18n="acct.email_label">Email</span>
       <span class="info-val" id="infoEmail">·</span>
     </div>
     <div class="info-row">
-      <span class="info-label">Member since</span>
+      <span class="info-label" data-i18n="acct.since_label">Member since</span>
       <span class="info-val" id="infoSince">·</span>
     </div>
     <div class="info-row" style="border-bottom:none;padding-top:16px;">
-      <button class="btn btn-danger" onclick="logout()">Sign out</button>
+      <button class="btn btn-danger" onclick="logout()" data-i18n="acct.signout_btn">Sign out</button>
     </div>
   </div>
 
   <!-- Danger Zone -->
   <div class="card card-danger">
-    <div class="card-title">Danger Zone</div>
+    <div class="card-title" data-i18n="acct.danger_title">Danger Zone</div>
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;">
       <div>
-        <div style="font-weight:700;color:var(--gray800);margin-bottom:4px;">Delete my account</div>
-        <div style="font-size:.88rem;color:var(--gray600);">Permanently removes your account and all data. This cannot be undone.</div>
+        <div style="font-weight:700;color:var(--gray800);margin-bottom:4px;" data-i18n="acct.delete_label">Delete my account</div>
+        <div style="font-size:.88rem;color:var(--gray600);" data-i18n="acct.delete_desc">Permanently removes your account and all data. This cannot be undone.</div>
       </div>
-      <button class="btn btn-danger-solid" onclick="openDeleteModal()">Delete account</button>
+      <button class="btn btn-danger-solid" onclick="openDeleteModal()" data-i18n="acct.delete_btn">Delete account</button>
     </div>
   </div>
 </main>
@@ -219,15 +221,14 @@
 <!-- Delete Account Modal -->
 <div class="modal-overlay" id="deleteModal" onclick="handleOverlayClick(event)">
   <div class="modal-box">
-    <div class="modal-title">⚠️ Delete your account?</div>
-    <div class="modal-body">
-      This will <strong>permanently delete</strong> your account, all your data, and cancel any active subscription.<br><br>
-      To confirm, type <strong>DELETE</strong> in the box below.
+    <div class="modal-title" data-i18n="acct.modal_title">⚠️ Delete your account?</div>
+    <div class="modal-body" data-i18n="acct.modal_body">
+      This will permanently delete your account, all your data, and cancel any active subscription. To confirm, type DELETE in the box below.
     </div>
-    <input class="modal-input" type="text" id="deleteConfirmInput" placeholder="Type DELETE to confirm" oninput="checkDeleteInput()" autocomplete="off" />
+    <input class="modal-input" type="text" id="deleteConfirmInput" data-i18n-ph="acct.modal_placeholder" placeholder="Type DELETE to confirm" oninput="checkDeleteInput()" autocomplete="off" />
     <div class="modal-actions">
-      <button class="btn btn-outline" onclick="closeDeleteModal()">Cancel</button>
-      <button class="btn btn-danger-solid" id="confirmDeleteBtn" onclick="doDeleteAccount()" disabled>Delete forever</button>
+      <button class="btn btn-outline" onclick="closeDeleteModal()" data-i18n="acct.modal_cancel">Cancel</button>
+      <button class="btn btn-danger-solid" id="confirmDeleteBtn" onclick="doDeleteAccount()" disabled data-i18n="acct.modal_confirm">Delete forever</button>
     </div>
   </div>
 </div>
@@ -267,7 +268,7 @@
     document.getElementById('infoSince').textContent = user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}) : '·';
     document.getElementById('statTailors').textContent = user.tailoringCount || 0;
     document.getElementById('statPlan').textContent = isPro ? 'Pro' : 'Free';
-    document.getElementById('statStatus').textContent = isPro ? 'Active' : isPastDue ? 'Past Due' : 'Free';
+    document.getElementById('statStatus').textContent = isPro ? t('acct.status_active') : isPastDue ? t('acct.status_past_due') : t('acct.status_free');
 
     if (isPro) {
       document.getElementById('planName').textContent = 'Pro Plan';
@@ -399,15 +400,17 @@
     var input = document.getElementById('referralLinkInput');
     navigator.clipboard.writeText(input.value).then(function() {
       var btn = document.getElementById('copyBtn');
-      btn.textContent = '✅ Copied!';
+      btn.querySelector('span').textContent = t('acct.copied');
       btn.style.background = '#166534';
-      setTimeout(function() { btn.textContent = '📋 Copy Link'; btn.style.background = ''; }, 2200);
+      setTimeout(function() { btn.querySelector('span').textContent = t('acct.copy_link'); btn.style.background = ''; }, 2200);
     }).catch(function() {
       input.select();
       document.execCommand('copy');
     });
   }
 
+  injectLangSwitcher(document.getElementById('langSwitcher'));
+  applyLang(getLang());
   loadUser();
   loadReferral();
 </script>
