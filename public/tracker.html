@@ -199,7 +199,6 @@
       .viewer-body .viewer-docx { padding:24px 20px; }
     }
   </style>
-  <script src="/i18n.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 </head>
 <body>
@@ -207,18 +206,17 @@
 <nav>
   <a href="/" class="logo">Apply<span>Stack</span></a>
   <div class="nav-right">
-    <div id="langSwitcher"></div>
-    <a href="/app.html" class="nav-link" data-i18n="nav.builder">← Resume Builder</a>
-    <a href="/account.html" class="nav-link" data-i18n="nav.account">Account</a>
-    <a href="/interview.html" class="btn-nav" data-i18n="nav.interview">🎤 Interview Coach</a>
+    <a href="/app.html" class="nav-link">← Resume Builder</a>
+    <a href="/account.html" class="nav-link">Account</a>
+    <a href="/interview.html" class="btn-nav">🎤 Interview Coach</a>
   </div>
 </nav>
 
 <main>
   <div class="page-hdr">
     <div>
-      <div class="page-title" data-i18n="trk.title">📋 Job Application Tracker</div>
-      <div class="page-sub" data-i18n="trk.subtitle">Track every application, update statuses, and never lose a lead.</div>
+      <div class="page-title">📋 Job Application Tracker</div>
+      <div class="page-sub">Track every application, update statuses, and never lose a lead.</div>
     </div>
   </div>
 
@@ -227,29 +225,29 @@
 
   <!-- Actions -->
   <div class="actions-bar">
-    <input class="search-box" type="text" id="searchBox" data-i18n-ph="trk.search" placeholder="🔍  Search by company or role…" oninput="filterTable()" />
-    <button class="btn btn-add" onclick="openAddModal()" data-i18n="trk.add_btn">+ Add Application</button>
-    <button class="btn btn-export" onclick="exportCSV()" data-i18n="trk.export_btn">⬇ Export CSV</button>
+    <input class="search-box" type="text" id="searchBox" placeholder="🔍  Search by company or role…" oninput="filterTable()" />
+    <button class="btn btn-add" onclick="openAddModal()">+ Add Application</button>
+    <button class="btn btn-export" onclick="exportCSV()">⬇ Export CSV</button>
   </div>
 
   <!-- Table -->
   <div class="table-wrap" id="tableWrap">
     <div class="tbl-empty" id="tblEmpty">
       <span class="te-ico">📝</span>
-      <div style="font-weight:700;color:var(--navy);margin-bottom:6px" data-i18n="trk.empty_title">No applications yet</div>
-      <div style="font-size:.9rem" data-i18n="trk.empty_desc">Build a resume in the Resume Builder to auto-add it here, or click + Add Application to track manually.</div>
+      <div style="font-weight:700;color:var(--navy);margin-bottom:6px">No applications yet</div>
+      <div style="font-size:.9rem">Build a resume in the Resume Builder to auto-add it here, or click <strong>+ Add Application</strong> to track manually.</div>
     </div>
     <table id="tbl" style="display:none">
       <thead>
         <tr>
-          <th data-i18n="trk.col_company">Company</th>
-          <th data-i18n="trk.col_role">Role</th>
-          <th class="hide-sm" data-i18n="trk.col_applied">Applied</th>
-          <th class="hide-sm" data-i18n="trk.col_ats">ATS</th>
-          <th data-i18n="trk.col_status">Status</th>
-          <th class="hide-sm" data-i18n="trk.col_files">Files</th>
-          <th class="hide-sm" data-i18n="trk.col_jd">JD</th>
-          <th data-i18n="trk.col_notes">Notes</th>
+          <th>Company</th>
+          <th>Role</th>
+          <th class="hide-sm">Applied</th>
+          <th class="hide-sm">ATS</th>
+          <th>Status</th>
+          <th class="hide-sm">Files</th>
+          <th class="hide-sm">JD</th>
+          <th>Notes</th>
           <th></th>
         </tr>
       </thead>
@@ -266,7 +264,7 @@
         <div class="viewer-filename" id="viewerFilename"></div>
         <div class="viewer-filesize" id="viewerFilesize"></div>
       </div>
-      <button class="viewer-dl-btn" onclick="viewerDownload()" data-i18n="trk.dl_btn">⬇ Download</button>
+      <button class="viewer-dl-btn" onclick="viewerDownload()">⬇ Download</button>
       <button class="viewer-close-btn" onclick="closeViewer()" title="Close">✕</button>
     </div>
     <div class="viewer-body" id="viewerBody">
@@ -303,39 +301,39 @@
 
       <!-- Application Info -->
       <div class="detail-section">
-        <div class="detail-section-title" data-i18n="trk.dm_appinfo">📋 Application Info</div>
+        <div class="detail-section-title">📋 Application Info</div>
         <div class="detail-grid">
-          <div class="detail-field"><div class="detail-field-label" data-i18n="trk.dm_date">Date Applied</div><div class="detail-field-value" id="dmDate"></div></div>
-          <div class="detail-field"><div class="detail-field-label" data-i18n="trk.dm_ats">ATS Score</div><div class="detail-field-value" id="dmAts"></div></div>
-          <div class="detail-field"><div class="detail-field-label" data-i18n="trk.dm_method">Application Method</div><div class="detail-field-value" id="dmMethod"></div></div>
-          <div class="detail-field"><div class="detail-field-label" data-i18n="trk.dm_followup">Follow-up Date</div><div class="detail-field-value" id="dmFollowUp"></div></div>
-          <div class="detail-field"><div class="detail-field-label" data-i18n="trk.dm_salary">Salary / Comp</div><div class="detail-field-value" id="dmSalary"></div></div>
-          <div class="detail-field"><div class="detail-field-label" data-i18n="trk.dm_url">Job Posting URL</div><div class="detail-field-value" id="dmUrl"></div></div>
+          <div class="detail-field"><div class="detail-field-label">Date Applied</div><div class="detail-field-value" id="dmDate"></div></div>
+          <div class="detail-field"><div class="detail-field-label">ATS Score</div><div class="detail-field-value" id="dmAts"></div></div>
+          <div class="detail-field"><div class="detail-field-label">Application Method</div><div class="detail-field-value" id="dmMethod"></div></div>
+          <div class="detail-field"><div class="detail-field-label">Follow-up Date</div><div class="detail-field-value" id="dmFollowUp"></div></div>
+          <div class="detail-field"><div class="detail-field-label">Salary / Comp</div><div class="detail-field-value" id="dmSalary"></div></div>
+          <div class="detail-field"><div class="detail-field-label">Job Posting URL</div><div class="detail-field-value" id="dmUrl"></div></div>
         </div>
       </div>
 
       <!-- Recruiter Info -->
       <div class="detail-section">
-        <div class="detail-section-title" data-i18n="trk.dm_recruiter">👤 Recruiter / Contact</div>
+        <div class="detail-section-title">👤 Recruiter / Contact</div>
         <div class="detail-grid">
-          <div class="detail-field"><div class="detail-field-label" data-i18n="trk.dm_rec_name">Name</div><div class="detail-field-value" id="dmRecruiterName"></div></div>
-          <div class="detail-field"><div class="detail-field-label" data-i18n="trk.dm_rec_email">Email</div><div class="detail-field-value" id="dmRecruiterEmail"></div></div>
-          <div class="detail-field"><div class="detail-field-label" data-i18n="trk.dm_rec_phone">Phone</div><div class="detail-field-value" id="dmRecruiterPhone"></div></div>
-          <div class="detail-field"><div class="detail-field-label" data-i18n="trk.dm_rec_linkedin">LinkedIn</div><div class="detail-field-value" id="dmRecruiterLinkedin"></div></div>
+          <div class="detail-field"><div class="detail-field-label">Name</div><div class="detail-field-value" id="dmRecruiterName"></div></div>
+          <div class="detail-field"><div class="detail-field-label">Email</div><div class="detail-field-value" id="dmRecruiterEmail"></div></div>
+          <div class="detail-field"><div class="detail-field-label">Phone</div><div class="detail-field-value" id="dmRecruiterPhone"></div></div>
+          <div class="detail-field"><div class="detail-field-label">LinkedIn</div><div class="detail-field-value" id="dmRecruiterLinkedin"></div></div>
         </div>
       </div>
 
       <!-- Documents -->
       <div class="detail-section">
-        <div class="detail-section-title" data-i18n="trk.dm_docs">📁 Documents</div>
+        <div class="detail-section-title">📁 Documents</div>
         <div class="files-row" id="dmFiles"></div>
       </div>
 
       <!-- Notes -->
       <div class="detail-section">
-        <div class="detail-section-title" data-i18n="trk.dm_notes">📝 Notes</div>
-        <textarea class="detail-notes-ta" id="dmNotes" data-i18n-ph="trk.notes_ph" placeholder="Add notes…"></textarea>
-        <button class="detail-save-btn" onclick="saveDetailNotes()" data-i18n="trk.dm_save">Save Notes</button>
+        <div class="detail-section-title">📝 Notes</div>
+        <textarea class="detail-notes-ta" id="dmNotes" placeholder="Add notes…"></textarea>
+        <button class="detail-save-btn" onclick="saveDetailNotes()">Save Notes</button>
       </div>
 
     </div>
@@ -345,27 +343,27 @@
 <!-- Add / Edit Application Modal -->
 <div class="modal-overlay" id="addModal" onclick="handleModalClick(event)">
   <div class="modal-box">
-    <div class="modal-title" data-i18n="trk.add_title">➕ Add Application</div>
-    <div class="modal-sub" data-i18n="trk.add_subtitle">Fill in what you know — you can always update it later.</div>
+    <div class="modal-title">➕ Add Application</div>
+    <div class="modal-sub">Fill in what you know — you can always update it later.</div>
 
-    <div class="section-label" data-i18n="trk.basic_info">Basic Info</div>
+    <div class="section-label">Basic Info</div>
     <div class="form-row">
       <div class="f">
-        <label data-i18n="trk.company">Company *</label>
-        <input type="text" id="addCompany" data-i18n-ph="trk.company_ph" placeholder="e.g. Google, Stripe" />
+        <label>Company *</label>
+        <input type="text" id="addCompany" placeholder="e.g. Google, Stripe" />
       </div>
       <div class="f">
-        <label data-i18n="trk.role">Role *</label>
-        <input type="text" id="addRole" data-i18n-ph="trk.role_ph" placeholder="e.g. Product Manager" />
+        <label>Role *</label>
+        <input type="text" id="addRole" placeholder="e.g. Product Manager" />
       </div>
     </div>
     <div class="form-row">
       <div class="f">
-        <label data-i18n="trk.date_applied">Date Applied</label>
+        <label>Date Applied</label>
         <input type="date" id="addDate" />
       </div>
       <div class="f">
-        <label data-i18n="trk.status_label">Status</label>
+        <label>Status</label>
         <select id="addStatus">
           <option>Applied</option>
           <option>Phone Screen</option>
@@ -379,67 +377,67 @@
     </div>
     <div class="form-row">
       <div class="f">
-        <label data-i18n="trk.method_label">Application Method</label>
+        <label>Application Method</label>
         <select id="addMethod">
-          <option value="" data-i18n="trk.method_ph">— Select —</option>
-          <option data-i18n="trk.m_website">Company Website</option>
-          <option data-i18n="trk.m_linkedin">LinkedIn</option>
-          <option data-i18n="trk.m_indeed">Indeed</option>
-          <option data-i18n="trk.m_glassdoor">Glassdoor</option>
-          <option data-i18n="trk.m_referral">Referral</option>
-          <option data-i18n="trk.m_email">Email</option>
-          <option data-i18n="trk.m_recruiter">Recruiter</option>
-          <option data-i18n="trk.m_jobfair">Job Fair</option>
-          <option data-i18n="trk.m_other">Other</option>
+          <option value="">— Select —</option>
+          <option>Company Website</option>
+          <option>LinkedIn</option>
+          <option>Indeed</option>
+          <option>Glassdoor</option>
+          <option>Referral</option>
+          <option>Email</option>
+          <option>Recruiter</option>
+          <option>Job Fair</option>
+          <option>Other</option>
         </select>
       </div>
       <div class="f">
-        <label data-i18n="trk.followup">Follow-up Date</label>
+        <label>Follow-up Date</label>
         <input type="date" id="addFollowUp" />
       </div>
     </div>
     <div class="form-row">
       <div class="f">
-        <label data-i18n="trk.salary">Salary / Compensation</label>
-        <input type="text" id="addSalary" data-i18n-ph="trk.salary_ph" placeholder="e.g. $90k–$110k" />
+        <label>Salary / Compensation</label>
+        <input type="text" id="addSalary" placeholder="e.g. $90k–$110k" />
       </div>
       <div class="f">
-        <label data-i18n="trk.job_url">Job Posting URL</label>
+        <label>Job Posting URL</label>
         <input type="url" id="addUrl" placeholder="https://…" />
       </div>
     </div>
 
-    <div class="section-label" data-i18n="trk.recruiter">Recruiter / Contact</div>
+    <div class="section-label">Recruiter / Contact</div>
     <div class="form-row">
       <div class="f">
-        <label data-i18n="trk.rec_name">Recruiter Name</label>
+        <label>Recruiter Name</label>
         <input type="text" id="addRecruiterName" placeholder="Jane Smith" />
       </div>
       <div class="f">
-        <label data-i18n="trk.rec_email">Recruiter Email</label>
+        <label>Recruiter Email</label>
         <input type="email" id="addRecruiterEmail" placeholder="jane@company.com" />
       </div>
     </div>
     <div class="form-row">
       <div class="f">
-        <label data-i18n="trk.rec_phone">Recruiter Phone</label>
+        <label>Recruiter Phone</label>
         <input type="tel" id="addRecruiterPhone" placeholder="+1 (555) 000-0000" />
       </div>
       <div class="f">
-        <label data-i18n="trk.rec_linkedin">Recruiter LinkedIn</label>
+        <label>Recruiter LinkedIn</label>
         <input type="url" id="addRecruiterLinkedin" placeholder="linkedin.com/in/…" />
       </div>
     </div>
 
-    <div class="section-label" data-i18n="trk.documents">Documents</div>
+    <div class="section-label">Documents</div>
     <div class="form-row">
       <div class="f">
-        <label data-i18n="trk.resume_used">Resume Used</label>
+        <label>Resume Used</label>
         <div class="file-upload-area" id="resumeUploadArea">
           <input type="file" id="addResume" accept=".pdf,.doc,.docx,.txt" onchange="handleFileSelect('resume')" />
           <div class="file-upload-label">
             <span class="ico">📄</span>
-            <span data-i18n="trk.resume_ph">Upload resume (PDF, DOCX, TXT)</span>
+            <span>Upload resume (PDF, DOCX, TXT)</span>
           </div>
         </div>
         <div class="file-chosen" id="resumeChosen" style="display:none">
@@ -449,12 +447,12 @@
         </div>
       </div>
       <div class="f">
-        <label data-i18n="trk.cover_used">Cover Letter Used</label>
+        <label>Cover Letter Used</label>
         <div class="file-upload-area" id="coverUploadArea">
           <input type="file" id="addCover" accept=".pdf,.doc,.docx,.txt" onchange="handleFileSelect('cover')" />
           <div class="file-upload-label">
             <span class="ico">✉️</span>
-            <span data-i18n="trk.cover_ph">Upload cover letter (PDF, DOCX, TXT)</span>
+            <span>Upload cover letter (PDF, DOCX, TXT)</span>
           </div>
         </div>
         <div class="file-chosen" id="coverChosen" style="display:none">
@@ -466,13 +464,13 @@
     </div>
 
     <div class="f" style="margin-bottom:14px">
-      <label data-i18n="trk.notes_label">Notes</label>
-      <textarea id="addNotes" data-i18n-ph="trk.notes_full_ph" placeholder="Recruiter name, salary range, interview tips, anything useful…"></textarea>
+      <label>Notes</label>
+      <textarea id="addNotes" placeholder="Recruiter name, salary range, interview tips, anything useful…"></textarea>
     </div>
 
     <div class="modal-actions">
-      <button class="btn btn-primary" onclick="confirmAdd()" data-i18n="trk.add_confirm">Add Application</button>
-      <button class="btn btn-cancel" onclick="closeAddModal()" data-i18n="trk.cancel">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmAdd()">Add Application</button>
+      <button class="btn btn-cancel" onclick="closeAddModal()">Cancel</button>
     </div>
   </div>
 </div>
@@ -584,13 +582,13 @@ function clearFile(type) {
 function renderPipeline() {
   var entries = load();
   var stages = [
-    { key:'All',         label:t('trk.all'),      dot:'#94a3b8', count: entries.length },
-    { key:'Applied',     label:t('trk.applied'),  dot:'#2d5a8e', count: entries.filter(function(e){ return e.status==='Applied'; }).length },
-    { key:'Phone Screen',label:t('trk.phone'),    dot:'#0369a1', count: entries.filter(function(e){ return e.status==='Phone Screen'; }).length },
-    { key:'Interview',   label:t('trk.interview'),dot:'#7c3aed', count: entries.filter(function(e){ return e.status==='Interview'; }).length },
-    { key:'Final Round', label:t('trk.final'),    dot:'#92400e', count: entries.filter(function(e){ return e.status==='Final Round'; }).length },
-    { key:'Offer',       label:t('trk.offers'),   dot:'#166534', count: entries.filter(function(e){ return e.status==='Offer'; }).length },
-    { key:'Rejected',    label:t('trk.rejected'), dot:'#991b1b', count: entries.filter(function(e){ return e.status==='Rejected'; }).length },
+    { key:'All',         label:'All',          dot:'#94a3b8', count: entries.length },
+    { key:'Applied',     label:'Applied',       dot:'#2d5a8e', count: entries.filter(function(e){ return e.status==='Applied'; }).length },
+    { key:'Phone Screen',label:'Phone Screen',  dot:'#0369a1', count: entries.filter(function(e){ return e.status==='Phone Screen'; }).length },
+    { key:'Interview',   label:'Interview',     dot:'#7c3aed', count: entries.filter(function(e){ return e.status==='Interview'; }).length },
+    { key:'Final Round', label:'Final Round',   dot:'#92400e', count: entries.filter(function(e){ return e.status==='Final Round'; }).length },
+    { key:'Offer',       label:'Offers 🎉',     dot:'#166534', count: entries.filter(function(e){ return e.status==='Offer'; }).length },
+    { key:'Rejected',    label:'Rejected',      dot:'#991b1b', count: entries.filter(function(e){ return e.status==='Rejected'; }).length },
   ];
   var h = '';
   stages.forEach(function(s) {
@@ -645,7 +643,7 @@ function renderTable() {
     var noteVal = (e.notes || '').replace(/"/g, '&quot;');
 
     var jdCell = e.jd
-      ? '<button class="jd-btn" data-jd-id="'+e.id+'" title="View saved job description">'+t('trk.view_jd')+'</button>'
+      ? '<button class="jd-btn" data-jd-id="'+e.id+'" title="View saved job description">📋 View JD</button>'
       : '<span style="color:var(--gray400);font-size:.78rem">—</span>';
 
     // Files badges — check both new (resumeFileName) and legacy (resumeFile) formats
@@ -655,12 +653,12 @@ function renderTable() {
     if (hasResume) {
       filesBadges += '<span class="file-badge resume" data-dl-resume="'+e.id+'" title="'+esc(e.resumeFileName || e.resumeFile.name)+'">📄 Resume</span>';
     } else {
-      filesBadges += '<span class="file-badge none">'+t('trk.no_resume')+'</span>';
+      filesBadges += '<span class="file-badge none">No resume</span>';
     }
     if (hasCover) {
       filesBadges += '<span class="file-badge cover" data-dl-cover="'+e.id+'" title="'+esc(e.coverLetterFileName || e.coverLetterFile.name)+'">✉️ Cover</span>';
     } else {
-      filesBadges += '<span class="file-badge none">'+t('trk.no_cover')+'</span>';
+      filesBadges += '<span class="file-badge none">No cover</span>';
     }
     filesBadges += '</div>';
 
@@ -671,8 +669,8 @@ function renderTable() {
        + '<td class="td-ats hide-sm">'+atsHtml+'</td>'
        + '<td><select class="status-select" data-id="'+e.id+'" style="color:'+sc+';background:'+sbg+'">'+opts+'</select></td>'
        + '<td class="hide-sm">'+filesBadges+'</td>'
-       + '<td class="hide-sm">'+jdCell+' <button class="detail-btn" data-detail-id="'+e.id+'" title="View full details" style="margin-top:4px">'+t('trk.details')+'</button></td>'
-       + '<td class="td-notes"><textarea data-notes-id="'+e.id+'" placeholder="'+t('trk.notes_ph')+'">'+esc(e.notes||'')+'</textarea></td>'
+       + '<td class="hide-sm">'+jdCell+' <button class="detail-btn" data-detail-id="'+e.id+'" title="View full details" style="margin-top:4px">🗂 Details</button></td>'
+       + '<td class="td-notes"><textarea data-notes-id="'+e.id+'" placeholder="Add notes…">'+esc(e.notes||'')+'</textarea></td>'
        + '<td class="td-del"><button class="del-btn" data-del="'+e.id+'" title="Remove">✕</button></td>'
        + '</tr>';
   });
@@ -701,7 +699,7 @@ function renderTable() {
   // Delete
   body.querySelectorAll('[data-del]').forEach(function(btn) {
     btn.addEventListener('click', function() {
-      if (!confirm(t('trk.remove'))) return;
+      if (!confirm('Remove this application?')) return;
       var id = btn.getAttribute('data-del');
       deleteTrackerFiles(id);
       save(load().filter(function(e){ return e.id!==id; }));
@@ -787,26 +785,26 @@ function openDetail(id) {
   if (resumeName) {
     var rb = document.createElement('button');
     rb.className = 'file-action-btn file-action-resume';
-    rb.innerHTML = t('trk.view_resume') + ' — ' + esc(resumeName);
+    rb.innerHTML = '📄 View Resume — ' + esc(resumeName);
     rb.onclick = function(){ viewTrackerFile(entry.id, 'resume'); };
     filesRow.appendChild(rb);
   }
   if (coverName) {
     var cb = document.createElement('button');
     cb.className = 'file-action-btn file-action-cover';
-    cb.innerHTML = t('trk.view_cover') + ' — ' + esc(coverName);
+    cb.innerHTML = '✉️ View Cover Letter — ' + esc(coverName);
     cb.onclick = function(){ viewTrackerFile(entry.id, 'cover'); };
     filesRow.appendChild(cb);
   }
   if (entry.jd) {
     var jb = document.createElement('button');
     jb.className = 'file-action-btn file-action-jd';
-    jb.innerHTML = t('trk.view_jd_btn');
+    jb.innerHTML = '📋 View Job Description';
     jb.onclick = function(){ closeDetail(); showJD(entry.company, entry.role, entry.jd); };
     filesRow.appendChild(jb);
   }
   if (!resumeName && !coverName && !entry.jd) {
-    filesRow.innerHTML = '<span style="color:var(--gray400);font-size:.85rem;font-style:italic">'+t('trk.dm_no_docs')+'</span>';
+    filesRow.innerHTML = '<span style="color:var(--gray400);font-size:.85rem;font-style:italic">No documents attached yet.</span>';
   }
 
   // Notes
@@ -840,8 +838,8 @@ function saveDetailNotes() {
   renderTable();
   // Brief visual confirm
   var btn = document.querySelector('.detail-save-btn');
-  btn.textContent = t('trk.dm_saved');
-  setTimeout(function(){ btn.textContent = t('trk.dm_save'); }, 1500);
+  btn.textContent = '✓ Saved!';
+  setTimeout(function(){ btn.textContent = 'Save Notes'; }, 1500);
 }
 
 function closeDetail() {
@@ -972,7 +970,7 @@ function viewTrackerFile(entryId, type) {
       f = type === 'resume' ? entry.resumeFile : entry.coverLetterFile;
     }
   }
-  if (!f || !f.data) { alert(t('trk.file_not_found')); return; }
+  if (!f || !f.data) { alert('File not found. It may not have been saved.'); return; }
   _viewerFileRef = f;
   openViewer(f);
 }
@@ -984,7 +982,7 @@ function openViewer(f) {
   document.getElementById('viewerFilesize').textContent = size;
 
   var body = document.getElementById('viewerBody');
-  body.innerHTML = '<div class="viewer-loading">'+t('trk.loading')+'</div>';
+  body.innerHTML = '<div class="viewer-loading">Loading preview…</div>';
   document.getElementById('viewerModal').classList.add('open');
 
   var ext  = name.split('.').pop().toLowerCase();
@@ -1044,7 +1042,7 @@ function viewerDownload() {
 
 function closeViewer() {
   document.getElementById('viewerModal').classList.remove('open');
-  document.getElementById('viewerBody').innerHTML = '<div class="viewer-loading">'+t('trk.loading')+'</div>';
+  document.getElementById('viewerBody').innerHTML = '<div class="viewer-loading">Loading preview…</div>';
   _viewerFileRef = null;
 }
 
@@ -1054,8 +1052,6 @@ function closeViewer() {
 })();
 
 // ── Init ──────────────────────────────────────────────────────
-injectLangSwitcher(document.getElementById('langSwitcher'));
-applyLang(getLang());
 renderPipeline();
 renderTable();
 </script>

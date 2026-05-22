@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ApplyStack</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy: #1e3a5f;
+      --blue: #4f6ef7;
+      --blue-lite: #eef1fe;
+      --green: #16a34a;
+      --green-bg: #dcfce7;
+      --red: #dc2626;
+      --red-bg: #fef2f2;
+      --border: #e2e8f0;
+      --muted: #64748b;
+      --text: #1a2744;
+      --bg: #f8fafc;
+    }
+
+    body {
+      width: 320px;
+      min-height: 200px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8e 100%);
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .logo {
+      font-size: 17px;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: -0.3px;
+    }
+    .logo span { color: #7c9ef8; }
+    .badge-pro {
+      background: rgba(255,255,255,0.15);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 99px;
+      border: 1px solid rgba(255,255,255,0.25);
+      display: none;
+    }
+    .badge-pro.show { display: block; }
+
+    /* ── Body ── */
+    .body { padding: 16px 18px; }
+
+    /* ── Auth section ── */
+    #auth-section { display: none; }
+    #auth-section.show { display: block; }
+
+    .auth-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 4px;
+    }
+    .auth-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+    .field { margin-bottom: 10px; }
+    .field label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 4px;
+    }
+    .field input {
+      width: 100%;
+      padding: 9px 11px;
+      border: 1.5px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      color: var(--text);
+      background: #fff;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .field input:focus { border-color: var(--blue); }
+
+    .btn-primary {
+      width: 100%;
+      padding: 10px;
+      background: linear-gradient(135deg, #1e3a5f, #4f6ef7);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      margin-top: 4px;
+    }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-primary:disabled { opacity: 0.5; cursor: wait; }
+
+    .error-msg {
+      font-size: 12px;
+      color: var(--red);
+      background: var(--red-bg);
+      padding: 8px 10px;
+      border-radius: 6px;
+      margin-top: 8px;
+      display: none;
+    }
+    .error-msg.show { display: block; }
+
+    /* ── Logged-in section ── */
+    #status-section { display: none; }
+    #status-section.show { display: block; }
+
+    .user-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+    }
+    .avatar {
+      width: 34px;
+      height: 34px;
+      background: var(--blue-lite);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--blue);
+      flex-shrink: 0;
+    }
+    .user-info { flex: 1; min-width: 0; }
+    .user-email {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--navy);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .user-plan {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+    .user-plan.pro { color: var(--blue); font-weight: 700; }
+
+    /* ── Quick actions ── */
+    .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+
+    .action-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .action-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      padding: 12px 8px;
+      background: #fff;
+      border: 1.5px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      text-decoration: none;
+      color: var(--navy);
+      font-size: 12px;
+      font-weight: 600;
+      text-align: center;
+      transition: all 0.15s;
+      line-height: 1.3;
+    }
+    .action-card:hover {
+      border-color: var(--blue);
+      background: var(--blue-lite);
+      color: var(--blue);
+    }
+    .action-card .icon { font-size: 20px; }
+
+    /* ── Current page indicator ── */
+    .page-job {
+      display: none;
+      align-items: flex-start;
+      gap: 8px;
+      background: #fff;
+      border: 1.5px solid var(--blue);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+    }
+    .page-job.show { display: flex; }
+    .page-job-icon { font-size: 18px; flex-shrink: 0; }
+    .page-job-text .pj-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--blue);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .page-job-text .pj-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-top: 1px;
+    }
+    .page-job-text .pj-company {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+    .btn-open-panel {
+      width: 100%;
+      padding: 9px;
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      margin-bottom: 12px;
+      display: none;
+    }
+    .btn-open-panel.show { display: block; }
+    .btn-open-panel:hover { opacity: 0.9; }
+
+    /* ── Settings ── */
+    .settings-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 10px;
+      border-top: 1px solid var(--border);
+    }
+    .settings-row a {
+      font-size: 11px;
+      color: var(--muted);
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .settings-row a:hover { color: var(--blue); }
+    .sign-out-btn {
+      font-size: 11px;
+      color: var(--red);
+      text-decoration: none;
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: inherit;
+      padding: 0;
+    }
+    .sign-out-btn:hover { opacity: 0.8; }
+
+    /* ── Loading state ── */
+    #loading-section { display: none; padding: 24px 18px; text-align: center; }
+    #loading-section.show { display: block; }
+    .spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid var(--border);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      margin: 0 auto 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-text { font-size: 13px; color: var(--muted); }
+
+    /* ── Config section ── */
+    #config-section { display: none; padding-top: 12px; border-top: 1px solid var(--border); margin-top: 4px; }
+    #config-section.show { display: block; }
+    .config-title { font-size: 11px; font-weight: 700; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.4px; }
+    .config-field { display: flex; gap: 6px; }
+    .config-field input {
+      flex: 1;
+      padding: 7px 10px;
+      border: 1.5px solid var(--border);
+      border-radius: 7px;
+      font-size: 11px;
+      font-family: inherit;
+      color: var(--text);
+      outline: none;
+    }
+    .config-field input:focus { border-color: var(--blue); }
+    .btn-save-config {
+      padding: 7px 12px;
+      background: var(--navy);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      font-size: 11px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">Apply<span>Stack</span></div>
+    <div class="badge-pro" id="badge-pro">PRO</div>
+  </div>
+
+  <!-- Loading -->
+  <div class="body">
+    <div id="loading-section" class="show">
+      <div class="spinner"></div>
+      <div class="loading-text">Loading…</div>
+    </div>
+
+    <!-- Not logged in -->
+    <div id="auth-section">
+      <div class="auth-title">Sign in to ApplyStack</div>
+      <div class="auth-sub">Save jobs and tailor your resume directly from any job board.</div>
+
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="you@email.com" autocomplete="email">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn-primary" id="login-btn">Sign in</button>
+      <div class="error-msg" id="login-error"></div>
+    </div>
+
+    <!-- Logged in -->
+    <div id="status-section">
+      <!-- User row -->
+      <div class="user-row">
+        <div class="avatar" id="avatar-letter">E</div>
+        <div class="user-info">
+          <div class="user-email" id="user-email-display">user@email.com</div>
+          <div class="user-plan" id="user-plan-display">Free plan</div>
+        </div>
+      </div>
+
+      <!-- Job detected on current page -->
+      <div class="page-job" id="page-job-card">
+        <div class="page-job-icon">📋</div>
+        <div class="page-job-text">
+          <div class="pj-label">Job detected on this page</div>
+          <div class="pj-title" id="pj-title">Job Title</div>
+          <div class="pj-company" id="pj-company">Company</div>
+        </div>
+      </div>
+      <button class="btn-open-panel" id="open-panel-btn">Open ApplyStack Panel →</button>
+
+      <!-- Quick actions -->
+      <div class="section-label">Quick actions</div>
+      <div class="action-grid">
+        <a class="action-card" id="link-builder">
+          <span class="icon">📝</span>
+          Tailor Resume
+        </a>
+        <a class="action-card" id="link-prep">
+          <span class="icon">🎯</span>
+          Interview Prep
+        </a>
+        <a class="action-card" id="link-negotiate">
+          <span class="icon">💰</span>
+          Salary Guide
+        </a>
+        <a class="action-card" id="link-account">
+          <span class="icon">⚙️</span>
+          My Account
+        </a>
+      </div>
+
+      <!-- Settings row -->
+      <div class="settings-row">
+        <a id="toggle-config">⚙ Server settings</a>
+        <button class="sign-out-btn" id="sign-out-btn">Sign out</button>
+      </div>
+
+      <!-- Config (hidden by default) -->
+      <div id="config-section">
+        <div class="config-title" style="margin-top:10px;">Backend URL</div>
+        <div class="config-field">
+          <input type="text" id="backend-url" placeholder="https://tailorcv-onb9.onrender.com">
+          <button class="btn-save-config" id="save-config-btn">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ApplyStack</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy: #1e3a5f;
+      --mid:  #2d5a8e;
+      --blue: #4f6ef7;
+      --blue-lite: #eef1fe;
+      --border: #e2e8f0;
+      --text: #1a2744;
+      --muted: #64748b;
+      --bg: #f8fafc;
+      --green: #16a34a;
+      --green-bg: #dcfce7;
+      --green-bd: #86efac;
+      --red: #dc2626;
+      --red-bg: #fef2f2;
+      --amber: #92400e;
+      --amber-bg: #fffbeb;
+      --r: 10px;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+    }
+
+    /* ── Header ── */
+    .header {
+      background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8e 100%);
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .logo {
+      font-size: 16px;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: -0.3px;
+    }
+    .logo span { color: #7c9ef8; }
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .user-chip {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 99px;
+      padding: 3px 10px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.85);
+      font-weight: 600;
+      max-width: 150px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ── Scrollable body ── */
+    .body { padding: 14px 14px 80px; overflow-y: auto; }
+
+    /* ── No job state ── */
+    #no-job-state { display: none; }
+    #no-job-state.show { display: block; }
+
+    .empty-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 28px 20px;
+      text-align: center;
+      margin-bottom: 14px;
+    }
+    .empty-icon { font-size: 36px; margin-bottom: 10px; }
+    .empty-title { font-size: 15px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
+    .empty-sub { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+    .boards-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 14px;
+    }
+    .board-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--navy);
+    }
+    .board-item .bi-icon { font-size: 16px; }
+    .board-item .bi-url { font-size: 11px; color: var(--muted); font-weight: 400; }
+
+    /* ── Job card ── */
+    #job-state { display: none; }
+    #job-state.show { display: block; }
+
+    .job-card {
+      background: #fff;
+      border: 1.5px solid var(--blue);
+      border-radius: var(--r);
+      padding: 14px;
+      margin-bottom: 12px;
+      position: relative;
+    }
+    .job-source-badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: var(--blue-lite);
+      color: var(--blue);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 99px;
+    }
+    .job-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: var(--navy);
+      margin-bottom: 3px;
+      padding-right: 60px;
+      line-height: 1.3;
+    }
+    .job-company {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--mid);
+      margin-bottom: 2px;
+    }
+    .job-location {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .job-url-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--blue);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .job-url-link:hover { text-decoration: underline; }
+
+    /* ── ATS Score Ring ── */
+    .score-section {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .score-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 12px;
+    }
+    .score-body { display: flex; align-items: center; gap: 16px; }
+    .ring-wrap { position: relative; width: 80px; height: 80px; flex-shrink: 0; }
+    .ring-wrap svg { width: 80px; height: 80px; transform: rotate(-90deg); }
+    .ring-track { fill: none; stroke: var(--border); stroke-width: 8; }
+    .ring-fill  { fill: none; stroke-width: 8; stroke-linecap: round; transition: stroke-dashoffset 1.2s ease; }
+    .ring-center {
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center; line-height: 1.1;
+    }
+    .ring-num { font-size: 22px; font-weight: 800; }
+    .ring-pct { font-size: 9px; color: var(--muted); }
+    .score-detail { flex: 1; }
+    .score-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--navy);
+      margin-bottom: 6px;
+    }
+    .score-sub { font-size: 11px; color: var(--muted); line-height: 1.55; margin-bottom: 8px; }
+
+    .score-bar-row { margin-bottom: 7px; }
+    .score-bar-top {
+      display: flex; justify-content: space-between;
+      font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 3px;
+    }
+    .score-bg { background: var(--border); border-radius: 99px; height: 5px; overflow: hidden; }
+    .score-fg { height: 5px; border-radius: 99px; transition: width 1s ease; }
+
+    .score-no-resume {
+      background: var(--amber-bg);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 12px;
+      color: var(--amber);
+      font-weight: 600;
+      line-height: 1.5;
+    }
+
+    /* ── Action buttons ── */
+    .actions-section { margin-bottom: 12px; }
+    .action-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      margin-bottom: 8px;
+    }
+    .btn-tailor {
+      width: 100%;
+      padding: 13px;
+      background: linear-gradient(135deg, #1e3a5f, #4f6ef7);
+      color: #fff;
+      border: none;
+      border-radius: var(--r);
+      font-size: 14px;
+      font-weight: 800;
+      font-family: inherit;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 14px rgba(79, 110, 247, 0.3);
+    }
+    .btn-tailor:hover { opacity: 0.9; }
+    .btn-tailor:disabled { opacity: 0.5; cursor: wait; }
+
+    .btn-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .btn-secondary {
+      padding: 10px;
+      background: #fff;
+      color: var(--navy);
+      border: 1.5px solid var(--border);
+      border-radius: var(--r);
+      font-size: 12px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .btn-secondary:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-lite); }
+
+    /* ── Job description preview ── */
+    .desc-section {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .desc-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .desc-header:hover { background: var(--bg); }
+    .desc-header-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .desc-chevron { font-size: 12px; color: var(--muted); transition: transform 0.2s; }
+    .desc-chevron.open { transform: rotate(180deg); }
+    .desc-body {
+      display: none;
+      padding: 0 14px 14px;
+      font-size: 12px;
+      color: var(--text);
+      line-height: 1.65;
+      max-height: 280px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      word-break: break-word;
+      border-top: 1px solid var(--border);
+    }
+    .desc-body.open { display: block; }
+
+    /* ── Saved jobs list ── */
+    .saved-section {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    .saved-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      cursor: pointer;
+    }
+    .saved-header:hover { background: var(--bg); }
+    .saved-header-left {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .saved-count {
+      background: var(--blue);
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 99px;
+    }
+    .saved-list { display: none; border-top: 1px solid var(--border); }
+    .saved-list.open { display: block; }
+    .saved-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .saved-item:last-child { border-bottom: none; }
+    .saved-item:hover { background: var(--bg); }
+    .saved-item-info { flex: 1; min-width: 0; }
+    .saved-item-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--navy);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .saved-item-company { font-size: 11px; color: var(--muted); margin-top: 1px; }
+    .saved-item-date { font-size: 10px; color: var(--muted); margin-top: 1px; }
+    .saved-item-source {
+      font-size: 10px;
+      font-weight: 700;
+      color: var(--blue);
+      background: var(--blue-lite);
+      padding: 2px 7px;
+      border-radius: 99px;
+      flex-shrink: 0;
+    }
+    .remove-saved {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--muted);
+      padding: 2px;
+      flex-shrink: 0;
+      opacity: 0.5;
+    }
+    .remove-saved:hover { opacity: 1; color: var(--red); }
+    .saved-empty {
+      padding: 16px 14px;
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    /* ── Auth prompt ── */
+    #auth-prompt { display: none; }
+    #auth-prompt.show { display: block; }
+    .auth-card {
+      background: #fff;
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 20px;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    .auth-icon { font-size: 28px; margin-bottom: 8px; }
+    .auth-title { font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 4px; }
+    .auth-sub { font-size: 12px; color: var(--muted); line-height: 1.55; margin-bottom: 14px; }
+    .btn-signin {
+      display: inline-block;
+      background: linear-gradient(135deg, #1e3a5f, #4f6ef7);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px 24px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-signin:hover { opacity: 0.9; }
+
+    /* ── Loading spinner ── */
+    .spinner-wrap { display: flex; align-items: center; gap: 8px; padding: 8px 0; }
+    .mini-spinner {
+      width: 16px; height: 16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner-label { font-size: 12px; color: var(--muted); }
+
+    /* ── Utility ── */
+    .show { display: block !important; }
+    .mt8 { margin-top: 8px; }
+
+    /* ── Success banner ── */
+    .success-banner {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      background: var(--green-bg);
+      border: 1px solid var(--green-bd);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--green);
+    }
+    .success-banner.show { display: flex; }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">Apply<span>Stack</span></div>
+    <div class="header-right">
+      <div class="user-chip" id="header-user-chip">Not signed in</div>
+    </div>
+  </div>
+
+  <div class="body">
+
+    <!-- Auth prompt (not logged in) -->
+    <div id="auth-prompt">
+      <div class="auth-card">
+        <div class="auth-icon">🔒</div>
+        <div class="auth-title">Sign in to ApplyStack</div>
+        <div class="auth-sub">Save jobs, get ATS scores, and tailor your resume without leaving this tab.</div>
+        <button class="btn-signin" id="open-popup-btn">Sign in via extension</button>
+      </div>
+    </div>
+
+    <!-- No job detected -->
+    <div id="no-job-state">
+      <div class="empty-card">
+        <div class="empty-icon">📋</div>
+        <div class="empty-title">No job detected yet</div>
+        <div class="empty-sub">Navigate to a job posting on LinkedIn, Indeed, or Glassdoor and click the <strong>⚡ Save to ApplyStack</strong> button that appears on the page.</div>
+      </div>
+
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">Supported job boards</div>
+      <div class="boards-list">
+        <div class="board-item">
+          <span class="bi-icon">💼</span>
+          <div>
+            <div>LinkedIn Jobs</div>
+            <div class="bi-url">linkedin.com/jobs</div>
+          </div>
+        </div>
+        <div class="board-item">
+          <span class="bi-icon">🔵</span>
+          <div>
+            <div>Indeed</div>
+            <div class="bi-url">indeed.com</div>
+          </div>
+        </div>
+        <div class="board-item">
+          <span class="bi-icon">🟢</span>
+          <div>
+            <div>Glassdoor</div>
+            <div class="bi-url">glassdoor.com</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Job detected state -->
+    <div id="job-state">
+
+      <!-- Success banner -->
+      <div class="success-banner" id="save-success">
+        <span>✓</span> Job saved to your ApplyStack tracker!
+      </div>
+
+      <!-- Job card -->
+      <div class="job-card">
+        <div class="job-source-badge" id="job-source">LinkedIn</div>
+        <div class="job-title" id="job-title">Senior Product Designer</div>
+        <div class="job-company" id="job-company">Acme Corp</div>
+        <div class="job-location" id="job-location">San Francisco, CA · Remote</div>
+        <a class="job-url-link" id="job-url" href="#" target="_blank">↗ View original listing</a>
+      </div>
+
+      <!-- ATS Score -->
+      <div class="score-section">
+        <div class="score-title">ATS Match Score</div>
+        <div id="score-loading" class="spinner-wrap">
+          <div class="mini-spinner"></div>
+          <div class="spinner-label">Analysing job description…</div>
+        </div>
+        <div id="score-no-resume" class="score-no-resume" style="display:none;">
+          ⚠️ Upload your resume in ApplyStack to get a personalised ATS match score for this role.
+        </div>
+        <div id="score-result" class="score-body" style="display:none;">
+          <div class="ring-wrap">
+            <svg viewBox="0 0 80 80">
+              <circle class="ring-track" cx="40" cy="40" r="32"/>
+              <circle class="ring-fill" id="ring-fill" cx="40" cy="40" r="32"
+                stroke-dasharray="201" stroke-dashoffset="201"/>
+            </svg>
+            <div class="ring-center">
+              <div class="ring-num" id="score-num">0</div>
+              <div class="ring-pct">/ 100</div>
+            </div>
+          </div>
+          <div class="score-detail">
+            <div class="score-label" id="score-label">Calculating…</div>
+            <div class="score-sub" id="score-sub"></div>
+            <div class="score-bar-row">
+              <div class="score-bar-top">
+                <span>Keywords matched</span>
+                <span id="kw-pct">–</span>
+              </div>
+              <div class="score-bg"><div class="score-fg" id="kw-bar" style="width:0%;background:var(--blue)"></div></div>
+            </div>
+            <div class="score-bar-row">
+              <div class="score-bar-top">
+                <span>Skills alignment</span>
+                <span id="sk-pct">–</span>
+              </div>
+              <div class="score-bg"><div class="score-fg" id="sk-bar" style="width:0%;background:var(--green)"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="actions-section">
+        <div class="action-title">Actions</div>
+        <button class="btn-tailor" id="tailor-btn">
+          ⚡ Tailor My Resume for This Job
+        </button>
+        <div class="btn-row">
+          <button class="btn-secondary" id="prep-btn">🎯 Interview Prep</button>
+          <button class="btn-secondary" id="negotiate-btn">💰 Salary Guide</button>
+        </div>
+      </div>
+
+      <!-- Description preview -->
+      <div class="desc-section">
+        <div class="desc-header" id="desc-toggle">
+          <div class="desc-header-title">Job Description</div>
+          <div class="desc-chevron" id="desc-chevron">▼</div>
+        </div>
+        <div class="desc-body" id="desc-body"></div>
+      </div>
+
+      <!-- Saved jobs -->
+      <div class="saved-section">
+        <div class="saved-header" id="saved-toggle">
+          <div class="saved-header-left">
+            Saved Jobs
+            <span class="saved-count" id="saved-count">0</span>
+          </div>
+          <div class="desc-chevron" id="saved-chevron">▼</div>
+        </div>
+        <div class="saved-list" id="saved-list">
+          <div class="saved-empty" id="saved-empty">No saved jobs yet. Click ⚡ on any job listing.</div>
+        </div>
+      </div>
+
+    </div><!-- /#job-state -->
+
+  </div><!-- /.body -->
+
+  <script src="sidebar.js"></script>
+</body>
+</html>
