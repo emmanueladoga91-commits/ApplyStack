@@ -1,3 +1,62 @@
+
+async function improveBulletAI(btn) {
+  var row=btn.closest('.vault-bullet-row'), input=row.querySelector('.vj-bullet-input'), entry=btn.closest('.vault-entry');
+  var original=input.value.trim();
+  if (!original) { showAlert('warn','Empty bullet','Type something first.'); return; }
+  var jobTitle=(entry.querySelector('.vj-title')||{}).value||'', company=(entry.querySelector('.vj-company')||{}).value||'';
+  btn.disabled=true; btn.textContent='⏳';
+  try {
+    var token=localStorage.getItem('tc_token');
+    var res=await fetch('/api/improve-bullet',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({bullet:original,jobTitle,company})});
+    var data=await res.json();
+    if (data.improved) { input.value=data.improved; input.classList.add('bullet-improved'); setTimeout(function(){input.classList.remove('bullet-improved');},2000); }
+    else showAlert('error','Failed',data.error||'Try again.');
+  } catch(e) { showAlert('error','Network error','Could not reach AI.'); }
+  finally { btn.disabled=false; btn.textContent='✨'; }
+}
+function vaultComputeScore() {
+  var vault=readVaultFromForm ? readVaultFromForm() : _vault, score=0, hints=[];
+  if ((vault.name||'').trim()) score+=5; else hints.push('Add your full name');
+  if ((vault.email||'').trim()) score+=5; else hints.push('Add your email');
+  if ((vault.phone||'').trim()) score+=3; else hints.push('Add phone number');
+  if ((vault.location||'').trim()) score+=3; else hints.push('Add your location');
+  if ((vault.linkedin||'').trim()) score+=4; else hints.push('Add LinkedIn URL');
+  if ((vault.careerLevel||'').trim()) score+=5; else hints.push('Set your career level');
+  if ((vault.industry||'').trim()) score+=5; else hints.push('Set your industry');
+  if ((vault.languages||'').trim()) score+=5;
+  var sumLen=(vault.summary||'').trim().length;
+  if (sumLen>80) score+=10; else if (sumLen>20) { score+=5; hints.push('Expand your summary'); } else hints.push('Add a summary or use AI Generate');
+  var sc=(vault.skills||'').split(',').map(function(s){return s.trim();}).filter(Boolean).length;
+  if (sc>=8) score+=15; else if (sc>=4) { score+=8; hints.push('Add more skills (aim for 8+)'); } else { score+=2; hints.push('Add your key skills'); }
+  if (vault.jobs.length>=2) score+=10; else if (vault.jobs.length===1) { score+=5; hints.push('Add a 2nd work experience'); } else hints.push('Add at least one work experience');
+  vault.jobs.forEach(function(j){ var gb=(j.bullets||[]).filter(function(b){return b.trim().length>30;}).length; if(gb>=3) score+=5; else if(gb>=1) { score+=2; hints.push('Add more bullets to '+j.title); } else hints.push('Add bullets to '+j.title); });
+  if ((vault.education||[]).length>0) score+=10; else hints.push('Add your education');
+  return { score: Math.min(score,100), hints: hints.slice(0,3) };
+}
+function updateVaultCompleteness() {
+  var r=vaultComputeScore(), pct=r.score;
+  var bar=vaultEl('vCompletenessBar'), label=vaultEl('vCompletenessLabel'), hint=vaultEl('vCompletenessHint');
+  if (!bar || !label) return;
+  bar.style.width=pct+'%';
+  bar.className='vcb-fill '+(pct>=80?'vcb-green':pct>=50?'vcb-amber':'vcb-red');
+  label.textContent=pct+'% complete'+(pct>=80?' 🎉':pct>=50?' — almost there':' — needs work');
+  if (hint) hint.textContent=r.hints.length?'💡 '+r.hints[0]:'';
+}
+async function generateVaultSummary() {
+  var btn=vaultEl('vSummaryGenBtn'), ta=vaultEl('vSummary');
+  if (!btn || !ta) return;
+  var vault=readVaultFromForm();
+  if (!vault.name && !vault.jobs.length) { showAlert('warn','Not enough data','Fill in name, experience, and skills first.'); return; }
+  btn.disabled=true; btn.textContent='⏳ Generating…';
+  try {
+    var token=localStorage.getItem('tc_token');
+    var res=await fetch('/api/generate-summary',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},body:JSON.stringify({vault})});
+    var data=await res.json();
+    if (data.summary) { ta.value=data.summary; _vault.summary=data.summary; ta.style.borderColor='#4ade80'; setTimeout(function(){ta.style.borderColor='';},2000); updateVaultCompleteness(); }
+    else showAlert('error','Failed',data.error||'Try again.');
+  } catch(e) { showAlert('error','Network error','Could not reach AI.'); }
+  finally { btn.disabled=false; btn.textContent='✨ AI Generate'; }
+}
 // ── State ──────────────────────────────────────────────────────────────────
 var fileBuffer = null, fileName = '', busy = false, selectedPages = 2, extractedText = '';
 var resumeBlobRef = null, resumeNameRef = '';
@@ -3423,6 +3482,7 @@ function updateVaultSkillCount() {
   if (badge) badge.textContent = count;
   _vault.skills = val;
   setVaultStatusUI(vaultComputeStatus());
+  updateVaultCompleteness();
 }
 
 // ── Jobs ───────────────────────────────────────────────────────
@@ -3474,7 +3534,7 @@ function addVaultJob(data) {
 }
 
 function bulletRowHtml(text) {
-  return '<div class="vault-bullet-row"><input type="text" class="vj-bullet-input" placeholder="Led team of 6 to deliver X, resulting in 30% improvement…" value="'+vaultEsc(text)+'"/><button class="vault-bullet-del" onclick="removeBullet(this)" title="Remove">✕</button></div>';
+  return '<div class="vault-bullet-row"><input type="text" class="vj-bullet-input" placeholder="Led team of X to deliver Y, cutting costs by 30%…" value="'+vaultEsc(text)+'"/><button class="vault-bullet-ai" onclick="improveBulletAI(this)" title="✨ Improve">✨</button><button class="vault-bullet-del" onclick="removeBullet(this)" title="Remove">✕</button></div>';
 }
 
 function addBulletToJob(btn) {
@@ -3625,8 +3685,11 @@ function readVaultFromForm() {
     location: (vaultEl('vLocation') || {}).value || '',
     linkedin: (vaultEl('vLinkedin') || {}).value || '',
     website:  (vaultEl('vWebsite')  || {}).value || '',
-    summary:  (vaultEl('vSummary')  || {}).value || '',
-    skills:   (vaultEl('vSkills')   || {}).value || '',
+    careerLevel: (vaultEl('vCareerLevel') || {}).value || '',
+    industry:    (vaultEl('vIndustry')    || {}).value || '',
+    languages:   (vaultEl('vLanguages')   || {}).value || '',
+    summary:     (vaultEl('vSummary')     || {}).value || '',
+    skills:      (vaultEl('vSkills')      || {}).value || '',
     jobs: [], education: [], certs: []
   };
 
@@ -3686,8 +3749,11 @@ function populateVaultForm(vault) {
   set('vLocation', vault.location);
   set('vLinkedin', vault.linkedin);
   set('vWebsite',  vault.website);
-  set('vSummary',  vault.summary);
-  set('vSkills',   vault.skills);
+  set('vCareerLevel', vault.careerLevel);
+  set('vIndustry',    vault.industry);
+  set('vLanguages',   vault.languages);
+  set('vSummary',     vault.summary);
+  set('vSkills',      vault.skills);
 
   // Clear existing dynamic entries
   var clearSection = function(listId, emptyId, addBtnClass) {

@@ -1424,6 +1424,34 @@ app.post('/api/career', requireAuth, async (req, res) => {
   }
 });
 
+
+app.post('/api/improve-bullet', requireAuth, async (req, res) => {
+  const { bullet, jobTitle, company } = req.body || {};
+  if (!bullet || !bullet.trim()) return res.status(400).json({ error: 'bullet required' });
+  if (!CLAUDE_KEY) return res.status(503).json({ error: 'AI not configured' });
+  const system = 'You are an expert resume writer. Improve this bullet point.\nRules: Start with strong past-tense verb. Add metric/number if possible. Max 25 words. Do NOT invent facts. Return ONLY the improved bullet.';
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', { method:'POST', headers:{'x-api-key':CLAUDE_KEY,'anthropic-version':'2023-06-01','content-type':'application/json'}, body: JSON.stringify({ model:'claude-haiku-4-5-20251001', max_tokens:120, system, messages:[{role:'user',content:'Job: '+(jobTitle||'')+' at '+(company||'')+'\nBullet: '+bullet.trim()+'\nImprove it:'}]}) });
+    if (!r.ok) return res.status(502).json({ error: 'AI error' });
+    const j = await r.json();
+    res.json({ improved: j.content[0].text.trim() });
+  } catch(e) { res.status(500).json({ error: 'Could not improve bullet.' }); }
+});
+
+app.post('/api/generate-summary', requireAuth, async (req, res) => {
+  const { vault } = req.body || {};
+  if (!vault) return res.status(400).json({ error: 'vault required' });
+  if (!CLAUDE_KEY) return res.status(503).json({ error: 'AI not configured' });
+  const jobs = (vault.jobs || []).slice(0,3).map(j => (j.title||'') + ' at ' + (j.company||'')).join('; ');
+  const system = 'Write a 3-sentence professional resume summary. Sentence 1: years of experience + expertise. Sentence 2: top strengths or accomplishments. Sentence 3: what they bring next. No I/me. Max 65 words. Return ONLY the summary.';
+  try {
+    const r = await fetch('https://api.anthropic.com/v1/messages', { method:'POST', headers:{'x-api-key':CLAUDE_KEY,'anthropic-version':'2023-06-01','content-type':'application/json'}, body: JSON.stringify({ model:'claude-haiku-4-5-20251001', max_tokens:200, system, messages:[{role:'user',content:'Level: '+(vault.careerLevel||'')+' Industry: '+(vault.industry||'')+'\nSkills: '+(vault.skills||'').slice(0,200)+'\nRoles: '+jobs+'\nWrite the summary:'}]}) });
+    if (!r.ok) return res.status(502).json({ error: 'AI error' });
+    const j = await r.json();
+    res.json({ summary: j.content[0].text.trim() });
+  } catch(e) { res.status(500).json({ error: 'Could not generate summary.' }); }
+});
+
 // ── Jobs API diagnostic endpoint ────────────────────────────────
 // Visit /api/jobs-test in browser (while logged in) to check config + live call.
 app.get('/api/jobs-test', requireAuth, async (req, res) => {

@@ -1111,6 +1111,23 @@
       transition:color var(--t);
     }
     .vault-bullet-del:hover { color:var(--red); }
+    .vault-bullet-ai{background:none;border:none;cursor:pointer;font-size:14px;padding:5px 4px;line-height:1;flex-shrink:0;opacity:.55;transition:opacity var(--t),transform .15s;}
+    .vault-bullet-ai:hover{opacity:1;transform:scale(1.2);}
+    .vault-bullet-ai:disabled{opacity:.3;cursor:wait;}
+    @keyframes bulletFlash{0%,100%{background:transparent}50%{background:rgba(74,222,128,.2)}}
+    .bullet-improved{animation:bulletFlash .6s ease;border-color:#4ade80 !important;}
+    .vault-completeness{padding:10px 14px 8px;border-bottom:1px solid rgba(91,99,240,.1);}
+    .vcb-track{height:7px;background:rgba(91,99,240,.12);border-radius:99px;overflow:hidden;}
+    .vcb-fill{height:100%;border-radius:99px;transition:width .5s cubic-bezier(.4,0,.2,1),background .3s;}
+    .vcb-green{background:linear-gradient(90deg,#4ade80,#22c55e);}
+    .vcb-amber{background:linear-gradient(90deg,#fbbf24,#f59e0b);}
+    .vcb-red{background:linear-gradient(90deg,#f87171,#ef4444);}
+    .vcb-labels{display:flex;justify-content:space-between;align-items:center;margin-top:5px;}
+    .vcb-label{font-size:11.5px;font-weight:700;color:var(--navy);}
+    .vcb-hint{font-size:11px;color:var(--muted);font-style:italic;}
+    .vault-ai-gen-btn{font-size:11.5px;font-weight:700;font-family:inherit;cursor:pointer;padding:4px 10px;border-radius:6px;background:var(--accent-lite);border:1.5px solid var(--accent-bd);color:var(--accent);transition:all var(--t);}
+    .vault-ai-gen-btn:hover{background:var(--accent);color:#fff;}
+    .vault-ai-gen-btn:disabled{opacity:.5;cursor:wait;}
     .vault-add-bullet {
       font-size:11px; color:var(--accent); cursor:pointer; font-weight:600;
       background:none; border:none; padding:3px 0; display:inline-flex;
@@ -2181,6 +2198,15 @@
         <span id="vaultImportStatus">Extracting text from file…</span>
       </div>
 
+      <!-- ── Completeness Meter ── -->
+      <div class="vault-completeness">
+        <div class="vcb-track"><div class="vcb-fill vcb-red" id="vCompletenessBar" style="width:0%"></div></div>
+        <div class="vcb-labels">
+          <span class="vcb-label" id="vCompletenessLabel">0% complete</span>
+          <span class="vcb-hint" id="vCompletenessHint"></span>
+        </div>
+      </div>
+
       <!-- ── Personal Info ── -->
       <div class="vault-section">
         <div class="vault-sec-hdr" onclick="toggleVaultSec(this)">
@@ -2197,8 +2223,15 @@
             <div class="vault-field"><label>Location</label><input type="text" id="vLocation" placeholder="San Francisco, CA" /></div>
           </div>
           <div class="vault-field-row">
-            <div class="vault-field"><label>LinkedIn URL</label><input type="url" id="vLinkedin" placeholder="linkedin.com/in/janesmith" /></div>
-            <div class="vault-field"><label>Website / Portfolio</label><input type="url" id="vWebsite" placeholder="janesmith.com" /></div>
+            <div class="vault-field"><label>LinkedIn URL</label><input type="url" id="vLinkedin" placeholder="linkedin.com/in/yourname" oninput="updateVaultCompleteness()" /></div>
+            <div class="vault-field"><label>Website / Portfolio</label><input type="url" id="vWebsite" placeholder="yoursite.com" /></div>
+          </div>
+          <div class="vault-field-row">
+            <div class="vault-field"><label>Career Level</label><select id="vCareerLevel" onchange="updateVaultCompleteness()"><option value="">— Select level —</option><option>Entry-level (0–2 yrs)</option><option>Mid-level (3–5 yrs)</option><option>Senior (6–10 yrs)</option><option>Lead / Manager</option><option>Director / VP</option><option>C-Suite / Executive</option></select></div>
+            <div class="vault-field"><label>Industry / Domain</label><input type="text" id="vIndustry" placeholder="e.g. FinTech, Healthcare, SaaS" oninput="updateVaultCompleteness()" /></div>
+          </div>
+          <div class="vault-field-row">
+            <div class="vault-field"><label>Languages <span style="font-weight:400;color:var(--muted)">(optional)</span></label><input type="text" id="vLanguages" placeholder="English (fluent), French (intermediate)" />
           </div>
         </div>
       </div>
@@ -2211,8 +2244,9 @@
         </div>
         <div class="vault-sec-body">
           <div class="vault-field">
-            <label>Summary</label>
-            <textarea id="vSummary" rows="4" placeholder="Results-driven software engineer with 8+ years building scalable web products…"></textarea>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px"><label style="margin-bottom:0">Summary</label><button class="vault-ai-gen-btn" id="vSummaryGenBtn" onclick="generateVaultSummary()">✨ AI Generate</button></div>
+            <textarea id="vSummary" rows="4" placeholder="Results-driven professional with X years… Proven track record of… (aim for 3 sentences)" oninput="updateVaultCompleteness()"></textarea>
+            <div class="vault-skills-hint">💡 Strong summary = experience + 2 key strengths + what you bring next. Hit ✨ AI Generate to auto-write it.</div>
           </div>
         </div>
       </div>
