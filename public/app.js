@@ -4073,7 +4073,7 @@ async function importResumeToVault(file) {
       '    }',
       '  ],',
       
-c function improveBulletAI(btn) {
+async function improveBulletAI(btn) {
   var row=btn.closest('.vault-bullet-row'), input=row.querySelector('.vj-bullet-input'), entry=btn.closest('.vault-entry');
   var original=input.value.trim();
   if (!original) { showAlert('warn','Empty bullet','Type something first.'); return; }
