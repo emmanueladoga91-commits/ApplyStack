@@ -4123,6 +4123,66 @@ async function importResumeToVault(file) {
 
     var parsed = JSON.parse(jsonStr);
 
+    if (!parsed.certs || !parsed.certs.length) {
+      parsed.certs = parsed.certifications || parsed.credentials || parsed.licenses || parsed.certificates || [];
+    }
+    if (Array.isArray(parsed.certs)) {
+      parsed.certs = parsed.certs.map(function(c) {
+        return { name: c.name||c.title||c.certification||'', issuer: c.issuer||c.organization||c.issuedBy||'', year: c.year||c.date||'' };
+      }).filter(function(c){ return c.name; });
+    }
+    if (Array.isArray(parsed.education)) {
+      parsed.education = parsed.education.map(function(e) {
+        return { degree: e.degree||e.qualification||e.program||'', school: e.school||e.institution||e.university||e.college||'', year: e.year||e.graduationYear||e.date||'', gpa: e.gpa||'' };
+      }).filter(function(e){ return e.degree || e.school; });
+    }
+
+    var needEdu  = !parsed.education || !parsed.education.length;
+    var needCert = !parsed.certs     || !parsed.certs.length;
+    if ((needEdu || needCert) && tok) {
+      if (statusEl) statusEl.textContent = 'Extracting education & certifications…';
+      try {
+        var sections = [];
+        if (needEdu)  sections.push('ALL education: degrees, diplomas, courses, universities, colleges');
+        if (needCert) sections.push('ALL certifications and licenses: PMP, AWS, CPA, CISSP, etc');
+        var eduJson  = needEdu  ? '"education": [{ "degree": "Full degree name", "school": "Institution", "year": "Year", "gpa": "" }]' : '';
+        var certJson = needCert ? '"certs": [{ "name": "Cert name", "issuer": "Issuing body", "year": "Year" }]' : '';
+        var bothJson = (eduJson && certJson) ? eduJson + ',
+  ' + certJson : (eduJson || certJson);
+        var pass2Prompt = 'Extract ONLY these from the resume:
+' + sections.join('
+') + '
+
+Return ONLY this JSON structure (no markdown, no extra text):
+{
+  ' + bothJson + '
+}
+
+RESUME:
+' + text;
+        var res2 = await fetch('/api/claude', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tok },
+          body: JSON.stringify({ type: 'score', system: 'Resume parser. Return ONLY valid JSON. No markdown.', userMsg: pass2Prompt, maxTokens: 2000, model: 'claude-haiku-4-5-20251001' })
+        });
+        if (res2.ok) {
+          var d2    = await res2.json();
+          var raw2  = (d2.text || '').trim();
+          var start = raw2.indexOf('{');
+          var end   = raw2.lastIndexOf('}');
+          if (start !== -1 && end !== -1) {
+            var p2 = JSON.parse(raw2.slice(start, end + 1));
+            if (needEdu  && p2.education && p2.education.length) {
+              parsed.education = p2.education.map(function(e){ return { degree: e.degree||e.qualification||'', school: e.school||e.institution||e.university||'', year: e.year||'', gpa: e.gpa||'' }; }).filter(function(e){ return e.degree||e.school; });
+            }
+            if (needCert && p2.certs && p2.certs.length) {
+              parsed.certs = p2.certs.map(function(c){ return { name: c.name||c.title||'', issuer: c.issuer||c.organization||'', year: c.year||'' }; }).filter(function(c){ return c.name; });
+            }
+          }
+        }
+      } catch(e2) { console.warn('2nd pass failed:', e2.message); }
+    }
+
     // Normalise key names
     if (!parsed.certs && parsed.certifications) parsed.certs = parsed.certifications;
     if (!parsed.certs && parsed.credentials)    parsed.certs = parsed.credentials;
