@@ -1766,7 +1766,7 @@ async function improveResume(){
   if(msg) msg.innerHTML='';
   try{
     var sys='You are a specialist resume writer. Improve a tailored resume by naturally incorporating missing keywords ONLY where existing experience genuinely supports it. NEVER invent facts. Return ONLY valid JSON with the exact same structure.';
-    var prompt='Missing keywords: '+missing.join(', ')+'\n\nJOB DESCRIPTION:\n'+jdRef+'\n\nCURRENT RESUME JSON:\n'+JSON.stringify(tailoredRef)+'\n\nReturn improved resume. ONLY valid JSON.';
+    var customNote=(document.getElementById('improveCustomNote')||{}).value||''; var prompt='Missing keywords: '+missing.join(', ')+(customNote?'\n\nCANDIDATE INSTRUCTIONS: '+customNote:'')+'\n\nJOB DESCRIPTION:\n'+jdRef+'\n\nCURRENT RESUME JSON:\n'+JSON.stringify(tailoredRef)+'\n\nReturn improved resume. ONLY valid JSON.';
     var improved=await callClaude('tailor',sys,prompt,16000,'claude-sonnet-4-6');
     tailoredRef=improved;
     btn.innerHTML='<span class="spin"></span> Rebuilding\u2026';
@@ -5840,7 +5840,7 @@ async function improveResume(){
   if(msg) msg.innerHTML='';
   try{
     var sys='You are a specialist resume writer. Improve a tailored resume by naturally incorporating missing keywords ONLY where existing experience genuinely supports it. NEVER invent facts. Return ONLY valid JSON with the exact same structure.';
-    var prompt='Missing keywords: '+missing.join(', ')+'\n\nJOB DESCRIPTION:\n'+jdRef+'\n\nCURRENT RESUME JSON:\n'+JSON.stringify(tailoredRef)+'\n\nReturn improved resume. ONLY valid JSON.';
+    var customNote=(document.getElementById('improveCustomNote')||{}).value||''; var prompt='Missing keywords: '+missing.join(', ')+(customNote?'\n\nCANDIDATE INSTRUCTIONS: '+customNote:'')+'\n\nJOB DESCRIPTION:\n'+jdRef+'\n\nCURRENT RESUME JSON:\n'+JSON.stringify(tailoredRef)+'\n\nReturn improved resume. ONLY valid JSON.';
     var improved=await callClaude('tailor',sys,prompt,16000,'claude-sonnet-4-6');
     tailoredRef=improved;
     btn.innerHTML='<span class="spin"></span> Rebuilding\u2026';
