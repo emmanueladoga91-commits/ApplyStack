@@ -4097,7 +4097,7 @@ async function importResumeToVault(file) {
         type: 'score',
         system: sys,
         userMsg: prompt,
-        maxTokens: 8000,
+        maxTokens: 12000,
         model: 'claude-sonnet-4-6'
       })
     });
