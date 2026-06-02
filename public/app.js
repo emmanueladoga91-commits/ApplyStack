@@ -3756,12 +3756,15 @@ function populateVaultForm(vault) {
   set('vSkills',      vault.skills);
 
   // Clear existing dynamic entries
-  var clearSection = function(listId, emptyId, addBtnClass) {
+  var clearSection = function(listId, emptyId) {
     var listEl = vaultEl(listId);
     if (!listEl) return;
     listEl.querySelectorAll('.vault-entry').forEach(function(e){ e.remove(); });
     var emptyEl = vaultEl(emptyId);
     if (emptyEl) emptyEl.style.display = '';
+    var badgeMap = { vJobList:'vJobCount', vEduList:'vEduCount', vCertList:'vCertCount' };
+    var badge = vaultEl(badgeMap[listId]);
+    if (badge) badge.textContent = '0';
   };
   clearSection('vJobList',  'vJobEmpty');
   clearSection('vEduList',  'vEduEmpty');
@@ -4120,21 +4123,35 @@ async function importResumeToVault(file) {
 
     var parsed = JSON.parse(jsonStr);
 
-    // Step 4: Generate IDs for each entry
-    var jobId = 0, eduId = 0, certId = 0;
-    (parsed.jobs || []).forEach(function(j) { j.id = 'j' + (++jobId); });
-    (parsed.education || []).forEach(function(e) { e.id = 'e' + (++eduId); });
-    (parsed.certs || []).forEach(function(c) { c.id = 'c' + (++certId); });
+    // Normalise key names
+    if (!parsed.certs && parsed.certifications) parsed.certs = parsed.certifications;
+    if (!parsed.certs && parsed.credentials)    parsed.certs = parsed.credentials;
+    if (Array.isArray(parsed.certs)) {
+      parsed.certs = parsed.certs.map(function(c) {
+        return { name: c.name||c.title||c.certification||'', issuer: c.issuer||c.organization||c.issuedBy||'', year: c.year||c.date||'' };
+      });
+    }
+    if (Array.isArray(parsed.education)) {
+      parsed.education = parsed.education.map(function(e) {
+        return { degree: e.degree||e.qualification||e.program||'', school: e.school||e.institution||e.university||e.college||'', year: e.year||e.graduationYear||e.date||'', gpa: e.gpa||e.grade||'' };
+      });
+    }
 
-    // Step 5: Populate the vault form
+    var jobId = 0, eduId = 0, certId = 0;
+    (parsed.jobs      || []).forEach(function(j) { j.id = 'j' + (++jobId); });
+    (parsed.education || []).forEach(function(e) { e.id = 'e' + (++eduId); });
+    (parsed.certs     || []).forEach(function(c) { c.id = 'c' + (++certId); });
+
     if (statusEl) statusEl.textContent = 'Populating your vault…';
     populateVaultForm(parsed);
     setVaultStatusUI(vaultComputeStatus());
-
-    // Done — show success
+    var eduBody=document.getElementById('vEduList'), certBody=document.getElementById('vCertList');
+    if (eduBody)  { eduBody.classList.add('open');  var t=eduBody.previousElementSibling;   if(t){var tog=t.querySelector('.vault-sec-toggle');   if(tog)tog.classList.add('open');} }
+    if (certBody) { certBody.classList.add('open'); var t2=certBody.previousElementSibling; if(t2){var tog2=t2.querySelector('.vault-sec-toggle'); if(tog2)tog2.classList.add('open');} }
+    var extraMsg = (!parsed.education||!parsed.education.length)&&(!parsed.certs||!parsed.certs.length) ? ' No education or certifications found — add them manually if needed.' : '';
     if (progressEl) progressEl.style.display = 'none';
     if (importBar)  importBar.style.display  = 'flex';
-    showAlert('info', 'Vault auto-filled!', 'Your resume data has been imported. Review the entries, then hit Save Vault.');
+    showAlert('info', 'Vault auto-filled!', 'Your resume data has been imported. Review the entries, then hit Save Vault.' + extraMsg);
 
   } catch (err) {
     console.error('Vault import error:', err);
