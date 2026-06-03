@@ -3068,8 +3068,9 @@ function downloadResumePDF(e) {
   if (e) e.preventDefault();
   if (!tailoredRef) return;
   var html = buildResumeHtml(tailoredRef, selectedTemplate);
+  var pdfName = ((tailoredRef.name||'Resume').replace(/\s+/g,'_')) + '_' + ((tailoredRef.targetRole||tailoredRef.summary||'Resume').split(' ').slice(0,3).join('_').replace(/[^a-zA-Z0-9_]/g,''));
   var winContent = '<!DOCTYPE html><html><head><meta charset="UTF-8">'
-    + '<title>Resume</title>'
+    + '<title>' + pdfName + '</title>'
     + '<style>'
     + 'body{font-family:Calibri,Georgia,serif;font-size:10pt;line-height:1.45;color:#111;margin:0;padding:0;}'
     + '.pv-name{font-size:22pt;font-weight:700;margin:0 0 5px;}'
