@@ -3088,8 +3088,8 @@ function downloadResumePDF(e) {
     + '.pv-edu{font-size:10pt;margin-bottom:5px;}'
     + '.pv-proj{font-size:10pt;margin:4px 0;text-align:justify;}'
     + '.pv-resp-lbl{font-weight:700;font-size:10pt;margin:7px 0 3px;}'
-    + '@page{margin:1in;}'
-    + '@media print{body{padding:0;margin:0;}}'
+    + '@page{margin:15mm;size:A4;}'
+    + '@media print{body{padding:0;margin:0;}html{-webkit-print-color-adjust:exact;}}'
     + '</style></head>'
     + '<body>' + html
     + '</body></html>';
@@ -3097,7 +3097,7 @@ function downloadResumePDF(e) {
   printWin.document.write(winContent);
   printWin.document.close();
   printWin.focus();
-  setTimeout(function() { printWin.print(); }, 500);
+  setTimeout(function() { printWin.print(); printWin.close(); }, 600);
 }
 
 // Hide PDF cards + CL preview when outputs are cleared
