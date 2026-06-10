@@ -145,11 +145,31 @@
 
     /* ── Responsive ── */
     @media (max-width:640px) {
+      /* Nav: hide extra links */
+      nav { padding:12px 16px; }
+      .nav-right .nav-link { display:none; }
+
+      /* Layout */
+      main { padding:16px 14px 60px; }
+      .page-hdr { margin-bottom:16px; }
+      .page-title { font-size:1.4rem; }
+      .page-sub { font-size:.88rem; }
+
+      /* Cards */
+      .card { padding:18px 16px; border-radius:14px; }
+
+      /* Forms */
       .form-grid { grid-template-columns:1fr; }
       .offer-comparison { grid-template-columns:1fr; }
+
+      /* Counter */
       .counter-number { font-size:2rem; }
-      .card { padding:20px; }
-      main { padding:20px 16px 60px; }
+
+      /* Buttons */
+      .btn-research { width:100%; justify-content:center; }
+
+      /* Results */
+      .red-flags-list li { padding:10px 12px; }
     }
   </style>
 </head>

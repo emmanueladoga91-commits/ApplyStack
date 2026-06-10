@@ -144,17 +144,29 @@
 
     /* ── Responsive ── */
     @media (max-width:640px) {
-      header { padding:12px 16px; }
+      /* Header: hide overflow nav items, keep logo + active */
+      header { padding:12px 16px; gap:8px; flex-wrap:wrap; }
       .logo { font-size:1.1rem; }
-      nav { gap:8px; font-size:.85rem; }
-      main { padding:20px 16px 60px; }
+      nav { gap:0; overflow-x:auto; -webkit-overflow-scrolling:touch; padding-bottom:2px; }
+      nav::-webkit-scrollbar { display:none; }
+      nav .nav-link { font-size:.82rem; padding:4px 8px; white-space:nowrap; flex-shrink:0; }
+
+      /* Layout */
+      main { padding:16px 14px 60px; }
       .page-title { font-size:1.4rem; margin-bottom:20px; }
-      #setupCard, .result-card { padding:18px; }
+      #setupCard, .result-card { padding:16px; }
       .setup-title, .card-title { font-size:1rem; }
-      .filter-tabs { gap:6px; }
-      .filter-tab { padding:8px 12px; font-size:.85rem; }
+      .setup-row { grid-template-columns:1fr; }
+
+      /* Questions */
+      .filter-tabs { gap:6px; overflow-x:auto; flex-wrap:nowrap; -webkit-overflow-scrolling:touch; padding-bottom:4px; }
+      .filter-tabs::-webkit-scrollbar { display:none; }
+      .filter-tab { padding:8px 14px; font-size:.85rem; flex-shrink:0; }
       .q-header { flex-direction:column; gap:8px; }
       .q-badge { align-self:flex-start; }
+
+      /* Buttons */
+      .generate-btn { width:100%; justify-content:center; }
     }
   </style>
 </head>

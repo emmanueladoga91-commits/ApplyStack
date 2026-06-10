@@ -743,6 +743,36 @@
       .user-link  { display:none; }
       /* Keep plan badge visible */
       .user-menu { gap:0; }
+
+      /* ── Resume / cover-letter preview modals ── */
+      #previewModal, #tmplPreviewModal { padding:10px 6px 32px; }
+      .pv-bar, .tpv-bar { flex-wrap:wrap; row-gap:8px; padding:12px 14px; }
+      .pv-bar h3 { width:100%; }
+      .tpv-title { order:-1; width:100%; }
+      .pv-dl-btn, .pv-close, .tpv-select-btn, .tpv-close, .tpv-nav button {
+        font-size:11px; padding:7px 10px;
+      }
+      #pvPage, #tpvPage { padding:24px 16px; }
+      .pv-name { font-size:18pt; }
+      .pv-sec  { font-size:10pt; }
+
+      /* ── Cover letter preview modal ── */
+      #clPreviewModal { padding:12px 8px; }
+      .clpv-bar { flex-wrap:wrap; row-gap:8px; padding:12px 14px !important; }
+      .clpv-bar h3 { width:100%; }
+      .clpv-bar button { font-size:11px; padding:7px 10px !important; }
+      .cl-pv-tmpl-strip { overflow-x:auto; flex-wrap:nowrap; }
+      .cl-pv-tmpl-chip { flex-shrink:0; }
+
+      /* ── Job match modal ── */
+      .jm-hdr { padding:16px 16px 12px; }
+      .jm-title { font-size:.95rem; }
+      .jm-subtitle { font-size:.72rem; }
+      .jm-loc-bar, .jm-filter-bar, .jm-source-bar, .jm-title-bar { padding-left:16px; padding-right:16px; }
+
+      /* ── JD modal ── */
+      .jd-modal-overlay { padding:0; align-items:flex-end; }
+      .jd-modal-box { border-radius:20px 20px 0 0; max-height:88vh; padding:22px 18px 20px; }
     }
     /* NOTE: .app-hamburger mobile show rule is declared AFTER the
        base display:none rule below, so it correctly overrides it. */
@@ -2861,9 +2891,9 @@
 
 <!-- Cover Letter Preview modal -->
 <div id="clPreviewModal" style="display:none;position:fixed;inset:0;z-index:1100;background:rgba(0,0,0,.55);overflow-y:auto;padding:24px 16px">
-  <div style="max-width:720px;margin:0 auto;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+  <div class="clpv-wrap" style="max-width:720px;margin:0 auto;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3)">
     <!-- Header bar -->
-    <div style="background:linear-gradient(135deg,#1e3a5f,#2d5a8e);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:12px">
+    <div class="clpv-bar" style="background:linear-gradient(135deg,#1e3a5f,#2d5a8e);color:#fff;padding:14px 20px;display:flex;align-items:center;gap:12px">
       <h3 style="font-size:15px;font-weight:700;flex:1">📄 Cover Letter Preview</h3>
       <button type="button" id="clDlBtn" style="background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);color:#fff;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">⬇ Download .docx</button>
       <button type="button" id="clPdfBtn" style="background:rgba(99,102,241,.45);border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:8px;padding:7px 14px;font-size:12px;font-weight:700;cursor:pointer">🖨 Download PDF</button>

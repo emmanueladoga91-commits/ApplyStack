@@ -307,11 +307,43 @@
     .save-modal-actions { display:flex; gap:10px; margin-top:18px; }
 
     /* ── Responsive ── */
-    @media(max-width:540px){
-      .setup-row { flex-direction:column; }
-      .stats-actions { margin-left:0; width:100%; }
-      .rating-btn { min-width:80px; }
+    @media(max-width:640px){
+      /* Header */
+      header { padding:14px 16px; gap:10px; }
+      .logo { font-size:22px; }
+      .header-text h1 { font-size:17px; }
+      .header-text p { display:none; }
+      .pro-badge { font-size:11px; padding:4px 10px; }
+      .back-btn { padding:6px 12px; font-size:12px; }
+
+      /* Layout */
+      main { margin:16px auto; padding:0 14px 64px; gap:14px; }
+      .card { padding:16px; }
+      .card-title { font-size:15px; }
+
+      /* Setup */
+      .setup-row { flex-direction:column; gap:12px; }
+      #jdInput { min-height:100px; }
+
+      /* Question display */
       .q-text { font-size:14px; }
+      .rating-row { flex-wrap:wrap; gap:6px; }
+      .rating-btn { flex:1; min-width:70px; padding:8px 6px; font-size:12px; }
+
+      /* Stats */
+      .stats-actions { margin-left:0; width:100%; flex-wrap:wrap; gap:6px; }
+      .stats-actions button { flex:1; }
+
+      /* Saved sessions list */
+      .ss-card { padding:12px 14px; }
+
+      /* Gate screen */
+      #gateScreen { padding:40px 16px; }
+    }
+
+    @media(max-width:400px){
+      .header-right { gap:6px; }
+      .back-btn { display:none; }
     }
   </style>
 </head>

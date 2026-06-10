@@ -79,6 +79,40 @@
     .modal-input:focus { border-color:#ef4444; }
     .modal-actions { display:flex; gap:10px; }
     .modal-actions .btn { flex:1; padding:12px; }
+
+    /* ── Responsive ── */
+    @media (max-width:640px) {
+      nav { padding:12px 16px; }
+      .nav-right { gap:10px; }
+      .nav-right .nav-link { font-size:.82rem; }
+
+      main { margin:24px auto; padding:0 14px 60px; }
+      h1 { font-size:1.4rem; }
+      .sub { font-size:.9rem; }
+
+      .card { padding:20px 16px; }
+      .stat-grid { grid-template-columns:repeat(3,1fr); gap:8px; }
+      .stat-n { font-size:1.4rem; }
+      .stat-l { font-size:.7rem; }
+      .pricing-grid { grid-template-columns:1fr; gap:10px; }
+      .plan-row { flex-direction:column; align-items:flex-start; gap:10px; }
+
+      .info-row { flex-wrap:wrap; gap:4px; padding:12px 0; }
+      .info-val { width:100%; font-size:.88rem; }
+
+      /* Referral link row */
+      .referral-input-row { flex-direction:column; gap:8px; }
+      .referral-input-row input { border-radius:10px !important; }
+      .referral-input-row button { border-radius:10px !important; width:100%; }
+
+      /* Modal */
+      .modal-overlay { padding:0; align-items:flex-end; }
+      .modal-box { border-radius:24px 24px 0 0; width:100%; max-width:100%; padding:28px 20px 32px; }
+      .modal-actions { flex-direction:column; }
+
+      /* Buttons */
+      .btn { padding:12px 18px; }
+    }
   </style>
 </head>
 <body>
@@ -137,7 +171,7 @@
     <div class="card-title">🎁 Refer a Friend · Earn Free Tailorings</div>
     <p style="font-size:.9rem;color:var(--gray600);margin-bottom:16px;line-height:1.6">Share your personal link. When a friend signs up and builds their first resume, you both get 1 free bonus tailoring. Works even on the free plan.</p>
 
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+    <div class="referral-input-row" style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
       <input id="referralLinkInput" type="text" readonly
         style="flex:1;min-width:200px;padding:11px 14px;border:1.5px solid var(--gray200);border-radius:10px;font-size:.85rem;color:var(--gray800);background:var(--gray50);font-family:inherit"
         value="Loading…" />
